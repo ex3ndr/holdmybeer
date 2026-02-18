@@ -1,11 +1,11 @@
-# daycare agent notes
+# holdmybeer agent notes
 
 ## Goals
 - keep the core minimal and composable
 - add integrations incrementally
 
 ## Conventions
-- single workspace package at `packages/daycare`
+- single workspace package at `packages/holdmybeer`
 - typescript only, esm output
 - sources live in `sources/`
 - tests use `*.spec.ts`
@@ -26,29 +26,14 @@
 - Add brief code comments for tricky or non-obvious logic.
 - Keep files concise; extract helpers instead of "V2" copies.
 - Aim to keep files under ~700 LOC; guideline only (not a hard guardrail). Split/refactor when it improves clarity or testability.
-- Naming: use **Daycare** for product/app/docs headings; use `daycare` for CLI command, package/binary, paths, and config keys.
+- Naming: use **HoldMyBeer** for product/app/docs headings; use `holdmybeer` for package name; use `beer` for CLI command, binary, paths, and config keys.
 - Function naming: do not use the `Build` suffix. Prefer direct names such as `contextForAgent` (not `contextForAgentBuild`).
 - Use `@/types` for shared types whenever available instead of deep module imports.
-
-## Logging
-- Always create a logger with an explicit module via `getLogger("module.name")`.
-- Module labels in pretty logs are normalized to 20 characters (trim or right-pad with spaces).
-- Plugin modules must use the `plugin.` prefix so they render as `(module)`; system modules render as `[module]`.
-- If a module is omitted or blank, logs use `unknown`.
-- Prefer concise, stable module names to reduce trimming collisions.
-- Pretty logs render as `[HH:MM:ss] [module     ] Message` (plugins render `(module     )`).
 
 ## Central Types (`@/types`)
 - Prefer `import type { ... } from "@/types"` for shared/cross-cutting types.
 - Add cross-cutting/public types to `sources/types.ts` and re-export there.
 - Keep domain-internal types in their local modules.
-
-## Plugin vs monolith
-- If it is something contained - new inference provider, new API, memory engine. It should be a plugin.
-- If it is requiring for coordinating multiple plugins or agents - it is part of the monilith. Cron is needed to everyone. Heartbeat too. Some event bus. Working with file system, sandboxing - it is part of the monolith code.
-- Plugins are contained exclusively in a single folder (with subfolders)
-- Each plugin folder must include a `README.md` documenting implementation details.
-- See [`doc/PLUGINS.md`](doc/PLUGINS.md) for comprehensive plugin development guide.
 
 ## Agent-Specific Notes
 - Never edit `node_modules` (global/Homebrew/npm/git installs too). Updates overwrite. Skill notes go in `tools.md` or `AGENTS.md`.
@@ -56,22 +41,17 @@
 - When answering questions, respond with high-confidence answers only: verify in code; do not guess.
 - Patching dependencies (pnpm patches, overrides, or vendored changes) requires explicit approval; do not do this by default.
 - If shared guardrails are available locally, review them; otherwise follow this repo's guidance.
-- **Restart apps:** "restart iOS/Android apps" means rebuild (recompile/install) and relaunch, not just kill/launch.
-- **Device checks:** before testing, verify connected real devices (iOS/Android) before reaching for simulators/emulators.
 - **Multi-agent safety:** do **not** create/apply/drop `git stash` entries unless explicitly requested (this includes `git pull --rebase --autostash`). Assume other agents may be working; keep unrelated WIP untouched and avoid cross-cutting state changes.
 - **Multi-agent safety:** when the user says "push", you may `git pull --rebase` to integrate latest changes (never discard other agents' work). When the user says "commit", scope to your changes only. When the user says "commit all", commit everything in grouped chunks.
 - **Multi-agent safety:** do **not** create/remove/modify `git worktree` checkouts (or edit `.worktrees/*`) unless explicitly requested.
 - **Multi-agent safety:** do **not** switch branches / check out a different branch unless explicitly requested.
 - **Multi-agent safety:** running multiple agents is OK as long as each agent has its own agent directory.
-- **Multi-agent safety:** when you see unrecognized files, keep going; focus on your changes and commit only those.
 - **Multi-agent safety:** focus reports on your edits; avoid guard-rail disclaimers unless truly blocked; when multiple agents touch the same file, continue if safe; end with a brief "other files present" note only if relevant.
 - Bug investigations: read source code of relevant npm dependencies and all related local code before concluding; aim for high-confidence root cause.
 - Code style: add brief comments for tricky logic; keep files under ~500 LOC when feasible (split/refactor as needed).
-- Never send streaming/partial replies to external messaging surfaces (WhatsApp, Telegram); only final replies should be delivered there. Streaming/tool events may still go to internal UIs/control channel.
 - Release guardrails: do not change version numbers without operator's explicit consent; always ask permission before running any npm publish/release step.
 - keep configs small and explicit
 - avoid hidden side effects
-- Permissions: parse permission strings (e.g. `@read:/path`) into a discriminated union; do not use optional path fields.
 - commit after each ready-to-use change using Angular-style commits
 - build before each commit and run tests
 - document every change in `/doc/` with mermaid diagrams
@@ -121,7 +101,7 @@ Place general-purpose helpers in `sources/util/`. This includes:
 - Async primitives (`lock.ts`, `sync.ts`, `debounce.ts`)
 - Shutdown coordination (`shutdown.ts`)
 
-Keep utilities **domain-agnostic**. If a helper is specific to a domain (e.g., permissions, agents), it belongs in that domain folder instead.
+Keep utilities **domain-agnostic**. If a helper is specific to a domain (e.g., github, beer), it belongs in that domain folder instead.
 
 ## Time Handling
 Use **unix timestamps** (milliseconds since epoch) for all time values in the application. Only use `Date` objects at boundaries for parsing or formatting.
@@ -208,13 +188,13 @@ sync.setValue(state3); // replaces again; only state3 persists
 ## File Organization: One Function, Prefix Naming
 
 ### Core Principle
-Write **one public function per file**. Name files and functions using **prefix notation** where the domain/noun comes first: `permissionCreate` not `createPermission`, `agentNormalize` not `normalizeAgent`.
+Write **one public function per file**. Name files and functions using **prefix notation** where the domain/noun comes first: `githubRepoCreate` not `createGithubRepo`, `beerSettingsRead` not `readBeerSettings`.
 
 ### Why Prefix Notation
-- **Autocomplete-friendly**: typing `permission` shows all permission operations
-- **File explorer grouping**: related files cluster alphabetically (`permissionApply.ts`, `permissionCreate.ts`, `permissionFormat.ts`)
-- **Import clarity**: `import { permissionCreate } from "./permissionCreate.js"` is self-documenting
-- **Avoids verb collision**: no more `createSession`, `createPermission`, `createTask` scattered everywhere
+- **Autocomplete-friendly**: typing `github` shows all github operations
+- **File explorer grouping**: related files cluster alphabetically (`githubRepoCreate.ts`, `githubRepoExists.ts`, `githubRepoParse.ts`)
+- **Import clarity**: `import { githubRepoCreate } from "./githubRepoCreate.js"` is self-documenting
+- **Avoids verb collision**: no more `createRepo`, `createSettings`, `createContext` scattered everywhere
 
 ### File Naming Convention
 ```
@@ -222,15 +202,14 @@ domainVerb.ts        # file name matches function name exactly
 domainVerb.spec.ts   # unit test lives next to the file
 ```
 
-Example: `permissionApply.ts` exports `permissionApply()`, tested in `permissionApply.spec.ts`.
+Example: `githubRepoParse.ts` exports `githubRepoParse()`, tested in `githubRepoParse.spec.ts`.
 
 ### Underscore Prefix for Aggregation Files
 Use an underscore prefix (`_`) for files that aggregate or combine multiple items into a single list or registry:
 
 ```
-_modules.ts      # list of all modules to register
-_skills.ts       # hardcoded skill definitions
 _providers.ts    # all provider implementations
+_commands.ts     # all CLI commands
 ```
 
 This distinguishes aggregation files from regular single-function files and makes them sort first in file explorers.
@@ -239,15 +218,14 @@ This distinguishes aggregation files from regular single-function files and make
 Each public function should have a brief comment describing its **purpose** and **expectations**:
 ```typescript
 /**
- * Applies a permission decision to an existing permissions object.
- * Returns a new SessionPermissions with the approved path added.
+ * Parses a GitHub repository reference from a URL or owner/repo string.
+ * Returns null if the input cannot be parsed.
  *
- * Expects: decision.approved === true; path must be absolute.
+ * Expects: non-empty string; handles both full URLs and shorthand.
  */
-export function permissionApply(
-  permissions: SessionPermissions,
-  decision: PermissionDecision
-): SessionPermissions {
+export function githubRepoParse(
+  input: string
+): GitHubRepoRef | null {
   // ...
 }
 ```
@@ -261,24 +239,25 @@ The "one public function per file" rule applies to **exported** functions. Inter
 - Would not be reused elsewhere
 
 ```typescript
-// permissionApply.ts
+// commandRun.ts
 
-/** Validates that a path is absolute and normalized. */
-function validatePath(path: string): boolean {
-  return path.startsWith("/") && !path.includes("/..");
+/** Quotes a shell argument if it contains special characters. */
+function commandShellQuote(value: string): string {
+  if (/^[A-Za-z0-9_/.:-]+$/.test(value)) {
+    return value;
+  }
+  return `'${value.replace(/'/g, `'\\\\''`)}'`;
 }
 
 /**
- * Applies a permission decision to an existing permissions object.
- * Expects: decision.approved === true; path must be absolute.
+ * Runs a command and captures stdout/stderr.
+ * Throws on non-zero exit unless allowFailure is true.
  */
-export function permissionApply(
-  permissions: SessionPermissions,
-  decision: PermissionDecision
-): SessionPermissions {
-  if (!validatePath(decision.path)) {
-    throw new Error("Invalid path");
-  }
+export async function commandRun(
+  command: string,
+  args: string[],
+  options: CommandRunOptions = {}
+): Promise<CommandRunResult> {
   // ...
 }
 ```
@@ -288,53 +267,50 @@ If an internal helper grows complex or gets reused, extract it to its own file.
 ### Grouping by Domain
 Organize files into domain folders. Each folder contains many small files:
 ```
-engine/
-  permissions/
-    permissionApply.ts
-    permissionBuildDefault.ts
-    permissionFormatTag.ts
-    permissionMerge.ts
-    permissionTypes.ts         # types can share a file
-  agents/
-    agentNormalize.ts
-    agentDescriptorTargetResolve.ts
-    agentKeyBuild.ts
-  messages/
-    messageBuildUser.ts
-    messageExtractText.ts
-    messageExtractToolCalls.ts
-    messageFormatIncoming.ts
+beer/
+  beerSettingsRead.ts
+  beerSettingsWrite.ts
+  beerSettingsPathResolve.ts
+github/
+  githubCliEnsure.ts
+  githubRepoCreate.ts
+  githubRepoExists.ts
+  githubRepoParse.ts
+  githubRepoNameResolve.ts
+rewrite/
+  rewriteRun.ts
+  baselineRewrite.ts
 ```
 
 ### Pure Functions First
 - **Prefer pure functions**: input → output, no side effects, no mutations
-- **Isolate impure code**: I/O, state mutations, and side effects go in clearly named files (`agent-persist.ts`, `connector-send.ts`)
+- **Isolate impure code**: I/O, state mutations, and side effects go in clearly named files (`beerSettingsWrite.ts`, `gitPush.ts`)
 - **Dependency injection**: pass dependencies as arguments rather than importing singletons
 
 ### Testing Pure Functions
 Every pure function gets a unit test in `*.spec.ts` next to it:
 ```typescript
-// permissionApply.ts
-export function permissionApply(permissions: SessionPermissions, decision: PermissionDecision): SessionPermissions {
-  // pure transformation, returns new object
+// githubRepoParse.ts
+export function githubRepoParse(input: string): GitHubRepoRef | null {
+  // pure transformation
 }
 
-// permissionApply.spec.ts
+// githubRepoParse.spec.ts
 import { describe, it, expect } from "vitest";
-import { permissionApply } from "./permissionApply.js";
+import { githubRepoParse } from "./githubRepoParse.js";
 
-describe("permissionApply", () => {
-  it("adds write path when approved", () => {
-    const result = permissionApply(basePermissions, writeDecision);
-    expect(result.writeDirs).toContain("/new/path");
+describe("githubRepoParse", () => {
+  it("parses owner/repo shorthand", () => {
+    const result = githubRepoParse("ex3ndr/holdmybeer");
+    expect(result?.fullName).toBe("ex3ndr/holdmybeer");
   });
 });
 ```
 
 ### When to Combine
 Some exceptions where multiple exports in one file make sense:
-- **Type definitions**: group related types in `*-types.ts`
-- **Tiny predicates**: `isCronContext()`, `isHeartbeatContext()` can share a file if under ~30 lines total
+- **Type definitions**: group related types in `*Types.ts`
+- **Tiny predicates**: small related checks can share a file if under ~30 lines total
 - **Tightly coupled pairs**: a function and its inverse (`encode`/`decode`)
 
 ### Migration Strategy
@@ -348,19 +324,19 @@ When refactoring large files:
 ## Central Types: `@/types`
 
 ### Purpose
-Consolidate shared type definitions in `sources/types.ts`, accessible via the `@/types` path alias. This provides a single import point for types used across plugins, engine, permissions, connectors, etc.
+Consolidate shared type definitions in `sources/types.ts`, accessible via the `@/types` path alias. This provides a single import point for types used across domains.
 
 ### Usage
 ```typescript
-import type { SessionPermissions, MessageContext, PluginConfig } from "@/types";
+import type { BeerSettings, Context, GitHubRepoRef } from "@/types";
 ```
 
 ### Rule
 - Always import shared types via `@/types` when available; only the defining type files should use local module paths to avoid cycles.
 
 ### What Goes in `@/types`
-- **Cross-cutting types**: types used by 3+ modules (e.g., `SessionPermissions`, `MessageContext`)
-- **Public plugin API types**: types plugins need to implement or consume
+- **Cross-cutting types**: types used by 3+ modules (e.g., `Context`, `BeerSettings`)
+- **Public API types**: types other domains need to consume
 - **Re-exports from domain modules**: aggregate exports for convenience
 
 ### What Stays in Domain Modules
@@ -370,10 +346,9 @@ import type { SessionPermissions, MessageContext, PluginConfig } from "@/types";
 ### Structure
 ```typescript
 // sources/types.ts
-export type { SessionPermissions } from "./engine/permissions.js";
-export type { MessageContext, ConnectorMessage } from "./engine/connectors/types.js";
-export type { PluginConfig, PluginContext } from "./engine/plugins/types.js";
-export type { FileReference } from "./files/types.js";
+export type { BeerSettings } from "./beer/beerSettingsTypes.js";
+export type { Context } from "./context/contextTypes.js";
+export type { GitHubRepoRef } from "./github/githubTypes.js";
 // ... more re-exports
 ```
 
@@ -388,3 +363,50 @@ The `@/types` alias is configured in `tsconfig.json`:
   }
 }
 ```
+
+## Text Catalog (`@text`)
+
+All user-facing strings (console messages, error messages, prompt labels) live in a single file: `sources/text/all.txt`.
+
+### File format
+`all.txt` uses `key = value` lines. Comments start with `#`, blank lines are ignored:
+```
+# Bootstrap
+bootstrap_no_changes = ✅  No changes to commit
+bootstrap_source_repo = 📦  Source repo: {repo}
+
+# Errors
+error_gh_required = ❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`
+```
+
+### Imports
+```typescript
+import { text, textFormat, beerLog } from "@text";
+```
+
+- **`text`** — `Record<string, string>` of all entries from `all.txt`.
+- **`textFormat(template, values)`** — replaces `{key}` placeholders in a template.
+- **`beerLog(key, values?)`** — logs a message to console with optional substitution.
+
+### Usage
+```typescript
+// Static message
+beerLog("bootstrap_no_changes");
+// → ✅  No changes to commit
+
+// With substitution
+beerLog("bootstrap_source_repo", { repo: "owner/repo" });
+// → 📦  Source repo: owner/repo
+
+// Error messages
+throw new Error(text["error_gh_required"]!);
+
+// Error with placeholders
+throw new Error(textFormat(text["error_output_dir_exists"]!, { dir: outputDir }));
+```
+
+### Rules
+- Never hardcode user-facing strings inline; add them to `sources/text/all.txt`.
+- Keys use underscore-separated names: `domain_description` (e.g., `bootstrap_no_changes`, `error_gh_required`, `prompt_source_repo`).
+- Use `beerLog(key)` for console output instead of raw `console.log`.
+- The build copies `all.txt` to `dist/text/` automatically.
