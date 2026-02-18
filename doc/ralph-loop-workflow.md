@@ -21,3 +21,4 @@ flowchart TD
 - All phases run through the project's built-in inference pipeline.
 - Plan, execution, and reviews are fail-fast; provider errors fail the workflow.
 - Execution and review rounds run with write-whitelist access scoped to the selected project path.
+- Workflow entrypoint: `sources/workflows/ralphLoopWorkflow.ts`.

@@ -6,9 +6,10 @@ import { ralphLoopReviewRound } from "@/workflows/steps/ralphLoopReviewRound.js"
 import { beerLog, text } from "@text";
 
 /**
- * Runs a ralph-loop workflow: ask goal, plan, execute, and review in 3 rounds.
+ * Runs the ralph-loop workflow: ask goal, plan, execute, and review in 3 rounds.
+ * Expects: projectPath is the repository root for execution and review writes.
  */
-export async function ralphLoop(projectPath: string): Promise<void> {
+export async function ralphLoopWorkflow(projectPath: string): Promise<void> {
   beerLog("ralph_loop_start");
   const context = await contextGetOrInitialize(projectPath);
   const showInferenceProgress = true;

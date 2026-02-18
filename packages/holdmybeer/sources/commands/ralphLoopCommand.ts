@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { ralphLoop } from "@/apps/ralphLoop.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
+import { ralphLoopWorkflow } from "@/workflows/ralphLoopWorkflow.js";
 
 /**
  * Builds the ralph-loop command entrypoint.
@@ -11,6 +11,6 @@ export function ralphLoopCommand(): Command {
     .action(async function (this: Command) {
       const options = this.optsWithGlobals<{ project?: string }>();
       const projectPath = pathResolveFromInitCwd(options.project ?? ".");
-      await ralphLoop(projectPath);
+      await ralphLoopWorkflow(projectPath);
     });
 }
