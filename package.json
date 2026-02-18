@@ -8,6 +8,7 @@
   "scripts": {
     "build": "yarn workspace holdmybeer run build",
     "dev": "yarn workspace holdmybeer run dev",
+    "dev:run": "yarn workspace holdmybeer run dev rewrite ./fixtures/dev-source --output ./.context/dev-output --force",
     "bootstrap": "yarn workspace holdmybeer run dev bootstrap",
     "rewrite": "yarn workspace holdmybeer run dev rewrite",
     "test": "yarn workspaces run test",

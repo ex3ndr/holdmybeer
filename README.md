@@ -16,12 +16,14 @@ Current baseline:
 yarn install
 yarn dev bootstrap
 yarn dev rewrite ../some-codebase --dry-run
+yarn dev:run
 ```
 
 ## Scripts
 
 - `yarn build`
 - `yarn dev`
+- `yarn dev:run`
 - `yarn bootstrap`
 - `yarn rewrite`
 - `yarn test`
