@@ -5,7 +5,7 @@ Inference commands now execute inside a shared sandbox instance created once at 
 ## Policy
 
 - Library: `@anthropic-ai/sandbox-runtime` (latest)
-- Network: always allowed via sandbox ask callback (`host -> allow`)
+- Network: unrestricted by sandbox (no `network` section configured)
 - Filesystem writes: only project directory
 - `.beer` subtree: explicitly denied for writes (read-only)
 
@@ -14,11 +14,11 @@ Inference commands now execute inside a shared sandbox instance created once at 
 ```mermaid
 flowchart TD
   A[contextInitialize] --> B[sandboxInferenceGet]
-  B --> C[SandboxManager.initialize once]
-  C --> D[Context.inferText]
-  D --> E[aiTextGenerate]
-  E --> F[commandRun with sandbox]
-  F --> G[sandbox.wrapCommand]
+  B --> C[Context.inferText]
+  C --> D[aiTextGenerate]
+  D --> E[commandRun with sandbox]
+  E --> F[sandbox.wrapCommand]
+  F --> G[SandboxManager.wrapWithSandbox]
   G --> H[provider CLI execution]
 ```
 
