@@ -1,4 +1,5 @@
 import { writeFile } from "node:fs/promises";
+import path from "node:path";
 import { aiCommitMessageGenerate } from "../ai/aiCommitMessageGenerate.js";
 import { aiReadmeGenerate } from "../ai/aiReadmeGenerate.js";
 import { beerOriginalPathResolve } from "../beer/beerOriginalPathResolve.js";
@@ -6,7 +7,6 @@ import { beerSettingsPathResolve } from "../beer/beerSettingsPathResolve.js";
 import { beerSettingsRead } from "../beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "../beer/beerSettingsWrite.js";
 import { contextGetOrInitialize } from "../context/contextGetOrInitialize.js";
-import { gitCommitCreate } from "../git/gitCommitCreate.js";
 import { gitPush } from "../git/gitPush.js";
 import { gitRepoCheckout } from "../git/gitRepoCheckout.js";
 import { gitRemoteEnsure } from "../git/gitRemoteEnsure.js";
@@ -19,6 +19,7 @@ import { githubRepoParse } from "../github/githubRepoParse.js";
 import { githubRepoStatusGet } from "../github/githubRepoStatusGet.js";
 import { githubRepoUrlBuild } from "../github/githubRepoUrlBuild.js";
 import { githubViewerGet } from "../github/githubViewerGet.js";
+import { pathResolveFromInitCwd } from "../util/pathResolveFromInitCwd.js";
 import { promptConfirm } from "../prompt/promptConfirm.js";
 import { promptInput } from "../prompt/promptInput.js";
 import { text, textFormat, beerLog } from "@text";
@@ -28,7 +29,8 @@ import { text, textFormat, beerLog } from "@text";
  */
 export async function bootstrapRun(): Promise<void> {
   beerLog("bootstrap_start");
-  const context = await contextGetOrInitialize();
+  const projectPath = pathResolveFromInitCwd(".");
+  const context = await contextGetOrInitialize(projectPath);
   const showInferenceProgress = true;
   beerLog("bootstrap_github_check");
   await githubCliEnsure();
@@ -142,7 +144,10 @@ export async function bootstrapRun(): Promise<void> {
   const originalCheckoutPath = beerOriginalPathResolve();
   const sourceRemoteUrl = githubRepoUrlBuild(settings.sourceRepo.fullName);
   beerLog("bootstrap_original_checkout_start");
-  await gitRepoCheckout(sourceRemoteUrl, originalCheckoutPath);
+  const sourceCommitHash = await gitRepoCheckout(sourceRemoteUrl, originalCheckoutPath);
+  settings.sourceCommitHash = sourceCommitHash;
+  settings.updatedAt = Date.now();
+  await beerSettingsWrite(settingsPath, settings);
   beerLog("bootstrap_original_checkout", { path: originalCheckoutPath });
 
   beerLog("bootstrap_readme_generating");
@@ -153,7 +158,7 @@ export async function bootstrapRun(): Promise<void> {
   }, {
     showProgress: showInferenceProgress
   });
-  await writeFile("README.md", `${readme.text.trim()}\n`, "utf-8");
+  await writeFile(path.join(context.projectPath, "README.md"), `${readme.text.trim()}\n`, "utf-8");
   beerLog("bootstrap_readme_generated", { provider: readme.provider ?? "fallback" });
 
   beerLog("bootstrap_commit_generating");
@@ -166,18 +171,15 @@ export async function bootstrapRun(): Promise<void> {
   );
   beerLog("bootstrap_commit_ready", { message: commitMessageGenerated.text });
 
-  settings.readmeProvider = readme.provider;
-  settings.commitMessageProvider = commitMessageGenerated.provider;
-  settings.commitMessage = commitMessageGenerated.text;
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
   beerLog("bootstrap_settings_saved", { path: settingsPath });
 
   const publishRemoteUrl = githubRepoUrlBuild(settings.publishRepo.fullName);
   beerLog("bootstrap_remote_ensuring", { url: publishRemoteUrl });
-  await gitRemoteEnsure(publishRemoteUrl);
+  await gitRemoteEnsure(publishRemoteUrl, context.projectPath);
   beerLog("bootstrap_commit_creating");
-  const committed = await gitCommitCreate(commitMessageGenerated.text);
+  const committed = await context.stageAndCommit(commitMessageGenerated.text);
   if (!committed) {
     beerLog("bootstrap_no_changes");
   } else {
@@ -185,7 +187,7 @@ export async function bootstrapRun(): Promise<void> {
   }
 
   beerLog("bootstrap_push_start", { remote: "origin", branch: "main" });
-  await gitPush("origin", "main");
+  await gitPush("origin", "main", context.projectPath);
   beerLog("bootstrap_push_done");
 
   beerLog("bootstrap_source_repo", { repo: settings.sourceRepo.fullName });

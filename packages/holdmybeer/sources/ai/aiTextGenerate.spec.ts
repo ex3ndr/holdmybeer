@@ -16,7 +16,6 @@ describe("aiTextGenerate", () => {
   it("uses requested provider priority and falls back to next provider", async () => {
     commandRunMock
       .mockResolvedValueOnce({ exitCode: 1, stdout: "", stderr: "codex failed" })
-      .mockResolvedValueOnce({ exitCode: 1, stdout: "", stderr: "codex failed" })
       .mockResolvedValueOnce({ exitCode: 0, stdout: "claude output", stderr: "" });
 
     const result = await aiTextGenerate(
@@ -30,18 +29,18 @@ describe("aiTextGenerate", () => {
     );
 
     expect(result).toEqual({ provider: "claude", text: "claude output" });
+    expect(commandRunMock).toHaveBeenCalledTimes(2);
     expect(commandRunMock.mock.calls[0]?.[0]).toBe("codex");
-    expect(commandRunMock.mock.calls[1]?.[0]).toBe("codex");
-    expect(commandRunMock.mock.calls[2]?.[0]).toBe("claude");
+    expect(commandRunMock.mock.calls[1]?.[0]).toBe("claude");
     expect(commandRunMock.mock.calls[0]?.[1]).toEqual([
       "--sandbox",
       "read-only",
       "-p",
       expect.stringContaining("Do not change files")
     ]);
-    expect(commandRunMock.mock.calls[2]?.[1]).toEqual([
-      "--tools",
-      "",
+    expect(commandRunMock.mock.calls[1]?.[1]).toEqual([
+      "--allowedTools",
+      "Read,Glob,Grep,Bash,WebFetch",
       "-p",
       expect.stringContaining("Do not change files")
     ]);
@@ -49,7 +48,6 @@ describe("aiTextGenerate", () => {
 
   it("returns fallback when no prioritized provider succeeds", async () => {
     commandRunMock
-      .mockResolvedValueOnce({ exitCode: 1, stdout: "", stderr: "failed" })
       .mockResolvedValueOnce({ exitCode: 1, stdout: "", stderr: "failed" });
 
     const result = await aiTextGenerate(
@@ -63,7 +61,8 @@ describe("aiTextGenerate", () => {
     );
 
     expect(result).toEqual({ text: "fallback" });
-    expect(commandRunMock.mock.calls.map((call) => call[0])).toEqual(["codex", "codex"]);
+    expect(commandRunMock).toHaveBeenCalledTimes(1);
+    expect(commandRunMock.mock.calls[0]?.[0]).toBe("codex");
   });
 
   it("passes sandbox into provider command execution", async () => {
@@ -105,7 +104,7 @@ describe("aiTextGenerate", () => {
 
     expect(result).toEqual({ provider: "claude", text: "claude output" });
     expect(messages).toContain("[beer][infer] provider=claude selected");
-    expect(messages).toContain("[beer][infer] provider=claude attempt=-p started");
+    expect(messages).toContain("[beer][infer] provider=claude started");
     expect(messages).toContain("[beer][infer] claude:stdout working...");
     expect(messages).toContain("[beer][infer] claude:stderr note");
     expect(messages).toContain("[beer][infer] provider=claude completed");

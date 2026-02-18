@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const providerDetectMock = vi.hoisted(() => vi.fn());
 const aiTextGenerateMock = vi.hoisted(() => vi.fn());
 const sandboxInferenceGetMock = vi.hoisted(() => vi.fn());
+const gitStageAndCommitMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../providers/providerDetect.js", () => ({
   providerDetect: providerDetectMock
@@ -16,6 +17,10 @@ vi.mock("../sandbox/sandboxInferenceGet.js", () => ({
   sandboxInferenceGet: sandboxInferenceGetMock
 }));
 
+vi.mock("../git/gitStageAndCommit.js", () => ({
+  gitStageAndCommit: gitStageAndCommitMock
+}));
+
 import { contextInitialize } from "./contextInitialize.js";
 
 describe("contextInitialize", () => {
@@ -23,10 +28,11 @@ describe("contextInitialize", () => {
     providerDetectMock.mockReset();
     aiTextGenerateMock.mockReset();
     sandboxInferenceGetMock.mockReset();
+    gitStageAndCommitMock.mockReset();
     globalThis.Context = undefined;
   });
 
-  it("creates global Context and wires inferText through prioritized providers", async () => {
+  it("creates global Context with projectPath and wires inferText", async () => {
     providerDetectMock.mockResolvedValue([
       { id: "claude", available: true, command: "claude", priority: 1 },
       { id: "codex", available: true, command: "codex", priority: 2 }
@@ -35,7 +41,9 @@ describe("contextInitialize", () => {
     sandboxInferenceGetMock.mockResolvedValue(sandbox);
     aiTextGenerateMock.mockResolvedValue({ provider: "codex", text: "ok" });
 
-    const context = await contextInitialize();
+    const context = await contextInitialize("/tmp/test-project");
+    expect(context.projectPath).toBe("/tmp/test-project");
+
     const result = await context.inferText({
       providerPriority: ["codex", "claude"],
       prompt: "hello",
@@ -53,6 +61,17 @@ describe("contextInitialize", () => {
     );
   });
 
+  it("wires stageAndCommit to gitStageAndCommit with projectPath", async () => {
+    providerDetectMock.mockResolvedValue([]);
+    sandboxInferenceGetMock.mockResolvedValue(null);
+    gitStageAndCommitMock.mockResolvedValue(true);
+
+    const context = await contextInitialize("/tmp/test-project");
+    await context.stageAndCommit("test commit");
+
+    expect(gitStageAndCommitMock).toHaveBeenCalledWith("test commit", "/tmp/test-project");
+  });
+
   it("wires progress output when showProgress is enabled", async () => {
     providerDetectMock.mockResolvedValue([
       { id: "claude", available: true, command: "claude", priority: 1 }
@@ -62,7 +81,7 @@ describe("contextInitialize", () => {
     aiTextGenerateMock.mockResolvedValue({ provider: "claude", text: "ok" });
 
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    const context = await contextInitialize();
+    const context = await contextInitialize("/tmp/test-project");
 
     await context.inferText({
       providerPriority: ["claude"],

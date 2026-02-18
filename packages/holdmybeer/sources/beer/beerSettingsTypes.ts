@@ -5,10 +5,8 @@ export interface BeerSettings {
   version: 1;
   providers: ProviderDetection[];
   sourceRepo?: GitHubRepoRef;
+  sourceCommitHash?: string;
   publishRepo?: GitHubRepoRef;
-  readmeProvider?: string;
-  commitMessageProvider?: string;
-  commitMessage?: string;
   updatedAt: number;
 }
 

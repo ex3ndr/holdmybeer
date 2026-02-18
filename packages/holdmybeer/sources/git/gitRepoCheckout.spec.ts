@@ -26,10 +26,11 @@ describe("gitRepoCheckout", () => {
       "init"
     ]);
 
-    await gitRepoCheckout(sourceDir, targetDir);
+    const hash = await gitRepoCheckout(sourceDir, targetDir);
 
     const readme = await readFile(path.join(targetDir, "README.md"), "utf-8");
     expect(readme).toBe("hello\n");
+    expect(hash).toMatch(/^[0-9a-f]{40}$/);
 
     await rm(tempRoot, { recursive: true, force: true });
   });

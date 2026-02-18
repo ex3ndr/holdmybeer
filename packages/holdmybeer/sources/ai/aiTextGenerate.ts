@@ -14,11 +14,6 @@ export interface AiTextGenerateOptions {
   sandbox?: CommandSandbox;
 }
 
-interface ProviderAttempt {
-  label: string;
-  args: string[];
-}
-
 function inferMessage(message: string, options?: AiTextGenerateOptions): void {
   options?.onMessage?.(`[beer][infer] ${message}`);
 }
@@ -55,67 +50,51 @@ function inferPromptResolve(prompt: string, readOnly: boolean): string {
   ].join("\n\n");
 }
 
-async function providerGenerateClaude(
+/**
+ * Runs a single provider CLI and returns stdout, or null on failure.
+ */
+async function providerGenerate(
+  providerId: ProviderId,
   command: string,
-  prompt: string,
+  args: string[],
   options?: AiTextGenerateOptions
 ): Promise<string | null> {
-  const readOnlyArgs = options?.readOnly ? ["--tools", ""] : [];
-  const attempts: ProviderAttempt[] = [
-    { label: "-p", args: [...readOnlyArgs, "-p", prompt] },
-    { label: "--print", args: [...readOnlyArgs, "--print", prompt] },
-    { label: "print", args: [...readOnlyArgs, "print", prompt] }
-  ];
-
-  for (const attempt of attempts) {
-    inferMessage(`provider=claude attempt=${attempt.label} started`, options);
-    const result = await commandRun(command, attempt.args, {
-      allowFailure: true,
-      timeoutMs: 90_000,
-      sandbox: options?.sandbox,
-      onStdoutText: (chunk) => inferOutputMessage("claude", "stdout", chunk, options),
-      onStderrText: (chunk) => inferOutputMessage("claude", "stderr", chunk, options)
-    });
-    const output = result.stdout.trim();
-    if (result.exitCode === 0 && output) {
-      inferMessage(`provider=claude attempt=${attempt.label} succeeded`, options);
-      return output;
-    }
-    inferMessage(`provider=claude attempt=${attempt.label} exit=${result.exitCode}`, options);
+  inferMessage(`provider=${providerId} started`, options);
+  const result = await commandRun(command, args, {
+    allowFailure: true,
+    timeoutMs: 90_000,
+    sandbox: options?.sandbox,
+    onStdoutText: (chunk) => inferOutputMessage(providerId, "stdout", chunk, options),
+    onStderrText: (chunk) => inferOutputMessage(providerId, "stderr", chunk, options)
+  });
+  const output = result.stdout.trim();
+  if (result.exitCode === 0 && output) {
+    inferMessage(`provider=${providerId} succeeded`, options);
+    return output;
   }
-
+  inferMessage(`provider=${providerId} exit=${result.exitCode}`, options);
   return null;
 }
 
-async function providerGenerateCodex(
-  command: string,
-  prompt: string,
-  options?: AiTextGenerateOptions
-): Promise<string | null> {
-  const readOnlyArgs = options?.readOnly ? ["--sandbox", "read-only"] : [];
-  const attempts: ProviderAttempt[] = [
-    { label: "-p", args: [...readOnlyArgs, "-p", prompt] },
-    { label: "ask", args: [...readOnlyArgs, "ask", prompt] }
-  ];
-
-  for (const attempt of attempts) {
-    inferMessage(`provider=codex attempt=${attempt.label} started`, options);
-    const result = await commandRun(command, attempt.args, {
-      allowFailure: true,
-      timeoutMs: 90_000,
-      sandbox: options?.sandbox,
-      onStdoutText: (chunk) => inferOutputMessage("codex", "stdout", chunk, options),
-      onStderrText: (chunk) => inferOutputMessage("codex", "stderr", chunk, options)
-    });
-    const output = result.stdout.trim();
-    if (result.exitCode === 0 && output) {
-      inferMessage(`provider=codex attempt=${attempt.label} succeeded`, options);
-      return output;
-    }
-    inferMessage(`provider=codex attempt=${attempt.label} exit=${result.exitCode}`, options);
+/**
+ * Builds CLI args for a provider invocation.
+ */
+function providerArgs(providerId: ProviderId, prompt: string, readOnly: boolean): string[] {
+  if (providerId === "claude") {
+    // Allow read tools so the AI can analyze the codebase; the prompt
+    // prefix and sandbox prevent writes.
+    const readOnlyArgs = readOnly
+      ? ["--allowedTools", "Read,Glob,Grep,Bash,WebFetch"]
+      : [];
+    return [...readOnlyArgs, "-p", prompt];
   }
 
-  return null;
+  if (providerId === "codex") {
+    const readOnlyArgs = readOnly ? ["--sandbox", "read-only"] : [];
+    return [...readOnlyArgs, "-p", prompt];
+  }
+
+  return ["-p", prompt];
 }
 
 /**
@@ -138,18 +117,11 @@ export async function aiTextGenerate(
     }
 
     inferMessage(`provider=${provider.id} selected`, options);
-    let output: string | null = null;
-    if (provider.id === "claude") {
-      output = await providerGenerateClaude(provider.command, promptResolved, {
-        ...options,
-        readOnly
-      });
-    } else if (provider.id === "codex") {
-      output = await providerGenerateCodex(provider.command, promptResolved, {
-        ...options,
-        readOnly
-      });
-    }
+    const args = providerArgs(provider.id, promptResolved, readOnly);
+    const output = await providerGenerate(provider.id, provider.command, args, {
+      ...options,
+      readOnly
+    });
 
     if (output) {
       inferMessage(`provider=${provider.id} completed`, options);

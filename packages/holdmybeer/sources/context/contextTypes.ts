@@ -9,8 +9,10 @@ export interface ContextInferTextInput {
 }
 
 export interface Context {
+  projectPath: string;
   providers: ProviderDetection[];
   inferText(input: ContextInferTextInput): Promise<AiTextGenerateResult>;
+  stageAndCommit(message: string): Promise<boolean>;
 }
 
 declare global {
