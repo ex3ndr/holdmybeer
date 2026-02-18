@@ -1,0 +1,28 @@
+import type { GitHubRepoStatus } from "./githubTypes.js";
+import { commandRun } from "../util/commandRun.js";
+
+/**
+ * Checks repository status for publish targeting.
+ * missing: not found, empty: exists with no content, nonEmpty: contains content.
+ */
+export async function githubRepoStatusGet(fullName: string): Promise<GitHubRepoStatus> {
+  const result = await commandRun(
+    "gh",
+    ["api", `repos/${fullName}`, "--jq", ".size"],
+    { allowFailure: true }
+  );
+
+  if (result.exitCode !== 0) {
+    if (result.stderr.includes("404") || result.stdout.includes("404")) {
+      return "missing";
+    }
+    throw new Error(`Unable to check repository status for ${fullName}: ${result.stderr || result.stdout}`);
+  }
+
+  const size = Number(result.stdout.trim());
+  if (Number.isFinite(size) && size === 0) {
+    return "empty";
+  }
+
+  return "nonEmpty";
+}
