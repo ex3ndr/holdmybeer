@@ -1,9 +1,9 @@
 import path from "node:path";
-import { pathResolveFromInitCwd } from "../util/pathResolveFromInitCwd.js";
+import { beerDevFolderResolve } from "./beerDevFolderResolve.js";
 
 /**
- * Returns the canonical settings file path under .beer/settings.json.
+ * Returns the canonical settings file path under ~/Developer/HoldMyBeerDev/.beer/settings.json.
  */
 export function beerSettingsPathResolve(): string {
-  return path.join(pathResolveFromInitCwd("."), ".beer", "settings.json");
+  return path.join(beerDevFolderResolve(), ".beer", "settings.json");
 }

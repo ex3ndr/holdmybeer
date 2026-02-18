@@ -30,4 +30,4 @@ flowchart LR
 
 - Inference now takes typed provider ids (`"claude" | "codex"`) per call.
 - Provider fallback order is controlled by the explicit `providerPriority` array.
-- Bootstrap still persists detected providers to `.beer/settings.json`, but inference no longer uses settings order directly.
+- Bootstrap persists detected providers to `~/Developer/HoldMyBeerDev/.beer/settings.json`, but inference no longer uses settings order directly.

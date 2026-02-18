@@ -3,7 +3,7 @@
 `holdmybeer` is a TypeScript CLI workspace with a single package at `packages/holdmybeer`.
 
 Current baseline:
-- `bootstrap` flow to initialize `.beer/settings.json`
+- `bootstrap` flow to initialize `~/Developer/HoldMyBeerDev/.beer/settings.json`
 - GitHub source + publish repository resolution via `gh`
 - local provider detection (`claude`, `codex`)
 - generated initial `README.md` and initial commit message using provider priority

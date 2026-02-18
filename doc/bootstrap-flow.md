@@ -7,7 +7,7 @@ This document describes the initial `beer bootstrap` workflow used by holdmybeer
 ```mermaid
 flowchart TD
   A[Start bootstrap] --> B[Detect providers: claude/codex]
-  B --> C[Write .beer/settings.json]
+  B --> C[Write ~/Developer/HoldMyBeerDev/.beer/settings.json]
   C --> D[Prompt source repo input]
   D --> E[Parse owner/repo]
   E --> F[Validate source exists via gh]
@@ -20,7 +20,7 @@ flowchart TD
   J --> L[Generate README via provider priority]
   K --> L
   L --> M[Generate initial commit message]
-  M --> N[Update .beer/settings.json]
+  M --> N[Update ~/Developer/HoldMyBeerDev/.beer/settings.json]
   N --> O[Ensure git origin remote]
   O --> P[Commit]
   P --> Q[Push HEAD to main]
