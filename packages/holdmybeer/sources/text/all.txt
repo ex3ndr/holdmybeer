@@ -35,6 +35,18 @@ bootstrap_commit_message = 💬  Commit message: {message}
 bootstrap_skipping_source = ✔️  Source repo already set: {repo}
 bootstrap_skipping_publish = ✔️  Publish repo already set: {repo}
 
+# Ralph Loop
+
+ralph_loop_start = 🚀  Starting ralph-loop workflow
+ralph_loop_goal = 🎯  Build goal: {goal}
+ralph_loop_plan_start = 🧭  Generating plan
+ralph_loop_plan_done = 📝  Plan generated at {path} with {provider}
+ralph_loop_execute_start = 🛠️  Executing implementation
+ralph_loop_execute_done = ✅  Execution completed with {provider}
+ralph_loop_review_start = 🔍  Running review round {round}/3
+ralph_loop_review_done = ✅  Review round {round}/3 completed with {provider}
+ralph_loop_done = ✅  Ralph-loop finished. Plan file: {path}
+
 # Release
 
 release_start = 🚀  Starting release
@@ -64,6 +76,7 @@ prompt_create_repo = 🆕  Repository {repo} does not exist. Create it now?
 prompt_create_private = 🔐  Create as private repository?
 prompt_release_mode = Select release increment (patch/minor/major/custom). patch -> {patch}
 prompt_release_custom = Enter custom semantic version
+prompt_ralph_loop_build = 🧠  What should I build?
 
 # Errors
 
@@ -85,3 +98,4 @@ error_release_version_invalid = ❌  Invalid semantic version: {version}
 error_release_version_same = ❌  New version must differ from current version.
 error_release_version_missing = ❌  Could not read current version from packages/holdmybeer/package.json
 error_release_tag_exists = ❌  Release tag already exists. Delete the existing tag or choose a different version.
+error_ralph_loop_goal_required = ❌  Build goal is required for ralph-loop.

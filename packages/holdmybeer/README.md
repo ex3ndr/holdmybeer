@@ -5,6 +5,7 @@ CLI package for **HoldMyBeer**.
 ## Command
 
 - `beer bootstrap`: initialize settings, resolve source/publish repos, generate README + commit message via inference, then push to `main`.
+- `beer ralph-loop`: ask what to build, generate a plan, execute implementation, then run 3 inference review rounds.
 
 ## Runtime Requirements
 

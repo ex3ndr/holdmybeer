@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import { bootstrapCommand } from "@/commands/bootstrapCommand.js";
+import { ralphLoopCommand } from "@/commands/ralphLoopCommand.js";
 
 const pkg = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8")
@@ -15,6 +16,7 @@ program
   .version(pkg.version);
 
 program.addCommand(bootstrapCommand());
+program.addCommand(ralphLoopCommand());
 
 if (process.argv.length <= 2) {
   program.outputHelp();

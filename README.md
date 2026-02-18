@@ -43,6 +43,7 @@ Requirements:
 
 ```bash
 beer bootstrap [--project <path>]
+beer ralph-loop [--project <path>]
 ```
 
 ## Development
