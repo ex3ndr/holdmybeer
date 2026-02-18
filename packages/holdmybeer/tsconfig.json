@@ -5,7 +5,8 @@
     "rootDir": "sources",
     "baseUrl": ".",
     "paths": {
-      "@/types": ["./sources/types.ts"]
+      "@/types": ["./sources/types.ts"],
+      "@text": ["./sources/text/text.ts"]
     },
     "types": ["node", "vitest/globals"]
   },

@@ -3,6 +3,7 @@ import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { applyBaselineRewrite } from "./baselineRewrite.js";
 import type { FileRewriteResult, RewriteOptions, RewriteReport } from "./rewriteTypes.js";
+import { text, textFormat } from "@text";
 
 const DEFAULT_IGNORE_GLOBS = [
   "**/.git/**",
@@ -65,7 +66,7 @@ async function ensureCleanOutput(outputDir: string, force: boolean): Promise<voi
   try {
     await stat(outputDir);
     if (!force) {
-      throw new Error(`Output directory already exists: ${outputDir}. Pass --force to overwrite.`);
+      throw new Error(textFormat(text["error_output_dir_exists"]!, { dir: outputDir }));
     }
     await rm(outputDir, { recursive: true, force: true });
   } catch (error) {
@@ -80,7 +81,7 @@ async function ensureCleanOutput(outputDir: string, force: boolean): Promise<voi
 export async function rewriteRun(options: RewriteOptions): Promise<RewriteReport> {
   const sourceStat = await stat(options.sourceDir).catch(() => null);
   if (!sourceStat || !sourceStat.isDirectory()) {
-    throw new Error(`Source directory does not exist or is not a directory: ${options.sourceDir}`);
+    throw new Error(textFormat(text["error_source_dir_invalid"]!, { dir: options.sourceDir }));
   }
 
   if (!options.dryRun) {

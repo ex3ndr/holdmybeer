@@ -1,10 +1,13 @@
 import { spawn } from "node:child_process";
+import { text as catalog, textFormat } from "@text";
 
 export interface CommandRunOptions {
   cwd?: string;
   timeoutMs?: number;
   input?: string;
   allowFailure?: boolean;
+  onStdoutText?: (text: string) => void;
+  onStderrText?: (text: string) => void;
 }
 
 export interface CommandRunResult {
@@ -41,15 +44,19 @@ export async function commandRun(
       }
       settled = true;
       child.kill("SIGTERM");
-      reject(new Error(`Command timed out after ${timeoutMs}ms: ${command} ${args.join(" ")}`));
+      reject(new Error(textFormat(catalog["error_command_timeout"]!, { ms: timeoutMs, command: `${command} ${args.join(" ")}` })));
     }, timeoutMs);
 
     child.stdout.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString("utf-8");
+      const text = chunk.toString("utf-8");
+      stdout += text;
+      options.onStdoutText?.(text);
     });
 
     child.stderr.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString("utf-8");
+      const text = chunk.toString("utf-8");
+      stderr += text;
+      options.onStderrText?.(text);
     });
 
     child.on("error", (error) => {
@@ -82,7 +89,8 @@ export async function commandRun(
 
   if (!options.allowFailure && result.exitCode !== 0) {
     throw new Error(
-      `Command failed (${result.exitCode}): ${command} ${args.join(" ")}\n${result.stderr || result.stdout}`
+      textFormat(catalog["error_command_failed"]!, { code: result.exitCode, command: `${command} ${args.join(" ")}` })
+      + `\n${result.stderr || result.stdout}`
     );
   }
 

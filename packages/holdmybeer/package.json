@@ -17,7 +17,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp sources/text/all.txt dist/text/",
     "dev": "tsx sources/main.ts",
     "test": "vitest run",
     "test:watch": "vitest",

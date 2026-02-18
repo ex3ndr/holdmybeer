@@ -1,0 +1,48 @@
+# Bootstrap
+
+bootstrap_detected_providers = 🔎  Detected providers: {providers}
+bootstrap_invalid_repo = ❌  Invalid repository format — try owner/repo or a GitHub URL
+bootstrap_repo_not_found = ❌  Repository not found or inaccessible: {repo}
+bootstrap_publish_owners = 🌐  Publish owner options: {owners}
+bootstrap_repo_collision = ⚠️  {requested} already contains code — using {resolved}
+bootstrap_original_checkout = 📥  Checked out original source to: {path}
+bootstrap_no_changes = ✅  No changes to commit
+bootstrap_source_repo = 📦  Source repo: {repo}
+bootstrap_publish_repo = 🚀  Publish repo: {repo}
+bootstrap_settings_path = ⚙️  Settings: {path}
+bootstrap_readme_provider = 📝  README provider: {provider}
+bootstrap_commit_message = 💬  Commit message: {message}
+bootstrap_skipping_source = ✔️  Source repo already set: {repo}
+bootstrap_skipping_publish = ✔️  Publish repo already set: {repo}
+
+# Rewrite
+
+rewrite_mode = ⚙️  Mode: {mode}
+rewrite_source = 📂  Source: {source}
+rewrite_output = 📁  Output: {output}
+rewrite_processed = 📄  Processed: {count}
+rewrite_rewritten = ✏️  Rewritten: {count}
+rewrite_copied_binary = 📎  Copied binary: {count}
+rewrite_report = 📊  Report: {path}
+
+# Prompts
+
+prompt_source_repo = 📦  Repository to rewrite (GitHub URL or owner/repo)
+prompt_publish_owner = 🌐  Publish owner/org
+prompt_publish_repo_name = 🏷️  Publish repository name
+prompt_create_repo = 🆕  Repository {repo} does not exist. Create it now?
+prompt_create_private = 🔐  Create as private repository?
+
+# Errors
+
+error_gh_required = ❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`
+error_gh_user_resolve = ❌  Unable to resolve authenticated GitHub user from gh
+error_repo_status_check = ❌  Unable to check repository status for {repo}: {detail}
+error_command_timeout = ⏰  Command timed out after {ms}ms: {command}
+error_command_failed = 💥  Command failed ({code}): {command}
+error_context_not_initialized = ❌  Context is not initialized — run contextInitialize() first
+error_repo_name_invalid = ❌  Publish repository name is invalid
+error_repo_name_exhausted = ❌  Unable to resolve an available publish repository name after 100 attempts
+error_bootstrap_cancelled = 🚫  Bootstrap cancelled — publish repository is required
+error_output_dir_exists = ⚠️  Output directory already exists: {dir} — pass --force to overwrite
+error_source_dir_invalid = ❌  Source directory does not exist or is not a directory: {dir}

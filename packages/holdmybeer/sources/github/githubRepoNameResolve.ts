@@ -1,4 +1,5 @@
 import type { GitHubRepoStatus } from "./githubTypes.js";
+import { text } from "@text";
 
 export interface GitHubRepoNameResolveOptions {
   owner: string;
@@ -21,7 +22,7 @@ export async function githubRepoNameResolve(
 ): Promise<GitHubRepoNameResolveResult> {
   const requested = options.requestedRepo.trim();
   if (!requested || !/^[A-Za-z0-9_.-]+$/.test(requested)) {
-    throw new Error("Publish repository name is invalid.");
+    throw new Error(text["error_repo_name_invalid"]!);
   }
 
   const firstFullName = `${options.owner}/${requested}`;
@@ -47,5 +48,5 @@ export async function githubRepoNameResolve(
     }
   }
 
-  throw new Error("Unable to resolve an available publish repository name after 100 attempts.");
+  throw new Error(text["error_repo_name_exhausted"]!);
 }

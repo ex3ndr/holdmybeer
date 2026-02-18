@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import path from "node:path";
 import { rewriteRun } from "../rewrite/rewriteRun.js";
+import { beerLog } from "@text";
 
 function collectOption(value: string, previous: string[]): string[] {
   previous.push(value);
@@ -39,15 +40,14 @@ export function rewriteCommand(): Command {
         preset: "baseline"
       });
 
-      const mode = report.dryRun ? "dry-run" : "write";
-      console.log(`[beer] mode=${mode}`);
-      console.log(`[beer] source=${report.sourceDir}`);
-      console.log(`[beer] output=${report.outputDir}`);
-      console.log(`[beer] processed=${report.filesProcessed}`);
-      console.log(`[beer] rewritten=${report.filesRewritten}`);
-      console.log(`[beer] copied_binary=${report.binaryFilesCopied}`);
+      beerLog("rewrite_mode", { mode: report.dryRun ? "dry-run" : "write" });
+      beerLog("rewrite_source", { source: report.sourceDir });
+      beerLog("rewrite_output", { output: report.outputDir });
+      beerLog("rewrite_processed", { count: report.filesProcessed });
+      beerLog("rewrite_rewritten", { count: report.filesRewritten });
+      beerLog("rewrite_copied_binary", { count: report.binaryFilesCopied });
       if (report.reportPath) {
-        console.log(`[beer] report=${report.reportPath}`);
+        beerLog("rewrite_report", { path: report.reportPath });
       }
     });
 }

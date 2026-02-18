@@ -45,76 +45,85 @@ export async function bootstrapRun(): Promise<void> {
     .join(", ");
   beerLog("bootstrap_detected_providers", { providers: availableProviderNames || "none" });
 
-  let source = settings.sourceRepo;
-  while (!source) {
-    const sourceInput = await promptInput(
-      text["prompt_source_repo"]!,
-      settings.sourceRepo?.fullName
-    );
-    const parsed = githubRepoParse(sourceInput);
-    if (!parsed) {
-      beerLog("bootstrap_invalid_repo");
-      continue;
-    }
+  if (!settings.sourceRepo) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const sourceInput = await promptInput(
+        text["prompt_source_repo"]!,
+        undefined
+      );
+      const parsed = githubRepoParse(sourceInput);
+      if (!parsed) {
+        beerLog("bootstrap_invalid_repo");
+        continue;
+      }
 
-    const exists = await githubRepoExists(parsed.fullName);
-    if (!exists) {
-      beerLog("bootstrap_repo_not_found", { repo: parsed.fullName });
-      continue;
-    }
+      const exists = await githubRepoExists(parsed.fullName);
+      if (!exists) {
+        beerLog("bootstrap_repo_not_found", { repo: parsed.fullName });
+        continue;
+      }
 
-    source = parsed;
+      settings.sourceRepo = parsed;
+      settings.updatedAt = Date.now();
+      await beerSettingsWrite(settingsPath, settings);
+      break;
+    }
+  } else {
+    beerLog("bootstrap_skipping_source", { repo: settings.sourceRepo.fullName });
   }
 
-  settings.sourceRepo = source;
-  settings.updatedAt = Date.now();
-  await beerSettingsWrite(settingsPath, settings);
+  const source = settings.sourceRepo;
 
-  const viewerLogin = await githubViewerGet();
-  const ownerChoices = await githubOwnerChoicesGet(viewerLogin);
-  beerLog("bootstrap_publish_owners", { owners: ownerChoices.join(", ") });
+  if (!settings.publishRepo) {
+    const viewerLogin = await githubViewerGet();
+    const ownerChoices = await githubOwnerChoicesGet(viewerLogin);
+    beerLog("bootstrap_publish_owners", { owners: ownerChoices.join(", ") });
 
-  const publishOwner = await promptInput(text["prompt_publish_owner"]!, viewerLogin);
-  const defaultRepoName = `${source.repo}-holdmybeer`;
-  const requestedRepoName = await promptInput(
-    text["prompt_publish_repo_name"]!,
-    settings.publishRepo?.repo ?? defaultRepoName
-  );
+    const publishOwner = await promptInput(text["prompt_publish_owner"]!, viewerLogin);
+    const defaultRepoName = `${source.repo}-holdmybeer`;
+    const requestedRepoName = await promptInput(
+      text["prompt_publish_repo_name"]!,
+      defaultRepoName
+    );
 
-  const resolvedPublish = await githubRepoNameResolve({
-    owner: publishOwner,
-    requestedRepo: requestedRepoName,
-    statusGet: githubRepoStatusGet
-  });
-
-  if (resolvedPublish.repo !== requestedRepoName) {
-    beerLog("bootstrap_repo_collision", {
-      requested: `${publishOwner}/${requestedRepoName}`,
-      resolved: resolvedPublish.fullName
+    const resolvedPublish = await githubRepoNameResolve({
+      owner: publishOwner,
+      requestedRepo: requestedRepoName,
+      statusGet: githubRepoStatusGet
     });
-  }
 
-  if (resolvedPublish.status === "missing") {
-    const createRepo = await promptConfirm(
-      textFormat(text["prompt_create_repo"]!, { repo: resolvedPublish.fullName }),
-      true
-    );
-    if (!createRepo) {
-      throw new Error(text["error_bootstrap_cancelled"]!);
+    if (resolvedPublish.repo !== requestedRepoName) {
+      beerLog("bootstrap_repo_collision", {
+        requested: `${publishOwner}/${requestedRepoName}`,
+        resolved: resolvedPublish.fullName
+      });
     }
 
-    const isPrivate = await promptConfirm(text["prompt_create_private"]!, true);
-    await githubRepoCreate(resolvedPublish.fullName, isPrivate ? "private" : "public");
-  }
+    if (resolvedPublish.status === "missing") {
+      const createRepo = await promptConfirm(
+        textFormat(text["prompt_create_repo"]!, { repo: resolvedPublish.fullName }),
+        true
+      );
+      if (!createRepo) {
+        throw new Error(text["error_bootstrap_cancelled"]!);
+      }
 
-  settings.publishRepo = {
-    owner: publishOwner,
-    repo: resolvedPublish.repo,
-    fullName: resolvedPublish.fullName,
-    url: `https://github.com/${resolvedPublish.fullName}`
-  };
-  settings.updatedAt = Date.now();
-  await beerSettingsWrite(settingsPath, settings);
+      const isPrivate = await promptConfirm(text["prompt_create_private"]!, true);
+      await githubRepoCreate(resolvedPublish.fullName, isPrivate ? "private" : "public");
+    }
+
+    settings.publishRepo = {
+      owner: publishOwner,
+      repo: resolvedPublish.repo,
+      fullName: resolvedPublish.fullName,
+      url: `https://github.com/${resolvedPublish.fullName}`
+    };
+    settings.updatedAt = Date.now();
+    await beerSettingsWrite(settingsPath, settings);
+  } else {
+    beerLog("bootstrap_skipping_publish", { repo: settings.publishRepo.fullName });
+  }
 
   const originalCheckoutPath = beerOriginalPathResolve();
   const sourceRemoteUrl = githubRepoUrlBuild(settings.sourceRepo.fullName);
