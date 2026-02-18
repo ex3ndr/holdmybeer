@@ -25,13 +25,13 @@ flowchart LR
   F -->|success| G[Return provider + text]
   F -->|failure| H[Try next provider id]
   H --> F
-  F -->|all fail| I[Return fallback text]
+  F -->|all fail| I[Throw inference error]
 ```
 
 ## Notes
 
 - Inference now takes typed provider ids (`"claude" | "codex"`) per call.
-- Provider fallback order is controlled by the explicit `providerPriority` array.
+- Provider retry order is controlled by the explicit `providerPriority` array.
 - Per-call visibility is supported with `showProgress: true` on `inferText`.
 - `inferText` always runs sandboxed and always uses yolo provider mode (`--dangerously-skip-permissions`).
 - `inferText` supports `writePolicy` for either read-only mode or write-whitelist mode.

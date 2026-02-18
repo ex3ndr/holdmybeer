@@ -21,7 +21,7 @@ flowchart TD
   A[Context.inferText] --> B[Resolve writePolicy]
   B --> C[sandboxInferenceGet with writePolicy]
   C --> D[Build filesystem policy]
-  D --> E[aiTextGenerate]
+  D --> E[generateText]
   E --> F[commandRun with sandbox]
   F --> G[sandbox.wrapCommand]
   G --> H[SandboxManager.wrapWithSandbox]

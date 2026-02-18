@@ -19,7 +19,7 @@ flowchart TD
   E --> F[Run provider with yolo flags]
   F --> G[Emit provider selection + attempt events]
   G --> H[Stream stdout/stderr chunks as text lines]
-  H --> I[Success or fallback]
+  H --> I[Success or error]
 ```
 
 ## Bootstrap Usage

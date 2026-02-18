@@ -43,7 +43,7 @@ flowchart LR
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes when a non-empty repo already exists.
 - Existing empty repository names are accepted and reused.
 - Source repository is checked out into `.beer/original` before README inference.
-- README/commit generation tries provider priority first, then uses deterministic fallback text.
+- README/commit generation follows provider priority and fails fast if inference providers cannot produce output.
 
 ## Bootstrap Logging
 
