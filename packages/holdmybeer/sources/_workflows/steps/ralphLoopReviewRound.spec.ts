@@ -5,11 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const runInferenceMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/workflows/steps/runInference.js", () => ({
+vi.mock("@/_workflows/steps/runInference.js", () => ({
   runInference: runInferenceMock
 }));
 
-import { ralphLoopReviewRound } from "@/workflows/steps/ralphLoopReviewRound.js";
+import { ralphLoopReviewRound } from "@/_workflows/steps/ralphLoopReviewRound.js";
 
 describe("ralphLoopReviewRound", () => {
   beforeEach(() => {

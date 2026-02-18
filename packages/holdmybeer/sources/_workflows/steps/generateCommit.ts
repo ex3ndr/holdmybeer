@@ -1,4 +1,4 @@
-import { runInference } from "@/workflows/steps/runInference.js";
+import { runInference } from "@/_workflows/steps/runInference.js";
 
 export interface GenerateCommitOptions {
   showProgress?: boolean;

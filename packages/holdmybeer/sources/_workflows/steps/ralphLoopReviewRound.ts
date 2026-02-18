@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { runInference } from "@/workflows/steps/runInference.js";
+import { runInference } from "@/_workflows/steps/runInference.js";
 
 export interface RalphLoopReviewRoundOptions {
   showProgress?: boolean;

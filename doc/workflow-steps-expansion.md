@@ -21,8 +21,8 @@ flowchart TD
 ## Notes
 
 - New step files:
-  - `sources/workflows/steps/runInference.ts`
-  - `sources/workflows/steps/generateCommit.ts`
-  - `sources/workflows/steps/pushMain.ts`
+  - `sources/_workflows/steps/runInference.ts`
+  - `sources/_workflows/steps/generateCommit.ts`
+  - `sources/_workflows/steps/pushMain.ts`
 - Removed legacy step:
-  - `sources/workflows/steps/generateCommitMessage.ts`
+  - `sources/_workflows/steps/generateCommitMessage.ts`

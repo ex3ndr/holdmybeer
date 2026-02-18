@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
-import { ralphLoopWorkflow } from "@/workflows/ralphLoopWorkflow.js";
+import { ralphLoopWorkflow } from "@/_workflows/ralphLoopWorkflow.js";
 
 /**
  * Builds the ralph-loop command entrypoint.

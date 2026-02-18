@@ -17,7 +17,7 @@ vi.mock("@/modules/git/gitPush.js", () => ({
   gitPush: gitPushMock
 }));
 
-import { pushMain } from "@/workflows/steps/pushMain.js";
+import { pushMain } from "@/_workflows/steps/pushMain.js";
 
 describe("pushMain", () => {
   beforeEach(() => {

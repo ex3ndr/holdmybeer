@@ -1,8 +1,8 @@
 import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
 import { promptInput } from "@/modules/prompt/promptInput.js";
-import { ralphLoopExecute } from "@/workflows/steps/ralphLoopExecute.js";
-import { ralphLoopPlanGenerate } from "@/workflows/steps/ralphLoopPlanGenerate.js";
-import { ralphLoopReviewRound } from "@/workflows/steps/ralphLoopReviewRound.js";
+import { ralphLoopExecute } from "@/_workflows/steps/ralphLoopExecute.js";
+import { ralphLoopPlanGenerate } from "@/_workflows/steps/ralphLoopPlanGenerate.js";
+import { ralphLoopReviewRound } from "@/_workflows/steps/ralphLoopReviewRound.js";
 import { text } from "@text";
 
 /**

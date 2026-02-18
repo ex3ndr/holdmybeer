@@ -19,14 +19,14 @@ import { githubRepoUrlBuild } from "@/modules/github/githubRepoUrlBuild.js";
 import { githubViewerGet } from "@/modules/github/githubViewerGet.js";
 import { promptConfirm } from "@/modules/prompt/promptConfirm.js";
 import { promptInput } from "@/modules/prompt/promptInput.js";
-import { generateCommit } from "@/workflows/steps/generateCommit.js";
-import { pushMain } from "@/workflows/steps/pushMain.js";
+import { generateCommit } from "@/_workflows/steps/generateCommit.js";
+import { pushMain } from "@/_workflows/steps/pushMain.js";
 import { text, textFormat, beerLog } from "@text";
 
 /**
- * Runs the interactive bootstrap flow for holdmybeer.
+ * Runs the interactive bootstrap workflow for holdmybeer.
  */
-export async function bootstrap(projectPath: string): Promise<void> {
+export async function bootstrapWorkflow(projectPath: string): Promise<void> {
   beerLog("bootstrap_start");
   const context = await contextGetOrInitialize(projectPath);
   const showInferenceProgress = true;

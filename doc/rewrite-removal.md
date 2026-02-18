@@ -7,7 +7,7 @@ The rewrite flow has been removed from the CLI.
 ```mermaid
 flowchart LR
   A[sources/main.ts] --> B[commands/bootstrapCommand.ts]
-  B --> C[apps/bootstrap.ts]
+  B --> C[_workflows/bootstrapWorkflow.ts]
   C --> D[modules/*]
 ```
 

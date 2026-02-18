@@ -12,7 +12,7 @@ vi.mock("@/modules/ai/generate.js", () => ({
   generate: generateMock
 }));
 
-import { runInference } from "@/workflows/steps/runInference.js";
+import { runInference } from "@/_workflows/steps/runInference.js";
 
 describe("runInference", () => {
   beforeEach(() => {

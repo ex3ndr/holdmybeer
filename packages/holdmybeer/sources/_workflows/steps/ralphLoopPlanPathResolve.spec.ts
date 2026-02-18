@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ralphLoopPlanPathResolve } from "@/workflows/steps/ralphLoopPlanPathResolve.js";
+import { ralphLoopPlanPathResolve } from "@/_workflows/steps/ralphLoopPlanPathResolve.js";
 
 describe("ralphLoopPlanPathResolve", () => {
   it("creates dated slugged path from build goal", () => {

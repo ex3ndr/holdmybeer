@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const runInferenceMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/workflows/steps/runInference.js", () => ({
+vi.mock("@/_workflows/steps/runInference.js", () => ({
   runInference: runInferenceMock
 }));
 
-import { generateCommit } from "@/workflows/steps/generateCommit.js";
+import { generateCommit } from "@/_workflows/steps/generateCommit.js";
 
 describe("generateCommit", () => {
   beforeEach(() => {

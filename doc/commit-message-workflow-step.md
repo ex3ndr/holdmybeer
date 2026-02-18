@@ -15,6 +15,6 @@ flowchart LR
 
 ## Notes
 
-- Current location: `sources/workflows/steps/generateCommit.ts`
+- Current location: `sources/_workflows/steps/generateCommit.ts`
 - Prompt placeholders resolve via `runInference` handlebars support.
 - `bootstrap` imports `generateCommit` directly.

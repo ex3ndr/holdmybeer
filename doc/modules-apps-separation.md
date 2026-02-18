@@ -1,6 +1,6 @@
-# Modules And Apps Separation
+# Modules And Workflows Separation
 
-The source tree is now split into core modules and workflow apps.
+The source tree is now split into core modules and workflow orchestration.
 
 ## Structure
 
@@ -8,7 +8,7 @@ The source tree is now split into core modules and workflow apps.
 flowchart TD
   A[sources/main.ts] --> B[modules]
   A --> D[commands]
-  D --> C[apps]
+  D --> C[_workflows]
   C --> B
 
   subgraph Modules
@@ -32,8 +32,9 @@ flowchart TD
     C1[commands/bootstrapCommand.ts]
   end
 
-  subgraph Apps
-    A1[apps/bootstrap.ts]
+  subgraph Workflows
+    A1[_workflows/bootstrapWorkflow.ts]
+    A2[_workflows/ralphLoopWorkflow.ts]
   end
 ```
 
@@ -41,4 +42,4 @@ flowchart TD
 
 - `modules/*`: reusable, non-workflow capabilities (inference, context, integrations, utilities).
 - `commands/*`: CLI command definitions and argument handling.
-- `apps/*`: workflow orchestration (bootstrap flow and its step coordination).
+- `_workflows/*`: workflow orchestration (`bootstrap`, `ralph-loop`, and step coordination).

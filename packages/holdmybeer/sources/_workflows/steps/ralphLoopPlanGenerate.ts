@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { runInference } from "@/workflows/steps/runInference.js";
-import { ralphLoopPlanPathResolve } from "@/workflows/steps/ralphLoopPlanPathResolve.js";
+import { runInference } from "@/_workflows/steps/runInference.js";
+import { ralphLoopPlanPathResolve } from "@/_workflows/steps/ralphLoopPlanPathResolve.js";
 
 export interface RalphLoopPlanGenerateOptions {
   showProgress?: boolean;
