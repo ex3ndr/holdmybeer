@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -78,13 +79,7 @@ export async function releaseRun(): Promise<void> {
     await releaseCommandRun("git", ["tag", tagName], repositoryDirectory);
     tagCreated = true;
 
-    beerLog("release_publish");
-    await releaseCommandRun(
-      "npm",
-      ["publish", "--access", "public", "--registry", npmRegistry, "--no-package-lock"],
-      packageDirectory,
-      releaseNpmEnv()
-    );
+    await releasePublish();
   } catch (error) {
     await releaseRollback(releaseCommitHash, tagName, tagCreated);
     throw error;
@@ -177,6 +172,47 @@ async function releaseRollback(
   }
   beerLog("release_rollback_commit");
   await releaseCommandRun("git", ["reset", "--hard", `${releaseCommitHash}^`], repositoryDirectory);
+}
+
+async function releasePublish(): Promise<void> {
+  beerLog("release_publish");
+  const publishArgs = [
+    "publish",
+    "--access",
+    "public",
+    "--registry",
+    npmRegistry,
+    "--no-package-lock"
+  ];
+  await releaseCommandRunInteractive("npm", publishArgs, packageDirectory, releaseNpmEnv());
+}
+
+async function releaseCommandRunInteractive(
+  command: string,
+  args: string[],
+  cwd: string,
+  env: Record<string, string> = {}
+): Promise<void> {
+  const exitCode = await new Promise<number>((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      stdio: "inherit",
+      env: { ...process.env, ...env }
+    });
+
+    child.on("error", (error) => {
+      reject(error);
+    });
+    child.on("close", (code) => {
+      resolve(code ?? 1);
+    });
+  });
+
+  if (exitCode !== 0) {
+    throw new Error(
+      `Command failed (${exitCode}): ${command} ${args.join(" ")}`
+    );
+  }
 }
 
 await releaseRun();
