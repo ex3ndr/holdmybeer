@@ -1,28 +1,29 @@
 # Provider Generate
 
-Added shared `providerGenerate` for codex/claude CLI inference execution.
+`providerGenerate` now executes inference through `pi` in JSON print mode.
 
 ## Flow
 
 ```mermaid
 flowchart TD
-  A[providerGenerate input] --> B[resolve provider args]
-  B --> C[run commandRun in sandbox]
+  A[providerGenerate input] --> B[resolve pi args]
+  B --> C[commandRun with sandbox wrapper]
   C --> D{exit code 0?}
   D -->|no| E[return failure]
-  D -->|yes| F{output tags present?}
-  F -->|yes| G[return extracted output]
-  F -->|no| H[retry once with output reminder]
-  H --> I{output tags present?}
-  I -->|no| E
-  I -->|yes| G
+  D -->|yes| F[parse pi JSON events]
+  F --> G[extract assistant message_end text]
+  G --> H{output tags required?}
+  H -->|no| I[return text]
+  H -->|yes| J{tags present?}
+  J -->|yes| K[return extracted output]
+  J -->|no| L[retry once with output reminder]
+  L --> M{tags present?}
+  M -->|yes| K
+  M -->|no| E
 ```
 
 ## Notes
 
-- Uses provider-native non-interactive invocation:
-  - Claude: `claude --dangerously-skip-permissions -p <prompt>`
-  - Codex: `codex exec --dangerously-bypass-approvals-and-sandbox -- <prompt>`
-- Uses provider-specific execution flags per CLI.
-- Applies codex env overrides required for sandbox execution.
-- Codex execution runs without codex-native sandbox flags and without the outer Anthropic sandbox wrapper.
+- Invocation uses `pi --mode json --print --no-session [--model ...]`.
+- The selected model is passed from workflow model priority resolution.
+- Sandbox execution remains enforced via the outer wrapper.

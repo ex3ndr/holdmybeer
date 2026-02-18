@@ -1,16 +1,16 @@
 # Context Inference Flow
 
-The CLI now initializes a global `Context` object once before command execution.
+The CLI initializes a global `Context` once, then routes all inference through `pi`.
 
 ## Initialization
 
 ```mermaid
 flowchart TD
   A[beer command starts] --> B[contextInitialize]
-  B --> C[providerDetect probes claude/codex]
-  C --> D[Create Context { providers, inferText }]
-  D --> E[Store in globalThis.Context]
-  E --> F[Command handlers use Context]
+  B --> C[providerDetect probes pi]
+  C --> D[providerModelsGet via pi RPC]
+  D --> E[Create Context { providers, inferText }]
+  E --> F[Store in globalThis.Context]
 ```
 
 ## Inference Routing
@@ -21,18 +21,18 @@ flowchart LR
   B --> C[sandboxInferenceGet builds per-call sandbox]
   C --> D[providerPriority ids]
   D --> E[providerPriorityList resolves available providers]
-  E --> F{Try provider command}
-  F -->|success| G[Return provider + text]
-  F -->|failure| H[Try next provider id]
-  H --> F
-  F -->|all fail| I[Throw inference error]
+  E --> F[providerModelSelect resolves model from modelPriority]
+  F --> G[providerGenerate executes pi]
+  G --> H{success?}
+  H -->|yes| I[Return provider + text]
+  H -->|no| J[Try next provider]
+  J --> H
+  H -->|all fail| K[Throw inference error]
 ```
 
 ## Notes
 
-- Inference now takes typed provider ids (`"claude" | "codex"`) per call.
-- Provider retry order is controlled by the explicit `providerPriority` array.
-- Per-call visibility is supported with `showProgress: true` on `inferText`.
-- `inferText` always runs sandboxed and always uses yolo provider mode (`--dangerously-skip-permissions`).
-- `inferText` supports `writePolicy` for either read-only mode or write-whitelist mode.
-- Bootstrap persists detected providers to `~/Developer/HoldMyBeerDev/.beer/settings.json`, but inference no longer uses settings order directly.
+- Inference now uses provider id type `"pi"`.
+- Provider retry order is controlled by `providerPriority`.
+- Model choice is controlled by `modelPriority` and cross-checked against live models.
+- Inference is fail-fast with no fallback content.

@@ -1,6 +1,6 @@
 # Pi Provider And Model Resolution
 
-This change replaces `claude` and `codex` provider execution with a single `pi` provider.
+This change replaces legacy direct provider execution with a single `pi` provider.
 
 ```mermaid
 flowchart TD
