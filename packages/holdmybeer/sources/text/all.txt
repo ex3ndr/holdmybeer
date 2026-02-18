@@ -33,6 +33,16 @@ bootstrap_commit_message = 💬  Commit message: {message}
 bootstrap_skipping_source = ✔️  Source repo already set: {repo}
 bootstrap_skipping_publish = ✔️  Publish repo already set: {repo}
 
+# Release
+
+release_start = 🚀  Starting release
+release_git_clean = ✅  Git working tree is clean
+release_install = 📦  Installing dependencies
+release_test = 🧪  Running tests
+release_build = 🏗️  Building package
+release_publish = 📤  Publishing holdmybeer to npm
+release_done = ✅  Release completed
+
 # Prompts
 
 prompt_source_repo = 📦  Source repository (GitHub URL or owner/repo)
@@ -53,3 +63,4 @@ error_repo_name_invalid = ❌  Publish repository name is invalid
 error_repo_name_exhausted = ❌  Unable to resolve an available publish repository name after 100 attempts
 error_bootstrap_cancelled = 🚫  Bootstrap cancelled — publish repository is required
 error_source_dir_invalid = ❌  Source directory does not exist or is not a directory: {dir}
+error_release_git_dirty = ❌  Release requires a clean git working tree. Commit pending changes first.

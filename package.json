@@ -10,6 +10,7 @@
     "dev": "yarn workspace holdmybeer run dev",
     "dev:run": "yarn workspace holdmybeer run dev rewrite ./fixtures/dev-source --output ./.context/dev-output --force",
     "bootstrap": "yarn workspace holdmybeer run dev bootstrap",
+    "release": "yarn workspace holdmybeer run release",
     "rewrite": "yarn workspace holdmybeer run dev rewrite",
     "test": "yarn workspaces run test",
     "test:watch": "yarn workspaces run test:watch",

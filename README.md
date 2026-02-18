@@ -53,6 +53,7 @@ yarn dev
 yarn typecheck
 yarn test
 yarn build
+yarn release
 ```
 
 ## License
