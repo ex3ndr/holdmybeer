@@ -98,7 +98,7 @@ function providerArgs(providerId: ProviderId, prompt: string): string[] {
   }
 
   if (providerId === "codex") {
-    return ["--dangerously-skip-permissions", "-p", prompt];
+    return ["--dangerously-bypass-approvals-and-sandbox", "-p", prompt];
   }
 
   return ["--dangerously-skip-permissions", "-p", prompt];

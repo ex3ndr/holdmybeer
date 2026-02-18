@@ -13,16 +13,19 @@ describe("sandboxInferenceFilesystemPolicy", () => {
     process.env.INIT_CWD = initCwd;
   });
 
-  it("defaults to read-only writes when no policy is provided", () => {
+  it("allows provider auth state writes when no policy is provided", () => {
     const result = sandboxInferenceFilesystemPolicy({
       platform: "linux",
       homeDir: "/home/alice"
     });
 
-    expect(result.allowWrite).toEqual([]);
+    expect(result.allowWrite).toEqual([
+      path.resolve("/home/alice/.claude"),
+      path.resolve("/home/alice/.codex")
+    ]);
   });
 
-  it("dedupes and resolves whitelisted write paths", () => {
+  it("dedupes and resolves whitelisted write paths with auth dirs", () => {
     const result = sandboxInferenceFilesystemPolicy({
       writePolicy: {
         mode: "write-whitelist",
@@ -38,7 +41,9 @@ describe("sandboxInferenceFilesystemPolicy", () => {
 
     expect(result.allowWrite).toEqual([
       path.resolve("/workspace/project/README.md"),
-      path.resolve("/workspace/project/doc/inference-sandbox.md")
+      path.resolve("/workspace/project/doc/inference-sandbox.md"),
+      path.resolve("/home/alice/.claude"),
+      path.resolve("/home/alice/.codex")
     ]);
   });
 

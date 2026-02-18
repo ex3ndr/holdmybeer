@@ -37,7 +37,7 @@ describe("aiTextGenerate", () => {
     expect(commandRunMock.mock.calls[0]?.[0]).toBe("codex");
     expect(commandRunMock.mock.calls[1]?.[0]).toBe("claude");
     expect(commandRunMock.mock.calls[0]?.[1]).toEqual([
-      "--dangerously-skip-permissions",
+      "--dangerously-bypass-approvals-and-sandbox",
       "-p",
       expect.stringContaining("Do not change files")
     ]);
@@ -134,7 +134,7 @@ describe("aiTextGenerate", () => {
     );
 
     expect(commandRunMock.mock.calls[0]?.[1]).toEqual([
-      "--dangerously-skip-permissions",
+      "--dangerously-bypass-approvals-and-sandbox",
       "-p",
       expect.stringContaining("Write-whitelist mode is enabled.")
     ]);

@@ -89,19 +89,31 @@ export function sandboxInferenceFilesystemPolicy(
 
   return {
     denyRead,
-    allowWrite: allowWriteResolve(input.writePolicy),
+    allowWrite: allowWriteResolve(input.writePolicy, homeDir),
     // Keep read/write denials aligned to prevent both access and tampering.
     denyWrite: [...denyRead]
   };
 }
 
-function allowWriteResolve(writePolicy?: InferenceWritePolicy): string[] {
+function allowWriteResolve(
+  writePolicy: InferenceWritePolicy | undefined,
+  homeDir: string
+): string[] {
+  const authPaths = [
+    path.resolve(homeDir, ".claude"),
+    path.resolve(homeDir, ".codex")
+  ];
+
   if (!writePolicy || writePolicy.mode === "read-only") {
-    return [];
+    // Provider CLIs need writable auth/session state in home directory.
+    return dedupeResolvedPaths(authPaths);
   }
 
   return dedupeResolvedPaths(
-    writePolicy.writablePaths.map((entry) => pathResolveFromInitCwd(entry))
+    [
+      ...writePolicy.writablePaths.map((entry) => pathResolveFromInitCwd(entry)),
+      ...authPaths
+    ]
   );
 }
 
