@@ -35,18 +35,6 @@ bootstrap_commit_message = 💬  Commit message: {message}
 bootstrap_skipping_source = ✔️  Source repo already set: {repo}
 bootstrap_skipping_publish = ✔️  Publish repo already set: {repo}
 
-# Ralph Loop
-
-ralph_loop_start = 🚀  Starting ralph-loop workflow
-ralph_loop_goal = 🎯  Build goal: {goal}
-ralph_loop_plan_start = 🧭  Generating plan
-ralph_loop_plan_done = 📝  Plan generated at {path} with {provider}
-ralph_loop_execute_start = 🛠️  Executing implementation
-ralph_loop_execute_done = ✅  Execution completed with {provider}
-ralph_loop_review_start = 🔍  Running review round {round}/3
-ralph_loop_review_done = ✅  Review round {round}/3 completed with {provider}
-ralph_loop_done = ✅  Ralph-loop finished. Plan file: {path}
-
 # Release
 
 release_start = 🚀  Starting release
