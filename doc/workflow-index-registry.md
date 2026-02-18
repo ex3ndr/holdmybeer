@@ -6,10 +6,10 @@ Workflow metadata and handlers are now centralized in `sources/_workflows/_index
 
 ```mermaid
 flowchart LR
-  A[bootstrapCommand] --> B[_workflows/_index.ts]
-  C[ralphLoopCommand] --> B
-  B --> D[workflowBootstrap title + run(ctx)]
-  B --> E[workflowRalphLoop title + run(ctx)]
+  A[sources/main.ts] --> B[_workflows/workflowRunInteractive.ts]
+  B --> C[_workflows/_index.ts]
+  C --> D[workflowBootstrap title + run(ctx)]
+  C --> E[workflowRalphLoop title + run(ctx)]
   D --> F[bootstrapWorkflow(ctx: Context)]
   E --> G[ralphLoopWorkflow(ctx: Context)]
 ```
@@ -17,4 +17,4 @@ flowchart LR
 ## Notes
 
 - Each workflow handler now has signature `run(ctx: Context)`.
-- Command descriptions reuse workflow titles from the registry.
+- Workflow titles are sourced from the registry.

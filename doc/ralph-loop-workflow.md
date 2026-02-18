@@ -1,19 +1,20 @@
 # Ralph Loop Workflow
 
-This document describes the `beer ralph-loop` workflow implemented with built-in model inference.
+This document describes the `ralph-loop` workflow selected from `beer`, implemented with built-in model inference.
 
 ## Sequence
 
 ```mermaid
 flowchart TD
-  A[beer ralph-loop] --> B[Ask: what should I build?]
-  B --> C[Generate plan markdown]
-  C --> D[Write plan to doc/plans/yyyyMMdd-slug.md]
-  D --> E[Execute implementation from plan]
-  E --> F[Review round 1]
-  F --> G[Review round 2]
-  G --> H[Review round 3]
-  H --> I[Done]
+  A[beer workflow picker] --> B[Select ralph-loop]
+  B --> C[Ask: what should I build?]
+  C --> D[Generate plan markdown]
+  D --> E[Write plan to doc/plans/yyyyMMdd-slug.md]
+  E --> F[Execute implementation from plan]
+  F --> G[Review round 1]
+  G --> H[Review round 2]
+  H --> I[Review round 3]
+  I --> J[Done]
 ```
 
 ## Notes

@@ -1,7 +1,5 @@
 import { Command } from "commander";
 import { readFileSync } from "node:fs";
-import { bootstrapCommand } from "@/commands/bootstrapCommand.js";
-import { ralphLoopCommand } from "@/commands/ralphLoopCommand.js";
 import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 import { workflowRunInteractive } from "@/_workflows/workflowRunInteractive.js";
@@ -14,7 +12,7 @@ const program = new Command();
 
 program
   .name("beer")
-  .description("Bootstrap codebases")
+  .description("Run HoldMyBeer workflows")
   .option("--project <path>", "Project path used by bootstrap operations", ".")
   .version(pkg.version)
   .action(async function (this: Command) {
@@ -23,8 +21,5 @@ program
     const ctx = await contextGetOrInitialize(projectPath);
     await workflowRunInteractive(ctx);
   });
-
-program.addCommand(bootstrapCommand());
-program.addCommand(ralphLoopCommand());
 
 await program.parseAsync(process.argv);

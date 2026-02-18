@@ -6,13 +6,15 @@ Workflow orchestration has been moved under `sources/_workflows` so the folder s
 
 ```mermaid
 flowchart LR
-  A[commands/bootstrapCommand.ts] --> B[_workflows/bootstrapWorkflow.ts]
-  C[commands/ralphLoopCommand.ts] --> D[_workflows/ralphLoopWorkflow.ts]
-  B --> E[_workflows/steps/*]
-  D --> E
+  A[sources/main.ts] --> B[_workflows/workflowRunInteractive.ts]
+  B --> C[_workflows/_index.ts]
+  C --> D[_workflows/bootstrapWorkflow.ts]
+  C --> E[_workflows/ralphLoopWorkflow.ts]
+  D --> F[_workflows/steps/*]
+  E --> F
 ```
 
 ## Notes
 
 - Renamed folder: `sources/workflows` -> `sources/_workflows`
-- `bootstrap` command now imports a workflow entrypoint, same pattern as `ralph-loop`.
+- Workflow entrypoints are selected from `sources/_workflows/_index.ts`.

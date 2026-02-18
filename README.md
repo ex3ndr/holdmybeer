@@ -7,7 +7,7 @@
 Bootstrap and publish a rewritten project using one command.
 
 ```bash
-$ beer bootstrap
+$ beer
 ```
 
 </div>
@@ -16,7 +16,9 @@ $ beer bootstrap
 
 ## What It Does
 
-`beer bootstrap` runs an interactive flow that:
+`beer` opens a workflow selector and then runs the selected workflow.
+
+The `bootstrap` workflow:
 
 - detects the local inference provider (`pi`) and available models
 - saves bootstrap settings under `~/Developer/HoldMyBeerDev/.beer/settings.json`
@@ -42,9 +44,7 @@ Requirements:
 ## CLI
 
 ```bash
-beer
-beer bootstrap [--project <path>]
-beer ralph-loop [--project <path>]
+beer [--project <path>]
 ```
 
 ## Development

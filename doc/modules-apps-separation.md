@@ -7,8 +7,7 @@ The source tree is now split into core modules and workflow orchestration.
 ```mermaid
 flowchart TD
   A[sources/main.ts] --> B[modules]
-  A --> D[commands]
-  D --> C[_workflows]
+  A --> C[_workflows]
   C --> B
 
   subgraph Modules
@@ -28,10 +27,6 @@ flowchart TD
     T2[text/all.txt]
   end
 
-  subgraph Commands
-    C1[commands/bootstrapCommand.ts]
-  end
-
   subgraph Workflows
     A1[_workflows/bootstrapWorkflow.ts]
     A2[_workflows/ralphLoopWorkflow.ts]
@@ -41,5 +36,5 @@ flowchart TD
 ## Intent
 
 - `modules/*`: reusable, non-workflow capabilities (inference, context, integrations, utilities).
-- `commands/*`: CLI command definitions and argument handling.
+- `main.ts`: CLI entrypoint and workflow selection.
 - `_workflows/*`: workflow orchestration (`bootstrap`, `ralph-loop`, and step coordination).

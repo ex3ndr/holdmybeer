@@ -4,9 +4,7 @@ CLI package for **HoldMyBeer**.
 
 ## Command
 
-- `beer`: open interactive workflow selection.
-- `beer bootstrap`: initialize settings, resolve source/publish repos, generate README + commit message via inference, then push to `main`.
-- `beer ralph-loop`: ask what to build, generate a plan, execute implementation, then run 3 inference review rounds.
+- `beer`: open interactive workflow selection and run the selected workflow.
 
 ## Runtime Requirements
 

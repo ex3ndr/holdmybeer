@@ -1,6 +1,6 @@
 # Bootstrap Flow
 
-This document describes the `beer bootstrap` workflow.
+This document describes the bootstrap workflow selected from `beer`.
 
 ## Sequence
 
