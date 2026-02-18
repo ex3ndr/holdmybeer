@@ -1,6 +1,6 @@
 # Bootstrap Flow
 
-This document describes the initial `daycare bootstrap` workflow used by holdmybeer.
+This document describes the initial `beer bootstrap` workflow used by holdmybeer.
 
 ## Sequence
 
@@ -25,6 +25,15 @@ flowchart TD
   O --> P[Commit]
   P --> Q[Push HEAD to main]
   Q --> R[Done]
+```
+
+## Identity
+
+```mermaid
+flowchart LR
+  A[Repository: holdmybeer] --> B[Workspace package: holdmybeer]
+  B --> C[CLI binary: beer]
+  C --> D[User command: beer bootstrap]
 ```
 
 ## Notes

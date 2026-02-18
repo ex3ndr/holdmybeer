@@ -10,7 +10,7 @@ const pkg = JSON.parse(
 const program = new Command();
 
 program
-  .name("daycare")
+  .name("beer")
   .description("Bootstrap and rewrite codebases")
   .version(pkg.version);
 

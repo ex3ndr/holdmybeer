@@ -1,6 +1,6 @@
 # holdmybeer
 
-`holdmybeer` is a TypeScript CLI workspace with a single package at `packages/daycare`.
+`holdmybeer` is a TypeScript CLI workspace with a single package at `packages/holdmybeer`.
 
 Current baseline:
 - `bootstrap` flow to initialize `.beer/settings.json`

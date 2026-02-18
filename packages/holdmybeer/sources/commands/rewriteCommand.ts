@@ -40,14 +40,14 @@ export function rewriteCommand(): Command {
       });
 
       const mode = report.dryRun ? "dry-run" : "write";
-      console.log(`[daycare] mode=${mode}`);
-      console.log(`[daycare] source=${report.sourceDir}`);
-      console.log(`[daycare] output=${report.outputDir}`);
-      console.log(`[daycare] processed=${report.filesProcessed}`);
-      console.log(`[daycare] rewritten=${report.filesRewritten}`);
-      console.log(`[daycare] copied_binary=${report.binaryFilesCopied}`);
+      console.log(`[beer] mode=${mode}`);
+      console.log(`[beer] source=${report.sourceDir}`);
+      console.log(`[beer] output=${report.outputDir}`);
+      console.log(`[beer] processed=${report.filesProcessed}`);
+      console.log(`[beer] rewritten=${report.filesRewritten}`);
+      console.log(`[beer] copied_binary=${report.binaryFilesCopied}`);
       if (report.reportPath) {
-        console.log(`[daycare] report=${report.reportPath}`);
+        console.log(`[beer] report=${report.reportPath}`);
       }
     });
 }

@@ -1,12 +1,12 @@
 {
-  "name": "daycare",
+  "name": "holdmybeer",
   "version": "0.1.0",
   "description": "Holdmybeer CLI bootstrap and rewrite tool",
   "type": "module",
   "license": "MIT",
   "author": "ex3ndr",
   "bin": {
-    "daycare": "./bin/daycare.js"
+    "beer": "./bin/beer.js"
   },
   "files": [
     "dist",

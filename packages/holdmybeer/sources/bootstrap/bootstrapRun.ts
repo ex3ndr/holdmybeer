@@ -39,7 +39,7 @@ export async function bootstrapRun(): Promise<void> {
     .filter((provider) => provider.available)
     .map((provider) => provider.id)
     .join(", ");
-  console.log(`[daycare] detected providers: ${availableProviderNames || "none"}`);
+  console.log(`[beer] detected providers: ${availableProviderNames || "none"}`);
 
   let source = settings.sourceRepo;
   while (!source) {
@@ -49,13 +49,13 @@ export async function bootstrapRun(): Promise<void> {
     );
     const parsed = githubRepoParse(sourceInput);
     if (!parsed) {
-      console.log("[daycare] invalid repository format. Try owner/repo or a GitHub URL.");
+      console.log("[beer] invalid repository format. Try owner/repo or a GitHub URL.");
       continue;
     }
 
     const exists = await githubRepoExists(parsed.fullName);
     if (!exists) {
-      console.log(`[daycare] repository not found or inaccessible: ${parsed.fullName}`);
+      console.log(`[beer] repository not found or inaccessible: ${parsed.fullName}`);
       continue;
     }
 
@@ -68,7 +68,7 @@ export async function bootstrapRun(): Promise<void> {
 
   const viewerLogin = await githubViewerGet();
   const ownerChoices = await githubOwnerChoicesGet(viewerLogin);
-  console.log(`[daycare] publish owner options: ${ownerChoices.join(", ")}`);
+  console.log(`[beer] publish owner options: ${ownerChoices.join(", ")}`);
 
   const publishOwner = await promptInput("Publish owner/org", viewerLogin);
   const defaultRepoName = `${source.repo}-holdmybeer`;
@@ -85,7 +85,7 @@ export async function bootstrapRun(): Promise<void> {
 
   if (resolvedPublish.repo !== requestedRepoName) {
     console.log(
-      `[daycare] ${publishOwner}/${requestedRepoName} already contains code; using ${resolvedPublish.fullName}`
+      `[beer] ${publishOwner}/${requestedRepoName} already contains code; using ${resolvedPublish.fullName}`
     );
   }
 
@@ -133,14 +133,14 @@ export async function bootstrapRun(): Promise<void> {
   await gitRemoteEnsure(publishRemoteUrl);
   const committed = await gitCommitCreate(commitMessageGenerated.text);
   if (!committed) {
-    console.log("[daycare] no changes to commit");
+    console.log("[beer] no changes to commit");
   }
 
   await gitPush("origin", "main");
 
-  console.log(`[daycare] source repo: ${settings.sourceRepo.fullName}`);
-  console.log(`[daycare] publish repo: ${settings.publishRepo.fullName}`);
-  console.log(`[daycare] settings: ${settingsPath}`);
-  console.log(`[daycare] README provider: ${readme.provider ?? "fallback"}`);
-  console.log(`[daycare] commit message: ${commitMessageGenerated.text}`);
+  console.log(`[beer] source repo: ${settings.sourceRepo.fullName}`);
+  console.log(`[beer] publish repo: ${settings.publishRepo.fullName}`);
+  console.log(`[beer] settings: ${settingsPath}`);
+  console.log(`[beer] README provider: ${readme.provider ?? "fallback"}`);
+  console.log(`[beer] commit message: ${commitMessageGenerated.text}`);
 }

@@ -6,7 +6,7 @@ import { rewriteRun } from "./rewriteRun.js";
 
 describe("rewriteRun", () => {
   it("rewrites text files and preserves extensionless files as text", async () => {
-    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "daycare-"));
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "beer-"));
     const sourceDir = path.join(tempRoot, "source");
     const outputDir = path.join(tempRoot, "out");
 

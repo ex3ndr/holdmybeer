@@ -6,10 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspace daycare run build",
-    "dev": "yarn workspace daycare run dev",
-    "bootstrap": "yarn workspace daycare run dev bootstrap",
-    "rewrite": "yarn workspace daycare run dev rewrite",
+    "build": "yarn workspace holdmybeer run build",
+    "dev": "yarn workspace holdmybeer run dev",
+    "bootstrap": "yarn workspace holdmybeer run dev bootstrap",
+    "rewrite": "yarn workspace holdmybeer run dev rewrite",
     "test": "yarn workspaces run test",
     "test:watch": "yarn workspaces run test:watch",
     "typecheck": "yarn workspaces run typecheck"
