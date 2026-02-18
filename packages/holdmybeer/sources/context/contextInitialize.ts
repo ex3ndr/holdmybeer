@@ -10,7 +10,6 @@ import type { Context } from "./contextTypes.js";
  */
 export async function contextInitialize(projectPath: string): Promise<Context> {
   const providers = await providerDetect();
-  const inferenceSandbox = await sandboxInferenceGet();
 
   const context: Context = {
     projectPath,
@@ -21,6 +20,9 @@ export async function contextInitialize(projectPath: string): Promise<Context> {
             console.log(message);
           }
         : undefined;
+      const sandbox = await sandboxInferenceGet({
+        writePolicy: input.writePolicy
+      });
 
       return aiTextGenerate(
         providers,
@@ -29,8 +31,8 @@ export async function contextInitialize(projectPath: string): Promise<Context> {
         input.fallbackText,
         {
           onMessage,
-          readOnly: true,
-          sandbox: inferenceSandbox
+          sandbox,
+          writePolicy: input.writePolicy
         }
       );
     },

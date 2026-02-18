@@ -1,30 +1,25 @@
 import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
-import path from "node:path";
-import { pathResolveFromInitCwd } from "../util/pathResolveFromInitCwd.js";
+import { sandboxInferenceFilesystemPolicy } from "./sandboxInferenceFilesystemPolicy.js";
 import type { CommandSandbox } from "./sandboxTypes.js";
+import type { InferenceWritePolicy } from "./sandboxInferenceTypes.js";
 
-let inferenceSandbox: CommandSandbox | undefined;
+export interface SandboxInferenceGetInput {
+  writePolicy?: InferenceWritePolicy;
+}
 
 /**
- * Returns a singleton sandbox for inference commands.
- * Network is unrestricted (no network config), writes are limited to project dir except .beer.
+ * Returns a per-call sandbox for inference commands.
+ * Network is unrestricted (no network config), writes follow writePolicy.
  */
-export async function sandboxInferenceGet(): Promise<CommandSandbox> {
-  if (inferenceSandbox) {
-    return inferenceSandbox;
-  }
+export async function sandboxInferenceGet(
+  input: SandboxInferenceGetInput = {}
+): Promise<CommandSandbox> {
+  const filesystem = sandboxInferenceFilesystemPolicy({
+    writePolicy: input.writePolicy
+  });
 
-  const projectDir = pathResolveFromInitCwd(".");
-  const beerDir = path.join(projectDir, ".beer");
-  const filesystem = {
-    denyRead: [],
-    allowWrite: [projectDir],
-    denyWrite: [path.join(beerDir, "**"), beerDir]
-  };
-
-  inferenceSandbox = {
+  return {
     wrapCommand: (command, abortSignal) =>
       SandboxManager.wrapWithSandbox(command, undefined, { filesystem }, abortSignal)
   };
-  return inferenceSandbox;
 }

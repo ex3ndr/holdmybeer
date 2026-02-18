@@ -2,3 +2,4 @@ export type { BeerSettings, ProviderDetection } from "./beer/beerSettingsTypes.j
 export type { Context, ContextInferTextInput } from "./context/contextTypes.js";
 export type { GitHubRepoRef, GitHubRepoStatus } from "./github/githubTypes.js";
 export type { ProviderId } from "./providers/providerTypes.js";
+export type { InferenceWritePolicy } from "./sandbox/sandboxInferenceTypes.js";

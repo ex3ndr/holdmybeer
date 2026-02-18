@@ -1,29 +1,32 @@
 # Inference Sandbox
 
-Inference commands now execute inside a shared sandbox instance created once at context initialization.
+Inference commands now execute inside a per-call sandbox policy created at `inferText` time.
 
 ## Policy
 
 - Library: `@anthropic-ai/sandbox-runtime` (latest)
 - Network: unrestricted by sandbox (no `network` section configured)
-- Filesystem writes: only project directory
-- `.beer` subtree: explicitly denied for writes (read-only)
+- Filesystem writes are dynamic per inference call:
+  - `read-only` mode: no writable paths
+  - `write-whitelist` mode: only explicitly listed files/paths are writable
+- Sensitive host paths are denied for both read and write (same baseline as Daycare sandbox policy)
 
 ## Sequence
 
 ```mermaid
 flowchart TD
-  A[contextInitialize] --> B[sandboxInferenceGet]
-  B --> C[Context.inferText]
-  C --> D[aiTextGenerate]
-  D --> E[commandRun with sandbox]
-  E --> F[sandbox.wrapCommand]
-  F --> G[SandboxManager.wrapWithSandbox]
-  G --> H[provider CLI execution]
+  A[Context.inferText] --> B[Resolve writePolicy]
+  B --> C[sandboxInferenceGet with writePolicy]
+  C --> D[Build filesystem policy]
+  D --> E[aiTextGenerate]
+  E --> F[commandRun with sandbox]
+  F --> G[sandbox.wrapCommand]
+  G --> H[SandboxManager.wrapWithSandbox]
+  H --> I[provider CLI execution]
 ```
 
 ## Notes
 
-- The sandbox is reused across all `inferText` calls.
-- Read-only inference prompt guard is still applied before provider invocation.
-- Provider-specific read-only flags are still used (`--tools ""`, `--sandbox read-only`).
+- Inference always runs in sandbox.
+- Provider CLIs are invoked in yolo mode (`--dangerously-skip-permissions`) and sandbox enforces file limits.
+- Prompt guards now describe either read-only behavior or the allowed write whitelist.

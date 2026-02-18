@@ -9,8 +9,11 @@ vi.mock("../util/commandRun.js", () => ({
 }));
 
 describe("aiTextGenerate", () => {
+  const sandbox = { wrapCommand: vi.fn() };
+
   beforeEach(() => {
     commandRunMock.mockReset();
+    sandbox.wrapCommand.mockReset();
   });
 
   it("uses requested provider priority and falls back to next provider", async () => {
@@ -25,7 +28,8 @@ describe("aiTextGenerate", () => {
       ],
       ["codex", "claude"],
       "test prompt",
-      "fallback"
+      "fallback",
+      { sandbox }
     );
 
     expect(result).toEqual({ provider: "claude", text: "claude output" });
@@ -33,14 +37,12 @@ describe("aiTextGenerate", () => {
     expect(commandRunMock.mock.calls[0]?.[0]).toBe("codex");
     expect(commandRunMock.mock.calls[1]?.[0]).toBe("claude");
     expect(commandRunMock.mock.calls[0]?.[1]).toEqual([
-      "--sandbox",
-      "read-only",
+      "--dangerously-skip-permissions",
       "-p",
       expect.stringContaining("Do not change files")
     ]);
     expect(commandRunMock.mock.calls[1]?.[1]).toEqual([
-      "--allowedTools",
-      "Read,Glob,Grep,Bash,WebFetch",
+      "--dangerously-skip-permissions",
       "-p",
       expect.stringContaining("Do not change files")
     ]);
@@ -57,7 +59,8 @@ describe("aiTextGenerate", () => {
       ],
       ["codex"],
       "test prompt",
-      "fallback"
+      "fallback",
+      { sandbox }
     );
 
     expect(result).toEqual({ text: "fallback" });
@@ -66,7 +69,6 @@ describe("aiTextGenerate", () => {
   });
 
   it("passes sandbox into provider command execution", async () => {
-    const sandbox = { wrapCommand: vi.fn() };
     commandRunMock.mockResolvedValueOnce({
       exitCode: 0,
       stdout: "claude output",
@@ -99,7 +101,7 @@ describe("aiTextGenerate", () => {
       ["claude"],
       "test prompt",
       "fallback",
-      { onMessage: (message) => messages.push(message) }
+      { sandbox, onMessage: (message) => messages.push(message) }
     );
 
     expect(result).toEqual({ provider: "claude", text: "claude output" });
@@ -108,5 +110,37 @@ describe("aiTextGenerate", () => {
     expect(messages).toContain("[beer][infer] claude:stdout working...");
     expect(messages).toContain("[beer][infer] claude:stderr note");
     expect(messages).toContain("[beer][infer] provider=claude completed");
+  });
+
+  it("injects write-whitelist prompt guard when write policy is provided", async () => {
+    commandRunMock.mockResolvedValueOnce({
+      exitCode: 0,
+      stdout: "codex output",
+      stderr: ""
+    });
+
+    await aiTextGenerate(
+      [{ id: "codex", available: true, command: "codex", priority: 1 }],
+      ["codex"],
+      "test prompt",
+      "fallback",
+      {
+        sandbox,
+        writePolicy: {
+          mode: "write-whitelist",
+          writablePaths: ["README.md", "doc/inference-sandbox.md"]
+        }
+      }
+    );
+
+    expect(commandRunMock.mock.calls[0]?.[1]).toEqual([
+      "--dangerously-skip-permissions",
+      "-p",
+      expect.stringContaining("Write-whitelist mode is enabled.")
+    ]);
+    expect(commandRunMock.mock.calls[0]?.[1]?.[2]).toContain("README.md");
+    expect(commandRunMock.mock.calls[0]?.[1]?.[2]).toContain(
+      "doc/inference-sandbox.md"
+    );
   });
 });

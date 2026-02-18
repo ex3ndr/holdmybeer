@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import path from "node:path";
 
 const wrapWithSandboxMock = vi.hoisted(() => vi.fn());
+const sandboxInferenceFilesystemPolicyMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@anthropic-ai/sandbox-runtime", () => ({
   SandboxManager: {
@@ -9,44 +9,57 @@ vi.mock("@anthropic-ai/sandbox-runtime", () => ({
   }
 }));
 
-vi.mock("../util/pathResolveFromInitCwd.js", () => ({
-  pathResolveFromInitCwd: () => "/workspace/project"
+vi.mock("./sandboxInferenceFilesystemPolicy.js", () => ({
+  sandboxInferenceFilesystemPolicy: sandboxInferenceFilesystemPolicyMock
 }));
 
 describe("sandboxInferenceGet", () => {
   beforeEach(() => {
     vi.resetModules();
     wrapWithSandboxMock.mockReset();
+    sandboxInferenceFilesystemPolicyMock.mockReset();
+    sandboxInferenceFilesystemPolicyMock.mockReturnValue({
+      denyRead: ["deny-read"],
+      allowWrite: ["allow-write"],
+      denyWrite: ["deny-write"]
+    });
   });
 
-  it("returns singleton and applies filesystem-only policy per command", async () => {
-    const { sandboxInferenceGet } = await import("./sandboxInferenceGet.js");
-
-    const first = await sandboxInferenceGet();
-    const second = await sandboxInferenceGet();
-
-    expect(first).toBe(second);
-  });
-
-  it("wraps command using sandbox manager", async () => {
+  it("builds read-only filesystem policy by default", async () => {
     wrapWithSandboxMock.mockResolvedValue("wrapped-command");
     const { sandboxInferenceGet } = await import("./sandboxInferenceGet.js");
 
     const sandbox = await sandboxInferenceGet();
+    await sandbox.wrapCommand("echo hi");
+
+    expect(sandboxInferenceFilesystemPolicyMock).toHaveBeenCalledWith({
+      writePolicy: undefined
+    });
+  });
+
+  it("wraps command using dynamic write policy", async () => {
+    wrapWithSandboxMock.mockResolvedValue("wrapped-command");
+    const { sandboxInferenceGet } = await import("./sandboxInferenceGet.js");
+    const writePolicy = {
+      mode: "write-whitelist" as const,
+      writablePaths: ["README.md"]
+    };
+
+    const sandbox = await sandboxInferenceGet({ writePolicy });
     const wrapped = await sandbox.wrapCommand("echo hi");
 
     expect(wrapped).toBe("wrapped-command");
+    expect(sandboxInferenceFilesystemPolicyMock).toHaveBeenCalledWith({
+      writePolicy
+    });
     expect(wrapWithSandboxMock).toHaveBeenCalledWith(
       "echo hi",
       undefined,
       {
         filesystem: {
-          denyRead: [],
-          allowWrite: ["/workspace/project"],
-          denyWrite: [
-            path.join("/workspace/project", ".beer", "**"),
-            path.join("/workspace/project", ".beer")
-          ]
+          denyRead: ["deny-read"],
+          allowWrite: ["allow-write"],
+          denyWrite: ["deny-write"]
         }
       },
       undefined

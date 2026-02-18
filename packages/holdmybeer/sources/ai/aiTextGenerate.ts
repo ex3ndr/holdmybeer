@@ -1,6 +1,7 @@
 import { providerPriorityList } from "../providers/providerPriorityList.js";
 import type { ProviderDetection, ProviderId } from "../providers/providerTypes.js";
 import type { CommandSandbox } from "../sandbox/sandboxTypes.js";
+import type { InferenceWritePolicy } from "../sandbox/sandboxInferenceTypes.js";
 import { commandRun } from "../util/commandRun.js";
 
 export interface AiTextGenerateResult {
@@ -10,8 +11,8 @@ export interface AiTextGenerateResult {
 
 export interface AiTextGenerateOptions {
   onMessage?: (message: string) => void;
-  readOnly?: boolean;
-  sandbox?: CommandSandbox;
+  sandbox: CommandSandbox;
+  writePolicy?: InferenceWritePolicy;
 }
 
 function inferMessage(message: string, options?: AiTextGenerateOptions): void {
@@ -38,14 +39,26 @@ function inferOutputMessage(
   }
 }
 
-function inferPromptResolve(prompt: string, readOnly: boolean): string {
-  if (!readOnly) {
-    return prompt;
+function inferPromptResolve(prompt: string, writePolicy: InferenceWritePolicy): string {
+  if (writePolicy.mode === "read-only") {
+    return [
+      "Read-only mode is enabled. Do not change files, run write operations, or apply edits.",
+      "Use read-only analysis only and return text output.",
+      prompt
+    ].join("\n\n");
   }
 
+  const writablePaths = writePolicy.writablePaths
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  const writableLine =
+    writablePaths.length > 0
+      ? `Only the following paths are writable: ${writablePaths.join(", ")}.`
+      : "No writable paths were configured. Treat this as read-only.";
+
   return [
-    "Read-only mode is enabled. Do not change files, run write operations, or apply edits.",
-    "Use read-only analysis only and return text output.",
+    "Write-whitelist mode is enabled.",
+    writableLine,
     prompt
   ].join("\n\n");
 }
@@ -57,13 +70,13 @@ async function providerGenerate(
   providerId: ProviderId,
   command: string,
   args: string[],
-  options?: AiTextGenerateOptions
+  options: AiTextGenerateOptions
 ): Promise<string | null> {
   inferMessage(`provider=${providerId} started`, options);
   const result = await commandRun(command, args, {
     allowFailure: true,
     timeoutMs: 90_000,
-    sandbox: options?.sandbox,
+    sandbox: options.sandbox,
     onStdoutText: (chunk) => inferOutputMessage(providerId, "stdout", chunk, options),
     onStderrText: (chunk) => inferOutputMessage(providerId, "stderr", chunk, options)
   });
@@ -79,22 +92,16 @@ async function providerGenerate(
 /**
  * Builds CLI args for a provider invocation.
  */
-function providerArgs(providerId: ProviderId, prompt: string, readOnly: boolean): string[] {
+function providerArgs(providerId: ProviderId, prompt: string): string[] {
   if (providerId === "claude") {
-    // Allow read tools so the AI can analyze the codebase; the prompt
-    // prefix and sandbox prevent writes.
-    const readOnlyArgs = readOnly
-      ? ["--allowedTools", "Read,Glob,Grep,Bash,WebFetch"]
-      : [];
-    return [...readOnlyArgs, "-p", prompt];
+    return ["--dangerously-skip-permissions", "-p", prompt];
   }
 
   if (providerId === "codex") {
-    const readOnlyArgs = readOnly ? ["--sandbox", "read-only"] : [];
-    return [...readOnlyArgs, "-p", prompt];
+    return ["--dangerously-skip-permissions", "-p", prompt];
   }
 
-  return ["-p", prompt];
+  return ["--dangerously-skip-permissions", "-p", prompt];
 }
 
 /**
@@ -105,10 +112,10 @@ export async function aiTextGenerate(
   providerPriority: readonly ProviderId[],
   prompt: string,
   fallbackText: string,
-  options?: AiTextGenerateOptions
+  options: AiTextGenerateOptions
 ): Promise<AiTextGenerateResult> {
-  const readOnly = options?.readOnly ?? true;
-  const promptResolved = inferPromptResolve(prompt, readOnly);
+  const writePolicy: InferenceWritePolicy = options.writePolicy ?? { mode: "read-only" };
+  const promptResolved = inferPromptResolve(prompt, writePolicy);
   const prioritizedProviders = providerPriorityList(providers, providerPriority);
 
   for (const provider of prioritizedProviders) {
@@ -117,11 +124,8 @@ export async function aiTextGenerate(
     }
 
     inferMessage(`provider=${provider.id} selected`, options);
-    const args = providerArgs(provider.id, promptResolved, readOnly);
-    const output = await providerGenerate(provider.id, provider.command, args, {
-      ...options,
-      readOnly
-    });
+    const args = providerArgs(provider.id, promptResolved);
+    const output = await providerGenerate(provider.id, provider.command, args, options);
 
     if (output) {
       inferMessage(`provider=${provider.id} completed`, options);

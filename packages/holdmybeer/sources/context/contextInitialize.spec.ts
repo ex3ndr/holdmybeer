@@ -43,6 +43,7 @@ describe("contextInitialize", () => {
 
     const context = await contextInitialize("/tmp/test-project");
     expect(context.projectPath).toBe("/tmp/test-project");
+    expect(sandboxInferenceGetMock).not.toHaveBeenCalled();
 
     const result = await context.inferText({
       providerPriority: ["codex", "claude"],
@@ -52,12 +53,15 @@ describe("contextInitialize", () => {
 
     expect(globalThis.Context).toBe(context);
     expect(result).toEqual({ provider: "codex", text: "ok" });
+    expect(sandboxInferenceGetMock).toHaveBeenCalledWith({
+      writePolicy: undefined
+    });
     expect(aiTextGenerateMock).toHaveBeenCalledWith(
       context.providers,
       ["codex", "claude"],
       "hello",
       "fallback",
-      { onMessage: undefined, readOnly: true, sandbox }
+      { onMessage: undefined, sandbox, writePolicy: undefined }
     );
   });
 
@@ -87,7 +91,11 @@ describe("contextInitialize", () => {
       providerPriority: ["claude"],
       prompt: "hello",
       fallbackText: "fallback",
-      showProgress: true
+      showProgress: true,
+      writePolicy: {
+        mode: "write-whitelist",
+        writablePaths: ["README.md"]
+      }
     });
 
     expect(aiTextGenerateMock).toHaveBeenCalledWith(
@@ -95,8 +103,21 @@ describe("contextInitialize", () => {
       ["claude"],
       "hello",
       "fallback",
-      { onMessage: expect.any(Function), readOnly: true, sandbox }
+      {
+        onMessage: expect.any(Function),
+        sandbox,
+        writePolicy: {
+          mode: "write-whitelist",
+          writablePaths: ["README.md"]
+        }
+      }
     );
+    expect(sandboxInferenceGetMock).toHaveBeenCalledWith({
+      writePolicy: {
+        mode: "write-whitelist",
+        writablePaths: ["README.md"]
+      }
+    });
 
     const onMessage = aiTextGenerateMock.mock.calls[0]?.[4]?.onMessage as
       | ((message: string) => void)

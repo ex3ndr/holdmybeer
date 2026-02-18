@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import type { Context } from "@/types";
 import { textFormat } from "@text";
+import { generate } from "./generate.js";
 
 export interface AiReadmeGenerateInput {
   sourceFullName: string;
@@ -60,10 +61,8 @@ export async function aiReadmeGenerate(
     ""
   ].join("\n");
 
-  return context.inferText({
-    providerPriority: ["claude", "codex"],
-    prompt,
-    fallbackText: fallback,
-    showProgress: options.showProgress
+  return generate(context, prompt, fallback, {
+    showProgress: options.showProgress,
+    writePolicy: { mode: "read-only" }
   });
 }
