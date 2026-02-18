@@ -1,20 +1,23 @@
 # AI Generate Function
 
-Added a shared `generate` function for inference calls that accepts prompt + permissions and routes through `Context.inferText`.
+Updated `generate` to shape prompts with explicit sandbox context and explicit output expectations.
 
 ## Flow
 
 ```mermaid
 flowchart LR
-  A[aiReadmeGenerate builds prompt] --> B[generate(context, prompt, permissions)]
-  B --> C[context.inferText]
-  C --> D[generateText]
-  D --> E[provider CLI]
+  A[Caller prompt] --> B[generate]
+  B --> C[prepend sandbox parameters]
+  C --> D[append expected output rules text or file]
+  D --> E[providerPriorityList]
+  E --> F[providerGenerate]
+  F --> G[extract output tags]
+  G --> H[GenerateResult]
 ```
 
 ## Notes
 
-- `generate` defaults to provider order `claude -> codex`.
-- `generate` defaults to `read-only` write policy.
-- README generation now uses `generate` and passes explicit read-only permissions.
-- Inference errors now bubble up (no fallback text path).
+- `generate` now prepends current sandbox details (`read-only` or `write-whitelist`).
+- `generate` appends expected output instructions (`text` or `file`).
+- `expectedOutput` defaults to `text` when omitted.
+- `generate` delegates provider invocation to `providerGenerate`.

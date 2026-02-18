@@ -42,8 +42,22 @@ flowchart LR
 - Source repository input accepts URL, SSH remote, or `owner/repo` shorthand.
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes when a non-empty repo already exists.
 - Existing empty repository names are accepted and reused.
-- Source repository is checked out into `.beer/original` before README inference.
+- Source repository is checked out into `<projectPath>/.beer/original` before README inference.
 - README/commit generation follows provider priority and fails fast if inference providers cannot produce output.
+- `projectPath` comes from global CLI option `--project <path>` (default: invocation path).
+
+## Checkout Path Resolution
+
+```mermaid
+flowchart TD
+  A[Bootstrap starts] --> B{--project provided?}
+  B -->|yes| C[Resolve projectPath from --project]
+  B -->|no| D[Resolve projectPath from invocation path]
+  C --> E[Create context with projectPath]
+  D --> E
+  E --> F[Resolve original checkout path as projectPath/.beer/original]
+  F --> G[Clone source repo into that path]
+```
 
 ## Bootstrap Logging
 

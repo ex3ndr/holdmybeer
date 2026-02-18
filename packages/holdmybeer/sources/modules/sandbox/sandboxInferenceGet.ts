@@ -5,6 +5,7 @@ import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTyp
 
 export interface SandboxInferenceGetInput {
   writePolicy?: InferenceWritePolicy;
+  enableWeakerNetworkIsolation?: boolean;
 }
 
 /**
@@ -17,9 +18,12 @@ export async function sandboxInferenceGet(
   const filesystem = sandboxInferenceFilesystemPolicy({
     writePolicy: input.writePolicy
   });
+  const options = typeof input.enableWeakerNetworkIsolation === "boolean"
+    ? { filesystem, enableWeakerNetworkIsolation: input.enableWeakerNetworkIsolation }
+    : { filesystem };
 
   return {
     wrapCommand: (command, abortSignal) =>
-      SandboxManager.wrapWithSandbox(command, undefined, { filesystem }, abortSignal)
+      SandboxManager.wrapWithSandbox(command, undefined, options, abortSignal)
   };
 }

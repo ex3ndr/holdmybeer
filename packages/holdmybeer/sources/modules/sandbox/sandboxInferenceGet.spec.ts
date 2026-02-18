@@ -35,9 +35,21 @@ describe("sandboxInferenceGet", () => {
     expect(sandboxInferenceFilesystemPolicyMock).toHaveBeenCalledWith({
       writePolicy: undefined
     });
+    expect(wrapWithSandboxMock).toHaveBeenCalledWith(
+      "echo hi",
+      undefined,
+      {
+        filesystem: {
+          denyRead: ["deny-read"],
+          allowWrite: ["allow-write"],
+          denyWrite: ["deny-write"]
+        }
+      },
+      undefined
+    );
   });
 
-  it("wraps command using dynamic write policy", async () => {
+  it("forwards enableWeakerNetworkIsolation to sandbox runtime options", async () => {
     wrapWithSandboxMock.mockResolvedValue("wrapped-command");
     const { sandboxInferenceGet } = await import("./sandboxInferenceGet.js");
     const writePolicy = {
@@ -45,7 +57,10 @@ describe("sandboxInferenceGet", () => {
       writablePaths: ["README.md"]
     };
 
-    const sandbox = await sandboxInferenceGet({ writePolicy });
+    const sandbox = await sandboxInferenceGet({
+      writePolicy,
+      enableWeakerNetworkIsolation: true
+    });
     const wrapped = await sandbox.wrapCommand("echo hi");
 
     expect(wrapped).toBe("wrapped-command");
@@ -60,7 +75,8 @@ describe("sandboxInferenceGet", () => {
           denyRead: ["deny-read"],
           allowWrite: ["allow-write"],
           denyWrite: ["deny-write"]
-        }
+        },
+        enableWeakerNetworkIsolation: true
       },
       undefined
     );

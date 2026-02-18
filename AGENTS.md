@@ -3,6 +3,7 @@
 ## Goals
 - keep the core minimal and composable
 - add integrations incrementally
+- **NO INFERENCE FALLBACKS EVER** — if AI providers fail, the operation fails. Do not add try/catch fallbacks, hardcoded default text, or graceful degradation around inference calls. The user must fix their provider setup.
 
 ## Conventions
 - single workspace package at `packages/holdmybeer`

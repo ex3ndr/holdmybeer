@@ -1,4 +1,4 @@
-import type { GenerateTextResult } from "@/modules/ai/generateText.js";
+import type { GenerateResult } from "@/modules/ai/generate.js";
 import type { ProviderDetection, ProviderId } from "@/modules/providers/providerTypes.js";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
 
@@ -12,7 +12,7 @@ export interface ContextInferTextInput {
 export interface Context {
   projectPath: string;
   providers: ProviderDetection[];
-  inferText(input: ContextInferTextInput): Promise<GenerateTextResult>;
+  inferText(input: ContextInferTextInput): Promise<GenerateResult>;
   stageAndCommit(message: string): Promise<boolean>;
 }
 

@@ -11,6 +11,7 @@ export interface CommandRunOptions {
   onStdoutText?: (text: string) => void;
   onStderrText?: (text: string) => void;
   sandbox?: CommandSandbox;
+  env?: Record<string, string>;
 }
 
 export interface CommandRunResult {
@@ -132,6 +133,10 @@ async function commandInvocationResolve(
     shell?: boolean;
   };
 }> {
+  const env = options.env
+    ? { ...process.env, ...options.env }
+    : process.env;
+
   if (!options.sandbox) {
     return {
       command,
@@ -139,7 +144,7 @@ async function commandInvocationResolve(
       spawnOptions: {
         cwd,
         stdio: "pipe",
-        env: process.env
+        env
       }
     };
   }
@@ -152,7 +157,7 @@ async function commandInvocationResolve(
     spawnOptions: {
       cwd,
       stdio: "pipe",
-      env: process.env,
+      env,
       shell: true
     }
   };

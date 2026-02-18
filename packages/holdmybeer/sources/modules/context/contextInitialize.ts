@@ -1,7 +1,6 @@
 import { generateText } from "@/modules/ai/generateText.js";
 import { gitStageAndCommit } from "@/modules/git/gitStageAndCommit.js";
 import { providerDetect } from "@/modules/providers/providerDetect.js";
-import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
 import type { Context } from "@/modules/context/contextTypes.js";
 
 /**
@@ -14,27 +13,12 @@ export async function contextInitialize(projectPath: string): Promise<Context> {
   const context: Context = {
     projectPath,
     providers,
-    inferText: async (input) => {
-      const onMessage = input.showProgress
-        ? (message: string) => {
-            console.log(message);
-          }
-        : undefined;
-      const sandbox = await sandboxInferenceGet({
+    inferText: (input) =>
+      generateText(context, input.prompt, {
+        providerPriority: input.providerPriority,
+        showProgress: input.showProgress,
         writePolicy: input.writePolicy
-      });
-
-      return generateText(
-        providers,
-        input.providerPriority,
-        input.prompt,
-        {
-          onMessage,
-          sandbox,
-          writePolicy: input.writePolicy
-        }
-      );
-    },
+      }),
     stageAndCommit: (message) => gitStageAndCommit(message, projectPath)
   };
 

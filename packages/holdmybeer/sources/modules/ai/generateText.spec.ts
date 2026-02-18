@@ -1,71 +1,35 @@
-import { spawnSync } from "node:child_process";
-import { describe, expect, it } from "vitest";
-import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Context } from "@/types";
+
+const generateMock = vi.hoisted(() => vi.fn());
+
+vi.mock("./generate.js", () => ({
+  generate: generateMock
+}));
+
 import { generateText } from "@/modules/ai/generateText.js";
-import type { ProviderId } from "@/modules/providers/providerTypes.js";
 
-const TEST_TIMEOUT_MS = 180_000;
-
-function commandExists(command: string): boolean {
-  const result = spawnSync("zsh", ["-lc", `command -v ${command}`], {
-    encoding: "utf-8"
-  });
-  return result.status === 0;
-}
-
-function errorTextResolve(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
-}
-
-async function runRealProviderInference(providerId: ProviderId, command: string): Promise<void> {
-  const sandbox = await sandboxInferenceGet({
-    writePolicy: { mode: "read-only" }
+describe("generateText", () => {
+  beforeEach(() => {
+    generateMock.mockReset();
   });
 
-  try {
-    const result = await generateText(
-      [{ id: providerId, available: true, command, priority: 1 }],
-      [providerId],
-      "Reply with a short single sentence.",
-      { sandbox }
-    );
+  it("forwards to generate with text expected output", async () => {
+    const context = { projectPath: "/tmp/test-project", providers: [] } as unknown as Context;
+    generateMock.mockResolvedValue({ provider: "claude", text: "ok" });
 
-    expect(result.provider).toBe(providerId);
-    expect(result.text.trim().length).toBeGreaterThan(0);
-  } catch (error) {
-    const message = errorTextResolve(error);
-    const providerFlag = providerId === "claude"
-      ? "--dangerously-skip-permissions"
-      : "--dangerously-bypass-approvals-and-sandbox";
+    const result = await generateText(context, "hello", {
+      providerPriority: ["codex", "claude"],
+      showProgress: true,
+      writePolicy: { mode: "read-only" }
+    });
 
-    // Real providers can fail when auth is missing; this assertion ensures
-    // failures are not caused by invalid provider flags.
-    expect(message).not.toContain(`unexpected argument '${providerFlag}'`);
-    expect(message).not.toContain(`unrecognized option '${providerFlag}'`);
-  }
-}
-
-describe("generateText claude integration", () => {
-  it(
-    "runs real claude inference without provider-flag parsing errors",
-    async () => {
-      expect(commandExists("claude")).toBe(true);
-      await runRealProviderInference("claude", "claude");
-    },
-    TEST_TIMEOUT_MS
-  );
-});
-
-describe("generateText codex integration", () => {
-  it(
-    "runs real codex inference without provider-flag parsing errors",
-    async () => {
-      expect(commandExists("codex")).toBe(true);
-      await runRealProviderInference("codex", "codex");
-    },
-    TEST_TIMEOUT_MS
-  );
+    expect(result).toEqual({ provider: "claude", text: "ok" });
+    expect(generateMock).toHaveBeenCalledWith(context, "hello", {
+      providerPriority: ["codex", "claude"],
+      showProgress: true,
+      writePolicy: { mode: "read-only" },
+      expectedOutput: { type: "text" }
+    });
+  });
 });

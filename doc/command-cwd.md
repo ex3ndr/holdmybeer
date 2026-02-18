@@ -21,3 +21,4 @@ flowchart TD
 
 - Tool commands consistently execute relative to the folder where the tool was invoked.
 - Development execution and production execution now use the same command cwd behavior.
+- Global `--project <path>` can override invocation path for bootstrap project operations.

@@ -26,6 +26,10 @@ export async function generateFile(
   ].join("\n\n");
   const permissionsResolved: GeneratePermissions = {
     ...permissions,
+    expectedOutput: {
+      type: "file",
+      filePath: resolvedOutputPath
+    },
     writePolicy: {
       mode: "write-whitelist",
       writablePaths: [resolvedOutputPath]

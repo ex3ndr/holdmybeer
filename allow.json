@@ -1,0 +1,16 @@
+{
+    "network": {
+        "allowedDomains": [
+            "chatgpt.com",
+            "*.chatgpt.com"
+        ],
+        "deniedDomains": []
+    },
+    "filesystem": {
+        "denyRead": [],
+        "allowWrite": [
+            "."
+        ],
+        "denyWrite": []
+    }
+}

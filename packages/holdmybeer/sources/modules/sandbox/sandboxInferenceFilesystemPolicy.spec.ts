@@ -77,7 +77,6 @@ describe("sandboxInferenceFilesystemPolicy", () => {
     expect(result.denyRead).toEqual(
       expect.arrayContaining([
         path.resolve("/Users/alice/.ssh"),
-        path.resolve("/Users/alice/Library/Keychains"),
         path.resolve("/Users/alice/Library/Application Support/com.apple.TCC"),
         path.resolve("/private/etc/ssh")
       ])

@@ -1,6 +1,5 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { aiCommitMessageGenerate } from "@/modules/ai/aiCommitMessageGenerate.js";
 import { aiReadmeGenerate } from "@/modules/ai/aiReadmeGenerate.js";
 import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
 import { beerSettingsPathResolve } from "@/modules/beer/beerSettingsPathResolve.js";
@@ -19,17 +18,16 @@ import { githubRepoParse } from "@/modules/github/githubRepoParse.js";
 import { githubRepoStatusGet } from "@/modules/github/githubRepoStatusGet.js";
 import { githubRepoUrlBuild } from "@/modules/github/githubRepoUrlBuild.js";
 import { githubViewerGet } from "@/modules/github/githubViewerGet.js";
-import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 import { promptConfirm } from "@/modules/prompt/promptConfirm.js";
 import { promptInput } from "@/modules/prompt/promptInput.js";
+import { generateCommitMessage } from "@/workflows/steps/generateCommitMessage.js";
 import { text, textFormat, beerLog } from "@text";
 
 /**
  * Runs the interactive bootstrap flow for holdmybeer.
  */
-export async function bootstrap(): Promise<void> {
+export async function bootstrap(projectPath: string): Promise<void> {
   beerLog("bootstrap_start");
-  const projectPath = pathResolveFromInitCwd(".");
   const context = await contextGetOrInitialize(projectPath);
   const showInferenceProgress = true;
   beerLog("bootstrap_github_check");
@@ -141,7 +139,7 @@ export async function bootstrap(): Promise<void> {
     beerLog("bootstrap_publish_selected", { repo: settings.publishRepo.fullName });
   }
 
-  const originalCheckoutPath = beerOriginalPathResolve();
+  const originalCheckoutPath = beerOriginalPathResolve(context.projectPath);
   const sourceRemoteUrl = githubRepoUrlBuild(settings.sourceRepo.fullName);
   beerLog("bootstrap_original_checkout_start");
   const sourceCommitHash = await gitRepoCheckout(sourceRemoteUrl, originalCheckoutPath);
@@ -162,7 +160,7 @@ export async function bootstrap(): Promise<void> {
   beerLog("bootstrap_readme_generated", { provider: readme.provider ?? "unknown" });
 
   beerLog("bootstrap_commit_generating");
-  const commitMessageGenerated = await aiCommitMessageGenerate(
+  const commitMessageGenerated = await generateCommitMessage(
     context,
     settings.sourceRepo.fullName,
     {

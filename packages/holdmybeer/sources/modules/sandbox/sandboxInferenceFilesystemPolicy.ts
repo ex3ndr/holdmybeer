@@ -10,7 +10,6 @@ const COMMON_HOME_RELATIVE_DENY_PATHS = [
   ".kube",
   ".docker",
   ".config/gcloud",
-  ".config/gh",
   ".config/op",
   ".config/1Password",
   ".local/share/keyrings",
@@ -30,7 +29,6 @@ const COMMON_SYSTEM_DENY_PATHS = [
 ];
 
 const DARWIN_HOME_RELATIVE_DENY_PATHS = [
-  "Library/Keychains",
   "Library/Application Support/iCloud",
   "Library/Application Support/com.apple.TCC",
   "Library/Group Containers"

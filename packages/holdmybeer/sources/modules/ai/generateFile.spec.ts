@@ -35,6 +35,10 @@ describe("generateFile", () => {
       expect(result).toEqual({ provider: "claude", text: "second" });
       expect(generateMock).toHaveBeenCalledTimes(2);
       expect(generateMock.mock.calls[0]?.[2]).toEqual({
+        expectedOutput: {
+          type: "file",
+          filePath: outputPath
+        },
         writePolicy: {
           mode: "write-whitelist",
           writablePaths: [outputPath]

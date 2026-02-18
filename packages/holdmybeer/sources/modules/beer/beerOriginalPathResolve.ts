@@ -1,9 +1,8 @@
 import path from "node:path";
-import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 
 /**
- * Returns the local original source checkout path under .beer/original.
+ * Returns the local original source checkout path under projectPath/.beer/original.
  */
-export function beerOriginalPathResolve(): string {
-  return path.join(pathResolveFromInitCwd("."), ".beer", "original");
+export function beerOriginalPathResolve(projectPath: string): string {
+  return path.join(projectPath, ".beer", "original");
 }
