@@ -33,13 +33,7 @@ describe("aiReadmeGenerate", () => {
       context,
       expect.stringContaining("acme/source"),
       {
-        modelPriority: [
-          "openai-codex/gpt-5.3-codex",
-          "openai-codex/gpt-5.2-codex",
-          "anthropic/claude-sonnet-4-6",
-          "anthropic/claude-sonnet-4-5",
-          "anthropic/claude-3-7-sonnet-latest"
-        ],
+        modelSelectionMode: "quality",
         showProgress: true,
         writePolicy: { mode: "read-only" }
       }

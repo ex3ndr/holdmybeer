@@ -19,16 +19,9 @@ const promptTemplate = readFileSync(
   path.join(path.dirname(fileURLToPath(import.meta.url)), "../../prompts/PROMPT_README.md"),
   "utf-8"
 );
-const README_MODEL_PRIORITY = [
-  "openai-codex/gpt-5.3-codex",
-  "openai-codex/gpt-5.2-codex",
-  "anthropic/claude-sonnet-4-6",
-  "anthropic/claude-sonnet-4-5",
-  "anthropic/claude-3-7-sonnet-latest"
-] as const;
 
 /**
- * Generates initial README markdown using provider priority.
+ * Generates initial README markdown using quality-biased model selection.
  * Reads the prompt template from PROMPT_README.md and substitutes input values.
  */
 export async function aiReadmeGenerate(
@@ -44,7 +37,7 @@ export async function aiReadmeGenerate(
 
   return generate(context, prompt, {
     showProgress: options.showProgress,
-    modelPriority: README_MODEL_PRIORITY,
+    modelSelectionMode: "quality",
     writePolicy: { mode: "read-only" }
   });
 }

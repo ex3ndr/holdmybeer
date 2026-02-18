@@ -32,12 +32,7 @@ describe("generateCommitMessage", () => {
       expect.stringContaining("owner/repo"),
       {
         showProgress: true,
-        modelPriority: [
-          "openai-codex/gpt-5.1-codex-mini",
-          "openai-codex/gpt-5.3-codex",
-          "anthropic/claude-haiku-4-5",
-          "anthropic/claude-sonnet-4-6"
-        ]
+        modelSelectionMode: "fast"
       }
     );
   });

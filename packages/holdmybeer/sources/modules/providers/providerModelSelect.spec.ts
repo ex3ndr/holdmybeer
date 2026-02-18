@@ -8,31 +8,72 @@ describe("providerModelSelect", () => {
     priority: 1,
     command: "pi",
     models: [
-      { id: "openai-codex/gpt-5.3-codex", provider: "openai-codex", modelId: "gpt-5.3-codex" },
-      { id: "anthropic/claude-sonnet-4-6", provider: "anthropic", modelId: "claude-sonnet-4-6" },
-      { id: "anthropic/claude-haiku-4-5", provider: "anthropic", modelId: "claude-haiku-4-5" }
+      {
+        id: "alpha/ultra-large",
+        provider: "alpha",
+        modelId: "ultra-large",
+        reasoning: true,
+        contextWindow: 1_000_000,
+        maxTokens: 64_000
+      },
+      {
+        id: "beta/flash-mini",
+        provider: "beta",
+        modelId: "flash-mini",
+        reasoning: false,
+        contextWindow: 128_000,
+        maxTokens: 8_000
+      },
+      {
+        id: "gamma/standard",
+        provider: "gamma",
+        modelId: "standard",
+        reasoning: false,
+        contextWindow: 256_000,
+        maxTokens: 16_000
+      }
     ]
   } as const;
 
   it("selects the first preferred model that exists", () => {
-    const selected = providerModelSelect(provider, [
-      "openai-codex/gpt-5.2-codex",
-      "openai-codex/gpt-5.3-codex"
-    ]);
+    const selected = providerModelSelect({
+      provider,
+      modelPriority: ["missing/model", "gamma/standard"]
+    });
 
-    expect(selected).toBe("openai-codex/gpt-5.3-codex");
+    expect(selected).toBe("gamma/standard");
   });
 
   it("supports unqualified model ids and globs", () => {
-    expect(providerModelSelect(provider, ["claude-sonnet-4-6"]))
-      .toBe("anthropic/claude-sonnet-4-6");
-    expect(providerModelSelect(provider, ["anthropic/claude-*"]))
-      .toBe("anthropic/claude-sonnet-4-6");
+    expect(
+      providerModelSelect({
+        provider,
+        modelPriority: ["flash-mini"]
+      })
+    ).toBe("beta/flash-mini");
+
+    expect(
+      providerModelSelect({
+        provider,
+        modelPriority: ["alpha/*"]
+      })
+    ).toBe("alpha/ultra-large");
   });
 
-  it("falls back to first available model", () => {
-    const selected = providerModelSelect(provider, ["missing/model"]);
+  it("falls back to score-based selection when priority has no match", () => {
+    const selected = providerModelSelect({
+      provider,
+      modelPriority: ["missing/model"],
+      mode: "quality"
+    });
 
-    expect(selected).toBe("openai-codex/gpt-5.3-codex");
+    expect(selected).toBe("alpha/ultra-large");
+  });
+
+  it("uses score-based selection when no priority is provided", () => {
+    expect(providerModelSelect({ provider, mode: "quality" }))
+      .toBe("alpha/ultra-large");
+    expect(providerModelSelect({ provider, mode: "fast" }))
+      .toBe("beta/flash-mini");
   });
 });

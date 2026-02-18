@@ -5,13 +5,6 @@ export interface GenerateCommitMessageOptions {
   showProgress?: boolean;
 }
 
-const COMMIT_MODEL_PRIORITY = [
-  "openai-codex/gpt-5.1-codex-mini",
-  "openai-codex/gpt-5.3-codex",
-  "anthropic/claude-haiku-4-5",
-  "anthropic/claude-sonnet-4-6"
-] as const;
-
 /**
  * Generates an Angular-style initial commit message for bootstrap workflow.
  * Expects: sourceFullName is a valid owner/repo string.
@@ -29,7 +22,7 @@ export async function generateCommitMessage(
 
   const result = await generate(context, prompt, {
     showProgress: options.showProgress,
-    modelPriority: COMMIT_MODEL_PRIORITY
+    modelSelectionMode: "fast"
   });
   const firstLine = result.text.split("\n")[0]?.trim();
   if (!firstLine) {

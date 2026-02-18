@@ -1,6 +1,6 @@
 import { providerPriorityList } from "@/modules/providers/providerPriorityList.js";
 import { providerModelSelect } from "@/modules/providers/providerModelSelect.js";
-import type { ProviderId } from "@/types";
+import type { ProviderId, ProviderModelSelectionMode } from "@/types";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
 import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
 import {
@@ -21,6 +21,7 @@ export type GenerateExpectedOutput =
 export interface GeneratePermissions {
   providerPriority?: readonly ProviderId[];
   modelPriority?: readonly string[];
+  modelSelectionMode?: ProviderModelSelectionMode;
   showProgress?: boolean;
   writePolicy?: InferenceWritePolicy;
   enableWeakerNetworkIsolation?: boolean;
@@ -144,7 +145,11 @@ export async function generate(
 
     inferMessage(`provider=${provider.id} selected`, options);
     inferMessage(`provider=${provider.id} started`, options);
-    const model = providerModelSelect(provider, permissions.modelPriority);
+    const model = providerModelSelect({
+      provider,
+      modelPriority: permissions.modelPriority,
+      mode: permissions.modelSelectionMode
+    });
     if (model) {
       inferMessage(`provider=${provider.id} model=${model}`, options);
     }

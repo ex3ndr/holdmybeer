@@ -13,7 +13,7 @@ describe("providerModelsGet", () => {
     commandRunMock.mockReset();
   });
 
-  it("returns normalized provider/model ids from rpc response", async () => {
+  it("returns normalized provider/model ids and metadata from rpc response", async () => {
     commandRunMock.mockResolvedValue({
       exitCode: 0,
       stdout: [
@@ -25,9 +25,27 @@ describe("providerModelsGet", () => {
           success: true,
           data: {
             models: [
-              { provider: "openai-codex", id: "gpt-5.3-codex" },
-              { provider: "openai-codex", id: "gpt-5.3-codex" },
-              { provider: "anthropic", id: "claude-sonnet-4-6" }
+              {
+                provider: "alpha",
+                id: "ultra-large",
+                name: "Ultra Large",
+                reasoning: true,
+                contextWindow: 1_000_000,
+                maxTokens: 64_000,
+                input: ["text", "image"]
+              },
+              {
+                provider: "alpha",
+                id: "ultra-large"
+              },
+              {
+                provider: "beta",
+                id: "flash-mini",
+                reasoning: false,
+                contextWindow: 128_000,
+                maxTokens: 8_000,
+                input: ["text"]
+              }
             ]
           }
         })
@@ -48,14 +66,24 @@ describe("providerModelsGet", () => {
     );
     expect(result).toEqual([
       {
-        id: "openai-codex/gpt-5.3-codex",
-        provider: "openai-codex",
-        modelId: "gpt-5.3-codex"
+        id: "alpha/ultra-large",
+        provider: "alpha",
+        modelId: "ultra-large",
+        name: "Ultra Large",
+        reasoning: true,
+        contextWindow: 1_000_000,
+        maxTokens: 64_000,
+        input: ["text", "image"]
       },
       {
-        id: "anthropic/claude-sonnet-4-6",
-        provider: "anthropic",
-        modelId: "claude-sonnet-4-6"
+        id: "beta/flash-mini",
+        provider: "beta",
+        modelId: "flash-mini",
+        name: undefined,
+        reasoning: false,
+        contextWindow: 128_000,
+        maxTokens: 8_000,
+        input: ["text"]
       }
     ]);
   });

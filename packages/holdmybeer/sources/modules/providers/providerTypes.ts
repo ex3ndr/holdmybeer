@@ -1,9 +1,15 @@
 export type ProviderId = "pi";
+export type ProviderModelSelectionMode = "balanced" | "quality" | "fast";
 
 export interface ProviderModel {
   id: string;
   provider: string;
   modelId: string;
+  name?: string;
+  reasoning?: boolean;
+  contextWindow?: number;
+  maxTokens?: number;
+  input?: readonly string[];
 }
 
 export interface ProviderDetection {

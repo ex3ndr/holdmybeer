@@ -48,6 +48,7 @@ describe("contextInitialize", () => {
       {
         providerPriority: ["pi"],
         modelPriority: undefined,
+        modelSelectionMode: undefined,
         showProgress: undefined,
         writePolicy: undefined
       }
@@ -88,6 +89,7 @@ describe("contextInitialize", () => {
       {
         providerPriority: ["pi"],
         modelPriority: undefined,
+        modelSelectionMode: undefined,
         showProgress: true,
         writePolicy: {
           mode: "write-whitelist",

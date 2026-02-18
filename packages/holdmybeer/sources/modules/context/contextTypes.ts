@@ -1,10 +1,15 @@
 import type { GenerateResult } from "@/modules/ai/generate.js";
-import type { ProviderDetection, ProviderId } from "@/modules/providers/providerTypes.js";
+import type {
+  ProviderDetection,
+  ProviderId,
+  ProviderModelSelectionMode
+} from "@/modules/providers/providerTypes.js";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
 
 export interface ContextInferTextInput {
   providerPriority: readonly ProviderId[];
   modelPriority?: readonly string[];
+  modelSelectionMode?: ProviderModelSelectionMode;
   prompt: string;
   showProgress?: boolean;
   writePolicy?: InferenceWritePolicy;

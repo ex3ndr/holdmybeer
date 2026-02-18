@@ -9,6 +9,11 @@ interface PiRpcResponse {
     models?: Array<{
       provider?: string;
       id?: string;
+      name?: string;
+      reasoning?: boolean;
+      contextWindow?: number;
+      maxTokens?: number;
+      input?: string[];
     }>;
   };
 }
@@ -48,7 +53,17 @@ function providerModelsFromRpcOutput(stdout: string): ProviderModel[] {
 
     const rawModels = parsed.data?.models ?? [];
     return rawModels
-      .map((entry) => providerModelFromRpc(entry.provider, entry.id))
+      .map((entry) =>
+        providerModelFromRpc({
+          provider: entry.provider,
+          modelId: entry.id,
+          name: entry.name,
+          reasoning: entry.reasoning,
+          contextWindow: entry.contextWindow,
+          maxTokens: entry.maxTokens,
+          input: entry.input
+        })
+      )
       .filter((entry): entry is ProviderModel => entry !== null);
   }
 
@@ -63,24 +78,65 @@ function providerModelsRpcParse(line: string): PiRpcResponse | null {
   }
 }
 
-function providerModelFromRpc(provider: string | undefined, modelId: string | undefined): ProviderModel | null {
-  const providerResolved = provider?.trim();
-  const modelIdResolved = modelId?.trim();
+function providerModelFromRpc(input: {
+  provider?: string;
+  modelId?: string;
+  name?: string;
+  reasoning?: boolean;
+  contextWindow?: number;
+  maxTokens?: number;
+  input?: string[];
+}): ProviderModel | null {
+  const providerResolved = input.provider?.trim();
+  const modelIdResolved = input.modelId?.trim();
   if (!providerResolved || !modelIdResolved) {
     return null;
   }
 
+  const inputTypes = (input.input ?? [])
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+
   return {
     id: `${providerResolved}/${modelIdResolved}`,
     provider: providerResolved,
-    modelId: modelIdResolved
+    modelId: modelIdResolved,
+    name: input.name?.trim() || undefined,
+    reasoning: typeof input.reasoning === "boolean" ? input.reasoning : undefined,
+    contextWindow:
+      typeof input.contextWindow === "number" && Number.isFinite(input.contextWindow)
+        ? input.contextWindow
+        : undefined,
+    maxTokens:
+      typeof input.maxTokens === "number" && Number.isFinite(input.maxTokens)
+        ? input.maxTokens
+        : undefined,
+    input: inputTypes.length > 0 ? inputTypes : undefined
   };
 }
 
 function dedupeModels(models: ProviderModel[]): ProviderModel[] {
   const deduped = new Map<string, ProviderModel>();
   for (const model of models) {
-    deduped.set(model.id, model);
+    const existing = deduped.get(model.id);
+    if (!existing) {
+      deduped.set(model.id, model);
+      continue;
+    }
+    deduped.set(model.id, providerModelMerge(existing, model));
   }
   return Array.from(deduped.values());
+}
+
+function providerModelMerge(existing: ProviderModel, incoming: ProviderModel): ProviderModel {
+  return {
+    id: existing.id,
+    provider: existing.provider,
+    modelId: existing.modelId,
+    name: incoming.name ?? existing.name,
+    reasoning: incoming.reasoning ?? existing.reasoning,
+    contextWindow: incoming.contextWindow ?? existing.contextWindow,
+    maxTokens: incoming.maxTokens ?? existing.maxTokens,
+    input: incoming.input ?? existing.input
+  };
 }

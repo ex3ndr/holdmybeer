@@ -30,8 +30,8 @@ describe("providerDetect", () => {
             success: true,
             data: {
               models: [
-                { provider: "openai-codex", id: "gpt-5.3-codex" },
-                { provider: "anthropic", id: "claude-sonnet-4-6" }
+                { provider: "alpha", id: "ultra-large", contextWindow: 1_000_000 },
+                { provider: "beta", id: "flash-mini", contextWindow: 128_000 }
               ]
             }
           })
@@ -67,14 +67,24 @@ describe("providerDetect", () => {
         priority: 1,
         models: [
           {
-            id: "openai-codex/gpt-5.3-codex",
-            provider: "openai-codex",
-            modelId: "gpt-5.3-codex"
+            id: "alpha/ultra-large",
+            provider: "alpha",
+            modelId: "ultra-large",
+            name: undefined,
+            reasoning: undefined,
+            contextWindow: 1_000_000,
+            maxTokens: undefined,
+            input: undefined
           },
           {
-            id: "anthropic/claude-sonnet-4-6",
-            provider: "anthropic",
-            modelId: "claude-sonnet-4-6"
+            id: "beta/flash-mini",
+            provider: "beta",
+            modelId: "flash-mini",
+            name: undefined,
+            reasoning: undefined,
+            contextWindow: 128_000,
+            maxTokens: undefined,
+            input: undefined
           }
         ]
       }
