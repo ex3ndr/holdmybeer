@@ -1,5 +1,6 @@
 import { providerPriorityList } from "../providers/providerPriorityList.js";
 import type { ProviderDetection, ProviderId } from "../providers/providerTypes.js";
+import type { CommandSandbox } from "../sandbox/sandboxTypes.js";
 import { commandRun } from "../util/commandRun.js";
 
 export interface AiTextGenerateResult {
@@ -10,6 +11,7 @@ export interface AiTextGenerateResult {
 export interface AiTextGenerateOptions {
   onMessage?: (message: string) => void;
   readOnly?: boolean;
+  sandbox?: CommandSandbox;
 }
 
 interface ProviderAttempt {
@@ -70,6 +72,7 @@ async function providerGenerateClaude(
     const result = await commandRun(command, attempt.args, {
       allowFailure: true,
       timeoutMs: 90_000,
+      sandbox: options?.sandbox,
       onStdoutText: (chunk) => inferOutputMessage("claude", "stdout", chunk, options),
       onStderrText: (chunk) => inferOutputMessage("claude", "stderr", chunk, options)
     });
@@ -100,6 +103,7 @@ async function providerGenerateCodex(
     const result = await commandRun(command, attempt.args, {
       allowFailure: true,
       timeoutMs: 90_000,
+      sandbox: options?.sandbox,
       onStdoutText: (chunk) => inferOutputMessage("codex", "stdout", chunk, options),
       onStderrText: (chunk) => inferOutputMessage("codex", "stderr", chunk, options)
     });

@@ -1,5 +1,6 @@
 import { aiTextGenerate } from "../ai/aiTextGenerate.js";
 import { providerDetect } from "../providers/providerDetect.js";
+import { sandboxInferenceGet } from "../sandbox/sandboxInferenceGet.js";
 import type { Context } from "./contextTypes.js";
 
 /**
@@ -7,6 +8,7 @@ import type { Context } from "./contextTypes.js";
  */
 export async function contextInitialize(): Promise<Context> {
   const providers = await providerDetect();
+  const inferenceSandbox = await sandboxInferenceGet();
 
   const context: Context = {
     providers,
@@ -24,7 +26,8 @@ export async function contextInitialize(): Promise<Context> {
         input.fallbackText,
         {
           onMessage,
-          readOnly: true
+          readOnly: true,
+          sandbox: inferenceSandbox
         }
       );
     }

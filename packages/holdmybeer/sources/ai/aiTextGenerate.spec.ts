@@ -66,6 +66,25 @@ describe("aiTextGenerate", () => {
     expect(commandRunMock.mock.calls.map((call) => call[0])).toEqual(["codex", "codex"]);
   });
 
+  it("passes sandbox into provider command execution", async () => {
+    const sandbox = { wrapCommand: vi.fn() };
+    commandRunMock.mockResolvedValueOnce({
+      exitCode: 0,
+      stdout: "claude output",
+      stderr: ""
+    });
+
+    await aiTextGenerate(
+      [{ id: "claude", available: true, command: "claude", priority: 1 }],
+      ["claude"],
+      "test prompt",
+      "fallback",
+      { sandbox }
+    );
+
+    expect(commandRunMock.mock.calls[0]?.[2]?.sandbox).toBe(sandbox);
+  });
+
   it("emits progress messages when enabled", async () => {
     commandRunMock.mockImplementationOnce(
       async (_command: string, _args: string[], options?: CommandRunOptions) => {

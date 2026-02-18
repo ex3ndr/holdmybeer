@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { text as catalog, textFormat } from "@text";
+import type { CommandSandbox } from "../sandbox/sandboxTypes.js";
 
 export interface CommandRunOptions {
   cwd?: string;
@@ -8,6 +9,7 @@ export interface CommandRunOptions {
   allowFailure?: boolean;
   onStdoutText?: (text: string) => void;
   onStderrText?: (text: string) => void;
+  sandbox?: CommandSandbox;
 }
 
 export interface CommandRunResult {
@@ -26,13 +28,17 @@ export async function commandRun(
   options: CommandRunOptions = {}
 ): Promise<CommandRunResult> {
   const timeoutMs = options.timeoutMs ?? 60_000;
+  const displayCommand = `${command} ${args.join(" ")}`;
+  const abortController = new AbortController();
+  const invocation = await commandInvocationResolve(
+    command,
+    args,
+    options,
+    abortController.signal
+  );
 
   const result = await new Promise<CommandRunResult>((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: options.cwd,
-      stdio: "pipe",
-      env: process.env
-    });
+    const child = spawn(invocation.command, invocation.args, invocation.spawnOptions);
 
     let stdout = "";
     let stderr = "";
@@ -43,8 +49,16 @@ export async function commandRun(
         return;
       }
       settled = true;
+      abortController.abort();
       child.kill("SIGTERM");
-      reject(new Error(textFormat(catalog["error_command_timeout"]!, { ms: timeoutMs, command: `${command} ${args.join(" ")}` })));
+      reject(
+        new Error(
+          textFormat(catalog["error_command_timeout"]!, {
+            ms: timeoutMs,
+            command: displayCommand
+          })
+        )
+      );
     }, timeoutMs);
 
     child.stdout.on("data", (chunk: Buffer) => {
@@ -89,10 +103,66 @@ export async function commandRun(
 
   if (!options.allowFailure && result.exitCode !== 0) {
     throw new Error(
-      textFormat(catalog["error_command_failed"]!, { code: result.exitCode, command: `${command} ${args.join(" ")}` })
-      + `\n${result.stderr || result.stdout}`
+      textFormat(catalog["error_command_failed"]!, {
+        code: result.exitCode,
+        command: displayCommand
+      }) + `\n${result.stderr || result.stdout}`
     );
   }
 
   return result;
+}
+
+async function commandInvocationResolve(
+  command: string,
+  args: string[],
+  options: CommandRunOptions,
+  abortSignal: AbortSignal
+): Promise<{
+  command: string;
+  args: string[];
+  spawnOptions: {
+    cwd?: string;
+    stdio: "pipe";
+    env: NodeJS.ProcessEnv;
+    shell?: boolean;
+  };
+}> {
+  if (!options.sandbox) {
+    return {
+      command,
+      args,
+      spawnOptions: {
+        cwd: options.cwd,
+        stdio: "pipe",
+        env: process.env
+      }
+    };
+  }
+
+  const shellCommand = commandShellBuild(command, args);
+  const sandboxedCommand = await options.sandbox.wrapCommand(shellCommand, abortSignal);
+  return {
+    command: sandboxedCommand,
+    args: [],
+    spawnOptions: {
+      cwd: options.cwd,
+      stdio: "pipe",
+      env: process.env,
+      shell: true
+    }
+  };
+}
+
+function commandShellBuild(command: string, args: string[]): string {
+  const commandParts = [command, ...args].map((part) => commandShellQuote(part));
+  return commandParts.join(" ");
+}
+
+function commandShellQuote(value: string): string {
+  if (/^[A-Za-z0-9_/.:-]+$/.test(value)) {
+    return value;
+  }
+
+  return `'${value.replace(/'/g, `'\\''`)}'`;
 }
