@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.37",
+    "@inquirer/select": "^5.0.7",
     "commander": "^12.1.0",
     "fast-glob": "^3.3.3"
   },
