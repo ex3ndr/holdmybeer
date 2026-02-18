@@ -31,19 +31,23 @@ AI does the reading. AI does the writing. You do the supervising, which in this 
 
 The tool figures out which AI is installed on your machine, sandboxes it so it can't mess with your config, runs the rewrite, and gets out of the way. If no AI is available, it still works -- just with less flair.
 
+## Install
+
+```bash
+npm install -g holdmybeer
+```
+
+You'll need Node.js 22+ and the GitHub CLI (`gh auth login`).
+
 ## Get Started
 
 ```bash
-yarn install
+# set everything up
+beer bootstrap
 
-# the full experience -- interactive, walks you through everything
-yarn bootstrap
-
-# just the rewrite, no GitHub stuff
-yarn rewrite ./any-project --dry-run
+# do the actual work
+beer now
 ```
-
-You'll need Node.js 22+, Yarn, and the GitHub CLI (`gh auth login`).
 
 ### AI Providers
 
