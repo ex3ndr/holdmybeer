@@ -27,17 +27,21 @@ import { text, textFormat, beerLog } from "@text";
  * Runs the interactive bootstrap flow for holdmybeer.
  */
 export async function bootstrapRun(): Promise<void> {
+  beerLog("bootstrap_start");
   const context = await contextGetOrInitialize();
   const showInferenceProgress = true;
+  beerLog("bootstrap_github_check");
   await githubCliEnsure();
 
   const settingsPath = beerSettingsPathResolve();
   const settings = await beerSettingsRead(settingsPath);
+  beerLog("bootstrap_settings_loaded", { path: settingsPath });
 
   const detectedProviders = context.providers;
   settings.providers = detectedProviders;
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
+  beerLog("bootstrap_settings_saved", { path: settingsPath });
 
   const availableProviderNames = detectedProviders
     .filter((provider) => provider.available)
@@ -67,10 +71,13 @@ export async function bootstrapRun(): Promise<void> {
       settings.sourceRepo = parsed;
       settings.updatedAt = Date.now();
       await beerSettingsWrite(settingsPath, settings);
+      beerLog("bootstrap_settings_saved", { path: settingsPath });
+      beerLog("bootstrap_source_selected", { repo: settings.sourceRepo.fullName });
       break;
     }
   } else {
     beerLog("bootstrap_skipping_source", { repo: settings.sourceRepo.fullName });
+    beerLog("bootstrap_source_selected", { repo: settings.sourceRepo.fullName });
   }
 
   const source = settings.sourceRepo;
@@ -110,6 +117,10 @@ export async function bootstrapRun(): Promise<void> {
       }
 
       const isPrivate = await promptConfirm(text["prompt_create_private"]!, true);
+      beerLog("bootstrap_repo_creating", {
+        repo: resolvedPublish.fullName,
+        visibility: isPrivate ? "private" : "public"
+      });
       await githubRepoCreate(resolvedPublish.fullName, isPrivate ? "private" : "public");
     }
 
@@ -121,14 +132,20 @@ export async function bootstrapRun(): Promise<void> {
     };
     settings.updatedAt = Date.now();
     await beerSettingsWrite(settingsPath, settings);
+    beerLog("bootstrap_settings_saved", { path: settingsPath });
+    beerLog("bootstrap_publish_selected", { repo: settings.publishRepo.fullName });
   } else {
     beerLog("bootstrap_skipping_publish", { repo: settings.publishRepo.fullName });
+    beerLog("bootstrap_publish_selected", { repo: settings.publishRepo.fullName });
   }
 
   const originalCheckoutPath = beerOriginalPathResolve();
   const sourceRemoteUrl = githubRepoUrlBuild(settings.sourceRepo.fullName);
+  beerLog("bootstrap_original_checkout_start");
   await gitRepoCheckout(sourceRemoteUrl, originalCheckoutPath);
+  beerLog("bootstrap_original_checkout", { path: originalCheckoutPath });
 
+  beerLog("bootstrap_readme_generating");
   const readme = await aiReadmeGenerate(context, {
     sourceFullName: settings.sourceRepo.fullName,
     publishFullName: settings.publishRepo.fullName,
@@ -137,7 +154,9 @@ export async function bootstrapRun(): Promise<void> {
     showProgress: showInferenceProgress
   });
   await writeFile("README.md", `${readme.text.trim()}\n`, "utf-8");
+  beerLog("bootstrap_readme_generated", { provider: readme.provider ?? "fallback" });
 
+  beerLog("bootstrap_commit_generating");
   const commitMessageGenerated = await aiCommitMessageGenerate(
     context,
     settings.sourceRepo.fullName,
@@ -145,21 +164,29 @@ export async function bootstrapRun(): Promise<void> {
       showProgress: showInferenceProgress
     }
   );
+  beerLog("bootstrap_commit_ready", { message: commitMessageGenerated.text });
 
   settings.readmeProvider = readme.provider;
   settings.commitMessageProvider = commitMessageGenerated.provider;
   settings.commitMessage = commitMessageGenerated.text;
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
+  beerLog("bootstrap_settings_saved", { path: settingsPath });
 
   const publishRemoteUrl = githubRepoUrlBuild(settings.publishRepo.fullName);
+  beerLog("bootstrap_remote_ensuring", { url: publishRemoteUrl });
   await gitRemoteEnsure(publishRemoteUrl);
+  beerLog("bootstrap_commit_creating");
   const committed = await gitCommitCreate(commitMessageGenerated.text);
   if (!committed) {
     beerLog("bootstrap_no_changes");
+  } else {
+    beerLog("bootstrap_commit_created");
   }
 
+  beerLog("bootstrap_push_start", { remote: "origin", branch: "main" });
   await gitPush("origin", "main");
+  beerLog("bootstrap_push_done");
 
   beerLog("bootstrap_source_repo", { repo: settings.sourceRepo.fullName });
   beerLog("bootstrap_publish_repo", { repo: settings.publishRepo.fullName });

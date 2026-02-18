@@ -1,12 +1,29 @@
 # Bootstrap
 
+bootstrap_start = 🚀  Starting bootstrap
+bootstrap_github_check = 🔐  Checking GitHub CLI authentication
+bootstrap_settings_loaded = ⚙️  Loaded settings: {path}
+bootstrap_settings_saved = 💾  Saved settings: {path}
 bootstrap_detected_providers = 🔎  Detected providers: {providers}
 bootstrap_invalid_repo = ❌  Invalid repository format — try owner/repo or a GitHub URL
 bootstrap_repo_not_found = ❌  Repository not found or inaccessible: {repo}
+bootstrap_source_selected = 📦  Selected source repo: {repo}
 bootstrap_publish_owners = 🌐  Publish owner options: {owners}
 bootstrap_repo_collision = ⚠️  {requested} already contains code — using {resolved}
+bootstrap_publish_selected = 🚀  Selected publish repo: {repo}
+bootstrap_repo_creating = 🆕  Creating repository: {repo} ({visibility})
+bootstrap_original_checkout_start = 📥  Checking out source repository
 bootstrap_original_checkout = 📥  Checked out original source to: {path}
+bootstrap_readme_generating = 🧠  Generating README.md
+bootstrap_readme_generated = 📝  Generated README.md with {provider}
+bootstrap_commit_generating = 🧠  Generating initial commit message
+bootstrap_commit_ready = 💬  Generated commit message: {message}
+bootstrap_remote_ensuring = 🔗  Ensuring git remote origin: {url}
+bootstrap_commit_creating = 🧾  Creating initial commit
 bootstrap_no_changes = ✅  No changes to commit
+bootstrap_commit_created = ✅  Created initial commit
+bootstrap_push_start = ⬆️  Pushing to {remote}/{branch}
+bootstrap_push_done = ✅  Push complete
 bootstrap_source_repo = 📦  Source repo: {repo}
 bootstrap_publish_repo = 🚀  Publish repo: {repo}
 bootstrap_settings_path = ⚙️  Settings: {path}
