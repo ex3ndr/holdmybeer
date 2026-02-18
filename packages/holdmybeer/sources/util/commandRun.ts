@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { text as catalog, textFormat } from "@text";
 import type { CommandSandbox } from "../sandbox/sandboxTypes.js";
+import { pathResolveFromInitCwd } from "./pathResolveFromInitCwd.js";
 
 export interface CommandRunOptions {
   cwd?: string;
@@ -28,11 +29,13 @@ export async function commandRun(
   options: CommandRunOptions = {}
 ): Promise<CommandRunResult> {
   const timeoutMs = options.timeoutMs ?? 60_000;
+  const cwdResolved = options.cwd ?? pathResolveFromInitCwd(".");
   const displayCommand = `${command} ${args.join(" ")}`;
   const abortController = new AbortController();
   const invocation = await commandInvocationResolve(
     command,
     args,
+    cwdResolved,
     options,
     abortController.signal
   );
@@ -116,6 +119,7 @@ export async function commandRun(
 async function commandInvocationResolve(
   command: string,
   args: string[],
+  cwd: string,
   options: CommandRunOptions,
   abortSignal: AbortSignal
 ): Promise<{
@@ -133,7 +137,7 @@ async function commandInvocationResolve(
       command,
       args,
       spawnOptions: {
-        cwd: options.cwd,
+        cwd,
         stdio: "pipe",
         env: process.env
       }
@@ -146,7 +150,7 @@ async function commandInvocationResolve(
     command: sandboxedCommand,
     args: [],
     spawnOptions: {
-      cwd: options.cwd,
+      cwd,
       stdio: "pipe",
       env: process.env,
       shell: true
