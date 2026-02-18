@@ -4,3 +4,4 @@ dist
 *.tsbuildinfo
 .context/
 .beer/
+.beer/original

@@ -10,8 +10,24 @@ export async function contextInitialize(): Promise<Context> {
 
   const context: Context = {
     providers,
-    inferText: async (input) =>
-      aiTextGenerate(providers, input.providerPriority, input.prompt, input.fallbackText)
+    inferText: async (input) => {
+      const onMessage = input.showProgress
+        ? (message: string) => {
+            console.log(message);
+          }
+        : undefined;
+
+      return aiTextGenerate(
+        providers,
+        input.providerPriority,
+        input.prompt,
+        input.fallbackText,
+        {
+          onMessage,
+          readOnly: true
+        }
+      );
+    }
   };
 
   globalThis.Context = context;

@@ -17,14 +17,15 @@ flowchart TD
   I -->|No| J[Create repo via gh]
   I -->|Empty| K[Reuse empty repo]
   I -->|Non-empty| H
-  J --> L[Generate README via provider priority]
+  J --> L[Checkout source to .beer/original]
   K --> L
-  L --> M[Generate initial commit message]
-  M --> N[Update ~/Developer/HoldMyBeerDev/.beer/settings.json]
-  N --> O[Ensure git origin remote]
-  O --> P[Commit]
-  P --> Q[Push HEAD to main]
-  Q --> R[Done]
+  L --> M[Generate README via provider priority]
+  M --> N[Generate initial commit message]
+  N --> O[Update ~/Developer/HoldMyBeerDev/.beer/settings.json]
+  O --> P[Ensure git origin remote]
+  P --> Q[Commit]
+  Q --> R[Push HEAD to main]
+  R --> S[Done]
 ```
 
 ## Identity
@@ -41,4 +42,5 @@ flowchart LR
 - Source repository input accepts URL, SSH remote, or `owner/repo` shorthand.
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes when a non-empty repo already exists.
 - Existing empty repository names are accepted and reused.
+- Source repository is checked out into `.beer/original` before README inference.
 - README/commit generation tries provider priority first, then uses deterministic fallback text.

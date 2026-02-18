@@ -5,6 +5,7 @@ export interface ContextInferTextInput {
   providerPriority: readonly ProviderId[];
   prompt: string;
   fallbackText: string;
+  showProgress?: boolean;
 }
 
 export interface Context {

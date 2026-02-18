@@ -40,7 +40,41 @@ describe("contextInitialize", () => {
       context.providers,
       ["codex", "claude"],
       "hello",
-      "fallback"
+      "fallback",
+      { onMessage: undefined, readOnly: true }
     );
+  });
+
+  it("wires progress output when showProgress is enabled", async () => {
+    providerDetectMock.mockResolvedValue([
+      { id: "claude", available: true, command: "claude", priority: 1 }
+    ]);
+    aiTextGenerateMock.mockResolvedValue({ provider: "claude", text: "ok" });
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const context = await contextInitialize();
+
+    await context.inferText({
+      providerPriority: ["claude"],
+      prompt: "hello",
+      fallbackText: "fallback",
+      showProgress: true
+    });
+
+    expect(aiTextGenerateMock).toHaveBeenCalledWith(
+      context.providers,
+      ["claude"],
+      "hello",
+      "fallback",
+      { onMessage: expect.any(Function), readOnly: true }
+    );
+
+    const onMessage = aiTextGenerateMock.mock.calls[0]?.[4]?.onMessage as
+      | ((message: string) => void)
+      | undefined;
+    onMessage?.("test message");
+    expect(logSpy).toHaveBeenCalledWith("test message");
+
+    logSpy.mockRestore();
   });
 });

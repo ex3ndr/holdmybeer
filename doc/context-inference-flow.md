@@ -30,4 +30,6 @@ flowchart LR
 
 - Inference now takes typed provider ids (`"claude" | "codex"`) per call.
 - Provider fallback order is controlled by the explicit `providerPriority` array.
+- Per-call visibility is supported with `showProgress: true` on `inferText`.
+- `inferText` is forced into read-only provider execution and injects a non-modification prompt guard.
 - Bootstrap persists detected providers to `~/Developer/HoldMyBeerDev/.beer/settings.json`, but inference no longer uses settings order directly.

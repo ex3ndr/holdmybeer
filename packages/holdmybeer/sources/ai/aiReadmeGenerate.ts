@@ -3,6 +3,11 @@ import type { Context } from "@/types";
 export interface AiReadmeGenerateInput {
   sourceFullName: string;
   publishFullName: string;
+  originalCheckoutPath: string;
+}
+
+export interface AiReadmeGenerateOptions {
+  showProgress?: boolean;
 }
 
 /**
@@ -10,12 +15,16 @@ export interface AiReadmeGenerateInput {
  */
 export async function aiReadmeGenerate(
   context: Context,
-  input: AiReadmeGenerateInput
+  input: AiReadmeGenerateInput,
+  options: AiReadmeGenerateOptions = {}
 ): Promise<{ provider?: string; text: string }> {
   const prompt = [
     "Write a concise README.md for a project called holdmybeer.",
     `Source repository: ${input.sourceFullName}`,
     `Publish repository: ${input.publishFullName}`,
+    `Local original checkout path: ${input.originalCheckoutPath}`,
+    "Use the local original checkout as read-only context.",
+    "Do not modify files or propose edits.",
     "Output only markdown.",
     "Include: project goal, approach, setup, and first rewrite workflow."
   ].join("\n");
@@ -25,6 +34,7 @@ export async function aiReadmeGenerate(
   return context.inferText({
     providerPriority: ["claude", "codex"],
     prompt,
-    fallbackText: fallback
+    fallbackText: fallback,
+    showProgress: options.showProgress
   });
 }

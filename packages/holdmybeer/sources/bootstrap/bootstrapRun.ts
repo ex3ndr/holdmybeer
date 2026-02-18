@@ -1,12 +1,14 @@
 import { writeFile } from "node:fs/promises";
 import { aiCommitMessageGenerate } from "../ai/aiCommitMessageGenerate.js";
 import { aiReadmeGenerate } from "../ai/aiReadmeGenerate.js";
+import { beerOriginalPathResolve } from "../beer/beerOriginalPathResolve.js";
 import { beerSettingsPathResolve } from "../beer/beerSettingsPathResolve.js";
 import { beerSettingsRead } from "../beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "../beer/beerSettingsWrite.js";
 import { contextGetOrInitialize } from "../context/contextGetOrInitialize.js";
 import { gitCommitCreate } from "../git/gitCommitCreate.js";
 import { gitPush } from "../git/gitPush.js";
+import { gitRepoCheckout } from "../git/gitRepoCheckout.js";
 import { gitRemoteEnsure } from "../git/gitRemoteEnsure.js";
 import { githubCliEnsure } from "../github/githubCliEnsure.js";
 import { githubOwnerChoicesGet } from "../github/githubOwnerChoicesGet.js";
@@ -19,12 +21,14 @@ import { githubRepoUrlBuild } from "../github/githubRepoUrlBuild.js";
 import { githubViewerGet } from "../github/githubViewerGet.js";
 import { promptConfirm } from "../prompt/promptConfirm.js";
 import { promptInput } from "../prompt/promptInput.js";
+import { text, textFormat, beerLog } from "@text";
 
 /**
  * Runs the interactive bootstrap flow for holdmybeer.
  */
 export async function bootstrapRun(): Promise<void> {
   const context = await contextGetOrInitialize();
+  const showInferenceProgress = true;
   await githubCliEnsure();
 
   const settingsPath = beerSettingsPathResolve();
@@ -39,23 +43,23 @@ export async function bootstrapRun(): Promise<void> {
     .filter((provider) => provider.available)
     .map((provider) => provider.id)
     .join(", ");
-  console.log(`[beer] detected providers: ${availableProviderNames || "none"}`);
+  beerLog("bootstrap_detected_providers", { providers: availableProviderNames || "none" });
 
   let source = settings.sourceRepo;
   while (!source) {
     const sourceInput = await promptInput(
-      "Repository to rewrite (GitHub URL or owner/repo)",
+      text["prompt_source_repo"]!,
       settings.sourceRepo?.fullName
     );
     const parsed = githubRepoParse(sourceInput);
     if (!parsed) {
-      console.log("[beer] invalid repository format. Try owner/repo or a GitHub URL.");
+      beerLog("bootstrap_invalid_repo");
       continue;
     }
 
     const exists = await githubRepoExists(parsed.fullName);
     if (!exists) {
-      console.log(`[beer] repository not found or inaccessible: ${parsed.fullName}`);
+      beerLog("bootstrap_repo_not_found", { repo: parsed.fullName });
       continue;
     }
 
@@ -68,12 +72,12 @@ export async function bootstrapRun(): Promise<void> {
 
   const viewerLogin = await githubViewerGet();
   const ownerChoices = await githubOwnerChoicesGet(viewerLogin);
-  console.log(`[beer] publish owner options: ${ownerChoices.join(", ")}`);
+  beerLog("bootstrap_publish_owners", { owners: ownerChoices.join(", ") });
 
-  const publishOwner = await promptInput("Publish owner/org", viewerLogin);
+  const publishOwner = await promptInput(text["prompt_publish_owner"]!, viewerLogin);
   const defaultRepoName = `${source.repo}-holdmybeer`;
   const requestedRepoName = await promptInput(
-    "Publish repository name",
+    text["prompt_publish_repo_name"]!,
     settings.publishRepo?.repo ?? defaultRepoName
   );
 
@@ -84,21 +88,22 @@ export async function bootstrapRun(): Promise<void> {
   });
 
   if (resolvedPublish.repo !== requestedRepoName) {
-    console.log(
-      `[beer] ${publishOwner}/${requestedRepoName} already contains code; using ${resolvedPublish.fullName}`
-    );
+    beerLog("bootstrap_repo_collision", {
+      requested: `${publishOwner}/${requestedRepoName}`,
+      resolved: resolvedPublish.fullName
+    });
   }
 
   if (resolvedPublish.status === "missing") {
     const createRepo = await promptConfirm(
-      `Repository ${resolvedPublish.fullName} does not exist. Create it now?`,
+      textFormat(text["prompt_create_repo"]!, { repo: resolvedPublish.fullName }),
       true
     );
     if (!createRepo) {
-      throw new Error("Bootstrap cancelled: publish repository is required.");
+      throw new Error(text["error_bootstrap_cancelled"]!);
     }
 
-    const isPrivate = await promptConfirm("Create as private repository?", true);
+    const isPrivate = await promptConfirm(text["prompt_create_private"]!, true);
     await githubRepoCreate(resolvedPublish.fullName, isPrivate ? "private" : "public");
   }
 
@@ -111,15 +116,25 @@ export async function bootstrapRun(): Promise<void> {
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
 
+  const originalCheckoutPath = beerOriginalPathResolve();
+  const sourceRemoteUrl = githubRepoUrlBuild(settings.sourceRepo.fullName);
+  await gitRepoCheckout(sourceRemoteUrl, originalCheckoutPath);
+
   const readme = await aiReadmeGenerate(context, {
     sourceFullName: settings.sourceRepo.fullName,
-    publishFullName: settings.publishRepo.fullName
+    publishFullName: settings.publishRepo.fullName,
+    originalCheckoutPath
+  }, {
+    showProgress: showInferenceProgress
   });
   await writeFile("README.md", `${readme.text.trim()}\n`, "utf-8");
 
   const commitMessageGenerated = await aiCommitMessageGenerate(
     context,
-    settings.sourceRepo.fullName
+    settings.sourceRepo.fullName,
+    {
+      showProgress: showInferenceProgress
+    }
   );
 
   settings.readmeProvider = readme.provider;
@@ -132,14 +147,14 @@ export async function bootstrapRun(): Promise<void> {
   await gitRemoteEnsure(publishRemoteUrl);
   const committed = await gitCommitCreate(commitMessageGenerated.text);
   if (!committed) {
-    console.log("[beer] no changes to commit");
+    beerLog("bootstrap_no_changes");
   }
 
   await gitPush("origin", "main");
 
-  console.log(`[beer] source repo: ${settings.sourceRepo.fullName}`);
-  console.log(`[beer] publish repo: ${settings.publishRepo.fullName}`);
-  console.log(`[beer] settings: ${settingsPath}`);
-  console.log(`[beer] README provider: ${readme.provider ?? "fallback"}`);
-  console.log(`[beer] commit message: ${commitMessageGenerated.text}`);
+  beerLog("bootstrap_source_repo", { repo: settings.sourceRepo.fullName });
+  beerLog("bootstrap_publish_repo", { repo: settings.publishRepo.fullName });
+  beerLog("bootstrap_settings_path", { path: settingsPath });
+  beerLog("bootstrap_readme_provider", { provider: readme.provider ?? "fallback" });
+  beerLog("bootstrap_commit_message", { message: commitMessageGenerated.text });
 }
