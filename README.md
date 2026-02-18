@@ -43,23 +43,29 @@ yarn bootstrap
 yarn rewrite ./any-project --dry-run
 ```
 
-You'll need Node.js 22+, Yarn, and the GitHub CLI (`gh auth login`). Having `claude` or `codex` installed makes the documentation generation actually good instead of just acceptable.
+You'll need Node.js 22+, Yarn, and the GitHub CLI (`gh auth login`).
+
+### AI Providers
+
+For the full experience you'll want all three subscriptions. Yes, all three. We said hold my beer, not hold my budget.
+
+- **Claude** -- Anthropic
+- **Codex** -- OpenAI
+- **Antigravity** -- Antigravity
+
+Auto-detected at startup. Works with one, better with two, unstoppable with three.
 
 ## The CLI
 
-**`beer bootstrap`** -- The whole workflow. Asks you which repo to rewrite, where to publish it, then does everything else automatically. Crash-safe -- kill it mid-run, re-run it, picks up where it left off. Idempotent. Relentless.
+**`beer bootstrap`** -- Set everything up. Source repo, publish repo, README, first commit, pushed. Interactive, crash-safe, picks up where it left off. Run it, answer a few questions, walk away.
 
-**`beer rewrite <dir>`** -- Just the file rewrite. Normalizes line endings, strips trailing whitespace, converts tabs, collapses blank lines, ensures trailing newlines. Recognizes 30+ text file types, copies binaries untouched, skips the junk directories you'd expect. Produces a detailed JSON report.
-
-```bash
-beer rewrite ./legacy-app -o ./clean-app --force
-beer rewrite ./sketchy-repo --dry-run --report ./audit.json
-beer rewrite ./monorepo -i "src/**" -x "**/*.test.*"
-```
+**`beer now`** -- Do the actual work. Takes the original codebase, hands it to the best available model, and rewrites the entire thing from scratch. New code, new docs, same intent. This is the whole point.
 
 ## Why
 
-Because every project deserves clean files and real documentation, and nobody wants to spend a weekend doing it by hand. HoldMyBeer treats codebase cleanup as a solved problem -- point, shoot, done.
+AI models get meaningfully better every six months. The code you wrote with last generation's model is already behind what today's model would produce from scratch. Instead of patching and accruing tech debt, HoldMyBeer takes the opposite approach -- full rewrite, every cycle, from the ground up. The original codebase is preserved as context so nothing is lost, but the output is always written by the best model available right now.
+
+Think of it as planned obsolescence, except you're the one in control and the replacement is always better.
 
 Three runtime dependencies. No API keys to configure. No config files to maintain. It shells out to the tools already on your machine and lets them do what they're good at.
 
