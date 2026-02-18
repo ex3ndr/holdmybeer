@@ -1,0 +1,37 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const runInferenceMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/workflows/steps/runInference.js", () => ({
+  runInference: runInferenceMock
+}));
+
+import { generateCommit } from "@/workflows/steps/generateCommit.js";
+
+describe("generateCommit", () => {
+  beforeEach(() => {
+    runInferenceMock.mockReset();
+  });
+
+  it("returns first line from inference output", async () => {
+    runInferenceMock.mockResolvedValue({
+      provider: "pi",
+      text: "feat: initial bootstrap\nextra line"
+    });
+
+    const result = await generateCommit("owner/repo", { showProgress: true });
+
+    expect(result).toEqual({
+      provider: "pi",
+      text: "feat: initial bootstrap"
+    });
+    expect(runInferenceMock).toHaveBeenCalledWith(
+      expect.stringContaining("{{sourceFullName}}"),
+      { sourceFullName: "owner/repo" },
+      {
+        showProgress: true,
+        modelSelectionMode: "fast"
+      }
+    );
+  });
+});

@@ -6,7 +6,6 @@ import { beerSettingsPathResolve } from "@/modules/beer/beerSettingsPathResolve.
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
 import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
-import { gitPush } from "@/modules/git/gitPush.js";
 import { gitRepoCheckout } from "@/modules/git/gitRepoCheckout.js";
 import { gitRemoteEnsure } from "@/modules/git/gitRemoteEnsure.js";
 import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
@@ -20,7 +19,8 @@ import { githubRepoUrlBuild } from "@/modules/github/githubRepoUrlBuild.js";
 import { githubViewerGet } from "@/modules/github/githubViewerGet.js";
 import { promptConfirm } from "@/modules/prompt/promptConfirm.js";
 import { promptInput } from "@/modules/prompt/promptInput.js";
-import { generateCommitMessage } from "@/workflows/steps/generateCommitMessage.js";
+import { generateCommit } from "@/workflows/steps/generateCommit.js";
+import { pushMain } from "@/workflows/steps/pushMain.js";
 import { text, textFormat, beerLog } from "@text";
 
 /**
@@ -165,12 +165,9 @@ export async function bootstrap(projectPath: string): Promise<void> {
   beerLog("bootstrap_readme_generated", { provider: readme.provider ?? "unknown" });
 
   beerLog("bootstrap_commit_generating");
-  const commitMessageGenerated = await generateCommitMessage(
-    context,
+  const commitMessageGenerated = await generateCommit(
     settings.sourceRepo.fullName,
-    {
-      showProgress: showInferenceProgress
-    }
+    { showProgress: showInferenceProgress }
   );
   beerLog("bootstrap_commit_ready", { message: commitMessageGenerated.text });
 
@@ -182,20 +179,25 @@ export async function bootstrap(projectPath: string): Promise<void> {
   beerLog("bootstrap_remote_ensuring", { url: publishRemoteUrl });
   await gitRemoteEnsure(publishRemoteUrl, context.projectPath);
   beerLog("bootstrap_commit_creating");
-  const committed = await context.stageAndCommit(commitMessageGenerated.text);
+  beerLog("bootstrap_push_start", { remote: "origin", branch: "main" });
+  const pushResult = await pushMain(commitMessageGenerated.text, {
+    showProgress: showInferenceProgress,
+    remote: "origin",
+    branch: "main"
+  });
+  const committed = pushResult.committed;
   if (!committed) {
     beerLog("bootstrap_no_changes");
   } else {
     beerLog("bootstrap_commit_created");
   }
-
-  beerLog("bootstrap_push_start", { remote: "origin", branch: "main" });
-  await gitPush("origin", "main", context.projectPath);
   beerLog("bootstrap_push_done");
+  beerLog("bootstrap_gitignore_provider", { provider: pushResult.provider ?? "unknown" });
 
   beerLog("bootstrap_source_repo", { repo: settings.sourceRepo.fullName });
   beerLog("bootstrap_publish_repo", { repo: settings.publishRepo.fullName });
   beerLog("bootstrap_settings_path", { path: settingsPath });
   beerLog("bootstrap_readme_provider", { provider: readme.provider ?? "unknown" });
+  beerLog("bootstrap_commit_provider", { provider: commitMessageGenerated.provider ?? "unknown" });
   beerLog("bootstrap_commit_message", { message: commitMessageGenerated.text });
 }

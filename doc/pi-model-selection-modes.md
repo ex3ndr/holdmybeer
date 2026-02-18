@@ -26,5 +26,5 @@ flowchart TD
 ## Notes
 
 - `aiReadmeGenerate` uses `modelSelectionMode: "quality"`.
-- `generateCommitMessage` uses `modelSelectionMode: "fast"`.
+- `generateCommit` uses `modelSelectionMode: "fast"`.
 - Explicit `modelPriority` still works and takes precedence.

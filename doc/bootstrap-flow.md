@@ -21,11 +21,14 @@ flowchart TD
   K --> M[Checkout source to .beer/original]
   L --> M
   M --> N[Generate README via pi]
-  N --> O[Generate initial commit message via pi]
-  O --> P[Update settings]
-  P --> Q[Ensure git origin remote]
-  Q --> R[Commit]
-  R --> S[Push HEAD to main]
+  N --> O[generateCommit step]
+  O --> P[runInference step]
+  P --> Q[Update settings]
+  Q --> R[Ensure git origin remote]
+  R --> S[pushMain step]
+  S --> T[LLM updates .gitignore]
+  T --> U[Commit]
+  U --> V[Push HEAD to main]
 ```
 
 ## Notes
@@ -34,4 +37,5 @@ flowchart TD
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes on non-empty collisions.
 - Source is checked out to `<projectPath>/.beer/original` before inference.
 - README and commit generation resolve workflow model priorities against live `pi` model availability.
+- Push step updates `.gitignore` via inference before staging and commit.
 - Inference failures fail the operation.
