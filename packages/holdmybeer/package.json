@@ -1,5 +1,5 @@
 {
-  "name": "holdmybeer",
+  "name": "@slopus/beer",
   "version": "0.1.0",
   "description": "Holdmybeer CLI bootstrap tool",
   "type": "module",

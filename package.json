@@ -6,12 +6,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspace holdmybeer run build",
-    "dev": "yarn workspace holdmybeer run dev",
-    "dev:run": "yarn workspace holdmybeer run dev rewrite ./fixtures/dev-source --output ./.context/dev-output --force",
-    "bootstrap": "yarn workspace holdmybeer run dev bootstrap",
-    "release": "yarn workspace holdmybeer run release",
-    "rewrite": "yarn workspace holdmybeer run dev rewrite",
+    "build": "yarn workspace @slopus/beer run build",
+    "dev": "yarn workspace @slopus/beer run dev",
+    "dev:run": "yarn workspace @slopus/beer run dev rewrite ./fixtures/dev-source --output ./.context/dev-output --force",
+    "bootstrap": "yarn workspace @slopus/beer run dev bootstrap",
+    "release": "yarn workspace @slopus/beer run release",
+    "rewrite": "yarn workspace @slopus/beer run dev rewrite",
     "test": "yarn workspaces run test",
     "test:watch": "yarn workspaces run test:watch",
     "typecheck": "yarn workspaces run typecheck"

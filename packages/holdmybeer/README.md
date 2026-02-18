@@ -1,4 +1,4 @@
-# holdmybeer
+# @slopus/beer
 
 CLI package for **HoldMyBeer**.
 

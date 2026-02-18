@@ -30,7 +30,7 @@ Inference is fail-fast: if provider execution fails, bootstrap fails.
 ## Install
 
 ```bash
-npm install -g holdmybeer
+npm install -g @slopus/beer
 ```
 
 Requirements:

@@ -6,7 +6,7 @@ Added a root `yarn release` flow that publishes the `holdmybeer` package.
 
 ```mermaid
 flowchart LR
-  A[yarn release at repo root] --> B[yarn workspace holdmybeer run release]
+  A[yarn release at repo root] --> B[yarn workspace @slopus/beer run release]
   B --> C[assert git status --porcelain is empty]
   C --> D[choose next version patch/minor/major/custom]
   D --> E[npm version X.Y.Z --no-git-tag-version]
