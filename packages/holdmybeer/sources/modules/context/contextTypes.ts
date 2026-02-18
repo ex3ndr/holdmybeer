@@ -4,6 +4,7 @@ import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTyp
 
 export interface ContextInferTextInput {
   providerPriority: readonly ProviderId[];
+  modelPriority?: readonly string[];
   prompt: string;
   showProgress?: boolean;
   writePolicy?: InferenceWritePolicy;

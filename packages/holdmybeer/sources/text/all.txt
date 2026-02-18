@@ -5,6 +5,7 @@ bootstrap_github_check = 🔐  Checking GitHub CLI authentication
 bootstrap_settings_loaded = ⚙️  Loaded settings: {path}
 bootstrap_settings_saved = 💾  Saved settings: {path}
 bootstrap_detected_providers = 🔎  Detected providers: {providers}
+bootstrap_detected_models = 🧩  Detected models: {models}
 bootstrap_invalid_repo = ❌  Invalid repository format — try owner/repo or a GitHub URL
 bootstrap_repo_not_found = ❌  Repository not found or inaccessible: {repo}
 bootstrap_source_selected = 📦  Selected source repo: {repo}

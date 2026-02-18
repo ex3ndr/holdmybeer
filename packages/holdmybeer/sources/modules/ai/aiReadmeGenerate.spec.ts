@@ -16,7 +16,7 @@ describe("aiReadmeGenerate", () => {
 
   it("uses generate with read-only permissions", async () => {
     const context = {} as Context;
-    generateMock.mockResolvedValue({ provider: "claude", text: "# test" });
+    generateMock.mockResolvedValue({ provider: "pi", text: "# test" });
 
     const result = await aiReadmeGenerate(
       context,
@@ -28,11 +28,18 @@ describe("aiReadmeGenerate", () => {
       { showProgress: true }
     );
 
-    expect(result).toEqual({ provider: "claude", text: "# test" });
+    expect(result).toEqual({ provider: "pi", text: "# test" });
     expect(generateMock).toHaveBeenCalledWith(
       context,
       expect.stringContaining("acme/source"),
       {
+        modelPriority: [
+          "openai-codex/gpt-5.3-codex",
+          "openai-codex/gpt-5.2-codex",
+          "anthropic/claude-sonnet-4-6",
+          "anthropic/claude-sonnet-4-5",
+          "anthropic/claude-3-7-sonnet-latest"
+        ],
         showProgress: true,
         writePolicy: { mode: "read-only" }
       }

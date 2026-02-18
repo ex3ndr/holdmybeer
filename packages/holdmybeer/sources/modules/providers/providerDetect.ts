@@ -1,5 +1,6 @@
 import type { ProviderDetection, ProviderId } from "@/modules/providers/providerTypes.js";
 import { commandRun } from "@/modules/util/commandRun.js";
+import { providerModelsGet } from "@/modules/providers/providerModelsGet.js";
 
 interface ProviderProbe {
   id: ProviderId;
@@ -9,14 +10,9 @@ interface ProviderProbe {
 
 const PROVIDER_PROBES: ProviderProbe[] = [
   {
-    id: "claude",
+    id: "pi",
     priority: 1,
-    commands: ["claude", "claude-code"]
-  },
-  {
-    id: "codex",
-    priority: 2,
-    commands: ["codex"]
+    commands: ["pi"]
   }
 ];
 
@@ -40,12 +36,14 @@ export async function providerDetect(): Promise<ProviderDetection[]> {
       }).catch(() => ({ exitCode: 1, stdout: "", stderr: "" }));
 
       if (result.exitCode === 0) {
+        const models = await providerModelsGet(command);
         resolved = {
           id: probe.id,
           available: true,
           command,
           version: result.stdout.trim() || undefined,
-          priority: probe.priority
+          priority: probe.priority,
+          models
         };
         break;
       }

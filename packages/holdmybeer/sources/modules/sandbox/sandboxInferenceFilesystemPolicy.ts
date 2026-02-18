@@ -98,8 +98,7 @@ function allowWriteResolve(
   homeDir: string
 ): string[] {
   const authPaths = [
-    path.resolve(homeDir, ".claude"),
-    path.resolve(homeDir, ".codex")
+    path.resolve(homeDir, ".pi")
   ];
 
   if (!writePolicy || writePolicy.mode === "read-only") {

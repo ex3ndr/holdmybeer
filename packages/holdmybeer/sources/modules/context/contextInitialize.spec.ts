@@ -28,26 +28,26 @@ describe("contextInitialize", () => {
 
   it("creates global Context with projectPath and wires inferText to generateText", async () => {
     providerDetectMock.mockResolvedValue([
-      { id: "claude", available: true, command: "claude", priority: 1 },
-      { id: "codex", available: true, command: "codex", priority: 2 }
+      { id: "pi", available: true, command: "pi", priority: 1 }
     ]);
-    generateTextMock.mockResolvedValue({ provider: "codex", text: "ok" });
+    generateTextMock.mockResolvedValue({ provider: "pi", text: "ok" });
 
     const context = await contextInitialize("/tmp/test-project");
     expect(context.projectPath).toBe("/tmp/test-project");
 
     const result = await context.inferText({
-      providerPriority: ["codex", "claude"],
+      providerPriority: ["pi"],
       prompt: "hello"
     });
 
     expect(globalThis.Context).toBe(context);
-    expect(result).toEqual({ provider: "codex", text: "ok" });
+    expect(result).toEqual({ provider: "pi", text: "ok" });
     expect(generateTextMock).toHaveBeenCalledWith(
       context,
       "hello",
       {
-        providerPriority: ["codex", "claude"],
+        providerPriority: ["pi"],
+        modelPriority: undefined,
         showProgress: undefined,
         writePolicy: undefined
       }
@@ -66,14 +66,14 @@ describe("contextInitialize", () => {
 
   it("passes showProgress and writePolicy through to generate", async () => {
     providerDetectMock.mockResolvedValue([
-      { id: "claude", available: true, command: "claude", priority: 1 }
+      { id: "pi", available: true, command: "pi", priority: 1 }
     ]);
-    generateTextMock.mockResolvedValue({ provider: "claude", text: "ok" });
+    generateTextMock.mockResolvedValue({ provider: "pi", text: "ok" });
 
     const context = await contextInitialize("/tmp/test-project");
 
     await context.inferText({
-      providerPriority: ["claude"],
+      providerPriority: ["pi"],
       prompt: "hello",
       showProgress: true,
       writePolicy: {
@@ -86,7 +86,8 @@ describe("contextInitialize", () => {
       context,
       "hello",
       {
-        providerPriority: ["claude"],
+        providerPriority: ["pi"],
+        modelPriority: undefined,
         showProgress: true,
         writePolicy: {
           mode: "write-whitelist",

@@ -16,6 +16,7 @@ export async function contextInitialize(projectPath: string): Promise<Context> {
     inferText: (input) =>
       generateText(context, input.prompt, {
         providerPriority: input.providerPriority,
+        modelPriority: input.modelPriority,
         showProgress: input.showProgress,
         writePolicy: input.writePolicy
       }),

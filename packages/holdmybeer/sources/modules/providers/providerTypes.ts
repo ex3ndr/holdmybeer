@@ -1,4 +1,10 @@
-export type ProviderId = "claude" | "codex";
+export type ProviderId = "pi";
+
+export interface ProviderModel {
+  id: string;
+  provider: string;
+  modelId: string;
+}
 
 export interface ProviderDetection {
   id: ProviderId;
@@ -6,4 +12,5 @@ export interface ProviderDetection {
   command?: string;
   version?: string;
   priority: number;
+  models?: readonly ProviderModel[];
 }

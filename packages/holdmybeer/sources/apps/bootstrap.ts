@@ -43,11 +43,16 @@ export async function bootstrap(projectPath: string): Promise<void> {
   await beerSettingsWrite(settingsPath, settings);
   beerLog("bootstrap_settings_saved", { path: settingsPath });
 
-  const availableProviderNames = detectedProviders
-    .filter((provider) => provider.available)
+  const availableProviders = detectedProviders.filter((provider) => provider.available);
+  const availableProviderNames = availableProviders
     .map((provider) => provider.id)
     .join(", ");
   beerLog("bootstrap_detected_providers", { providers: availableProviderNames || "none" });
+  const availableModels = availableProviders
+    .flatMap((provider) => provider.models ?? [])
+    .map((model) => model.id)
+    .join(", ");
+  beerLog("bootstrap_detected_models", { models: availableModels || "none" });
 
   if (!settings.sourceRepo) {
     // eslint-disable-next-line no-constant-condition

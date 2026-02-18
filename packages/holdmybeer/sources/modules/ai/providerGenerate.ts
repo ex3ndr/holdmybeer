@@ -7,6 +7,7 @@ import { commandRun } from "@/modules/util/commandRun.js";
 export interface ProviderGenerateInput {
   providerId: ProviderId;
   command: string;
+  model?: string;
   prompt: string;
   sandbox: CommandSandbox;
   writePolicy?: InferenceWritePolicy;
@@ -30,7 +31,7 @@ const OUTPUT_RETRY_PROMPT = "Last time you didnt return <output> - do this now";
 
 /**
  * Runs provider inference through CLI and extracts response wrapped in <output> tags.
- * Expects: providerId is either claude or codex and command is executable.
+ * Expects: providerId is pi and command is executable.
  */
 export async function providerGenerate(
   input: ProviderGenerateInput
@@ -42,11 +43,10 @@ export async function providerGenerate(
   ];
 
   for (let attempt = 0; attempt < prompts.length; attempt += 1) {
-    const result = await commandRun(input.command, providerArgs(input.providerId, prompts[attempt]!, input.writePolicy), {
+    const result = await commandRun(input.command, providerArgs(input.providerId, prompts[attempt]!, input.model), {
       allowFailure: true,
       timeoutMs: 90_000,
       sandbox: providerSandboxResolve(input),
-      env: providerEnv(input.providerId),
       onStdoutText: input.onStdoutText,
       onStderrText: input.onStderrText
     });
@@ -62,7 +62,7 @@ export async function providerGenerate(
       };
     }
 
-    const outputRaw = result.stdout.trim();
+    const outputRaw = providerOutputResolve(input.providerId, result.stdout);
     if (requireOutputTags && !outputRaw) {
       return {
         output: null,
@@ -108,38 +108,88 @@ export async function providerGenerate(
 function providerArgs(
   providerId: ProviderId,
   prompt: string,
-  writePolicy: InferenceWritePolicy | undefined
+  model: string | undefined
 ): string[] {
-  if (providerId === "claude") {
-    return ["--dangerously-skip-permissions", "-p", prompt];
+  const args = ["--mode", "json", "--print", "--no-session"];
+  if (model && model.trim().length > 0) {
+    args.push("--model", model.trim());
   }
-
-  // Codex runs with codex-native approvals+sandbox bypass flag.
-  return [...codexArgs(prompt, writePolicy)];
-}
-
-function providerEnv(providerId: ProviderId): Record<string, string> | undefined {
-  if (providerId !== "codex") {
-    return undefined;
-  }
-
-  // Codex needs seatbelt mode in sandbox to avoid SCDynamicStore panics.
-  return {
-    CODEX_SANDBOX: "seatbelt",
-    RUST_LOG: "codex_core::rollout::list=off"
-  };
+  args.push(prompt);
+  return args;
 }
 
 function providerSandboxResolve(input: ProviderGenerateInput): CommandSandbox | undefined {
-  if (input.providerId === "codex") {
-    // Codex runs without outer wrapper sandbox.
-    return undefined;
-  }
-
   return input.sandbox;
 }
 
-function codexArgs(prompt: string, writePolicy: InferenceWritePolicy | undefined): string[] {
-  void writePolicy;
-  return ["exec", "--dangerously-bypass-approvals-and-sandbox", "--", prompt];
+function providerOutputResolve(providerId: ProviderId, stdout: string): string {
+  if (providerId !== "pi") {
+    return stdout.trim();
+  }
+  return providerOutputResolvePiJson(stdout);
+}
+
+function providerOutputResolvePiJson(stdout: string): string {
+  const lines = stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  let finalAssistantText: string | undefined;
+  for (const line of lines) {
+    const parsed = providerPiEventParse(line);
+    if (!parsed || typeof parsed !== "object") {
+      continue;
+    }
+
+    const text = providerPiAssistantText(parsed);
+    if (typeof text === "string") {
+      finalAssistantText = text;
+    }
+  }
+
+  return finalAssistantText?.trim() ?? stdout.trim();
+}
+
+function providerPiEventParse(line: string): unknown {
+  try {
+    return JSON.parse(line);
+  } catch {
+    return null;
+  }
+}
+
+function providerPiAssistantText(event: unknown): string | undefined {
+  if (!event || typeof event !== "object") {
+    return undefined;
+  }
+
+  const typed = event as {
+    type?: string;
+    message?: { role?: string; content?: unknown };
+  };
+  if (typed.type !== "message_end" || typed.message?.role !== "assistant") {
+    return undefined;
+  }
+
+  return providerPiContentText(typed.message.content);
+}
+
+function providerPiContentText(content: unknown): string {
+  if (!Array.isArray(content)) {
+    return "";
+  }
+
+  return content
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return "";
+      }
+
+      const typed = entry as { type?: string; text?: string };
+      return typed.type === "text" && typeof typed.text === "string"
+        ? typed.text
+        : "";
+    })
+    .join("");
 }

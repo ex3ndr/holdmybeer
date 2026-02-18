@@ -24,15 +24,15 @@ describe("generateFile", () => {
       const context = { projectPath: tempDir } as Context;
 
       generateMock
-        .mockResolvedValueOnce({ provider: "claude", text: "first" })
+        .mockResolvedValueOnce({ provider: "pi", text: "first" })
         .mockImplementationOnce(async () => {
           await writeFile(outputPath, "# ok\n", "utf-8");
-          return { provider: "claude", text: "second" };
+          return { provider: "pi", text: "second" };
         });
 
       const result = await generateFile(context, "Create readme", outputPath);
 
-      expect(result).toEqual({ provider: "claude", text: "second" });
+      expect(result).toEqual({ provider: "pi", text: "second" });
       expect(generateMock).toHaveBeenCalledTimes(2);
       expect(generateMock.mock.calls[0]?.[2]).toEqual({
         expectedOutput: {
@@ -62,7 +62,7 @@ describe("generateFile", () => {
       const outputPath = path.join(tempDir, "README.md");
       const context = { projectPath: tempDir } as Context;
 
-      generateMock.mockResolvedValue({ provider: "claude", text: "done" });
+      generateMock.mockResolvedValue({ provider: "pi", text: "done" });
 
       await expect(
         generateFile(context, "Create readme", outputPath, { retries: 1 })

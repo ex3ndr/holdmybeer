@@ -1,4 +1,5 @@
 import { providerPriorityList } from "@/modules/providers/providerPriorityList.js";
+import { providerModelSelect } from "@/modules/providers/providerModelSelect.js";
 import type { ProviderId } from "@/types";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
 import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
@@ -19,6 +20,7 @@ export type GenerateExpectedOutput =
 
 export interface GeneratePermissions {
   providerPriority?: readonly ProviderId[];
+  modelPriority?: readonly string[];
   showProgress?: boolean;
   writePolicy?: InferenceWritePolicy;
   enableWeakerNetworkIsolation?: boolean;
@@ -131,7 +133,7 @@ export async function generate(
   });
 
   const promptResolved = inferPromptResolve(prompt, writePolicy, expectedOutput);
-  const providerPriority = permissions.providerPriority ?? ["claude", "codex"];
+  const providerPriority = permissions.providerPriority ?? ["pi"];
   const prioritizedProviders = providerPriorityList(context.providers, providerPriority);
   const failures: ProviderGenerateFailure[] = [];
 
@@ -142,9 +144,14 @@ export async function generate(
 
     inferMessage(`provider=${provider.id} selected`, options);
     inferMessage(`provider=${provider.id} started`, options);
+    const model = providerModelSelect(provider, permissions.modelPriority);
+    if (model) {
+      inferMessage(`provider=${provider.id} model=${model}`, options);
+    }
     const result = await providerGenerate({
       providerId: provider.id,
       command: provider.command,
+      model,
       prompt: promptResolved,
       sandbox,
       writePolicy,
@@ -153,7 +160,7 @@ export async function generate(
       onStderrText: (chunk) => inferOutputMessage(provider.id, "stderr", chunk, options)
     });
 
-    if (result.output) {
+    if (result.output !== null) {
       inferMessage(`provider=${provider.id} completed`, options);
       return {
         provider: provider.id,

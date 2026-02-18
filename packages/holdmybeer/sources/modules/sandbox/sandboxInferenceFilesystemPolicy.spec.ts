@@ -20,8 +20,7 @@ describe("sandboxInferenceFilesystemPolicy", () => {
     });
 
     expect(result.allowWrite).toEqual([
-      path.resolve("/home/alice/.claude"),
-      path.resolve("/home/alice/.codex")
+      path.resolve("/home/alice/.pi")
     ]);
   });
 
@@ -42,8 +41,7 @@ describe("sandboxInferenceFilesystemPolicy", () => {
     expect(result.allowWrite).toEqual([
       path.resolve("/workspace/project/README.md"),
       path.resolve("/workspace/project/doc/inference-sandbox.md"),
-      path.resolve("/home/alice/.claude"),
-      path.resolve("/home/alice/.codex")
+      path.resolve("/home/alice/.pi")
     ]);
   });
 

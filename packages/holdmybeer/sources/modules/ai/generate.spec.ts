@@ -30,6 +30,7 @@ function contextForProvider(providerId: ProviderId, command: string): Context {
         input.prompt,
         {
           providerPriority: input.providerPriority,
+          modelPriority: input.modelPriority,
           showProgress: input.showProgress,
           writePolicy: input.writePolicy
         }
@@ -50,34 +51,20 @@ async function runRealProviderInference(providerId: ProviderId, command: string)
     expect(result.text.trim().length).toBeGreaterThan(0);
   } catch (error) {
     const message = errorTextResolve(error);
-    const providerFlag = providerId === "claude"
-      ? "--dangerously-skip-permissions"
-      : "--dangerously-bypass-approvals-and-sandbox";
 
-    // Real providers can fail when auth is missing; this assertion ensures
-    // failures are not caused by invalid provider flags.
-    expect(message).not.toContain(`unexpected argument '${providerFlag}'`);
-    expect(message).not.toContain(`unrecognized option '${providerFlag}'`);
+    // Real provider can fail when auth/network is missing; ensure failures
+    // are not caused by unsupported CLI flags.
+    expect(message).not.toContain("unknown option '--mode'");
+    expect(message).not.toContain("unknown option '--print'");
   }
 }
 
-describe("generate claude integration", () => {
+describe("generate pi integration", () => {
   it(
-    "runs real claude inference without provider-flag parsing errors",
+    "runs real pi inference without json-mode flag parsing errors",
     async () => {
-      expect(commandExists("claude")).toBe(true);
-      await runRealProviderInference("claude", "claude");
-    },
-    TEST_TIMEOUT_MS
-  );
-});
-
-describe("generate codex integration", () => {
-  it(
-    "runs real codex inference without provider-flag parsing errors",
-    async () => {
-      expect(commandExists("codex")).toBe(true);
-      await runRealProviderInference("codex", "codex");
+      expect(commandExists("pi")).toBe(true);
+      await runRealProviderInference("pi", "pi");
     },
     TEST_TIMEOUT_MS
   );

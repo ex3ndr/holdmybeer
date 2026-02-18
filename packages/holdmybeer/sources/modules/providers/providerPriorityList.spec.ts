@@ -4,23 +4,21 @@ import { providerPriorityList } from "@/modules/providers/providerPriorityList.j
 describe("providerPriorityList", () => {
   it("orders available providers by requested provider ids", () => {
     const providers = [
-      { id: "claude", available: true, command: "claude", priority: 1 },
-      { id: "codex", available: true, command: "codex", priority: 2 }
+      { id: "pi", available: true, command: "pi", priority: 1 }
     ] as const;
 
-    const ordered = providerPriorityList(providers, ["codex", "claude"]);
+    const ordered = providerPriorityList(providers, ["pi"]);
 
-    expect(ordered.map((provider) => provider.id)).toEqual(["codex", "claude"]);
+    expect(ordered.map((provider) => provider.id)).toEqual(["pi"]);
   });
 
   it("skips unavailable or missing providers", () => {
     const providers = [
-      { id: "claude", available: false, command: "claude", priority: 1 },
-      { id: "codex", available: true, command: "codex", priority: 2 }
+      { id: "pi", available: false, command: "pi", priority: 1 }
     ] as const;
 
-    const ordered = providerPriorityList(providers, ["claude", "codex"]);
+    const ordered = providerPriorityList(providers, ["pi"]);
 
-    expect(ordered.map((provider) => provider.id)).toEqual(["codex"]);
+    expect(ordered.map((provider) => provider.id)).toEqual([]);
   });
 });
