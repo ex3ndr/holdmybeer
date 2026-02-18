@@ -37,10 +37,20 @@ bootstrap_skipping_publish = ✔️  Publish repo already set: {repo}
 
 release_start = 🚀  Starting release
 release_git_clean = ✅  Git working tree is clean
+release_version_current = 🏷️  Current version: {version}
+release_version_selected = 🧭  Selected version: {version}
 release_install = 📦  Installing dependencies
+release_version_bump = 🔢  Bumping version to {version}
+release_commit_creating = 🧾  Creating release commit for {version}
 release_test = 🧪  Running tests
 release_build = 🏗️  Building package
+release_tag_creating = 🏷️  Creating tag {tag}
 release_publish = 📤  Publishing holdmybeer to npm
+release_push_commit = ⬆️  Pushing release commit
+release_push_tag = ⬆️  Pushing tag {tag}
+release_rollback_start = ↩️  Release failed, rolling back git changes
+release_rollback_tag = 🏷️  Removing tag {tag}
+release_rollback_commit = 🧹  Reverting release commit
 release_done = ✅  Release completed
 
 # Prompts
@@ -50,6 +60,8 @@ prompt_publish_owner = 🌐  Publish owner/org
 prompt_publish_repo_name = 🏷️  Publish repository name
 prompt_create_repo = 🆕  Repository {repo} does not exist. Create it now?
 prompt_create_private = 🔐  Create as private repository?
+prompt_release_mode = Select release increment (patch/minor/major/custom). patch -> {patch}
+prompt_release_custom = Enter custom semantic version
 
 # Errors
 
@@ -64,3 +76,10 @@ error_repo_name_exhausted = ❌  Unable to resolve an available publish reposito
 error_bootstrap_cancelled = 🚫  Bootstrap cancelled — publish repository is required
 error_source_dir_invalid = ❌  Source directory does not exist or is not a directory: {dir}
 error_release_git_dirty = ❌  Release requires a clean git working tree. Commit pending changes first.
+error_release_mode_invalid = ❌  Invalid release mode: {mode}. Use patch, minor, major, or custom.
+error_release_mode_required_non_tty = ❌  Release mode is required in non-interactive shells. Use: yarn release -- <patch|minor|major|custom> [version]
+error_release_custom_missing = ❌  Custom version is required for custom release mode.
+error_release_version_invalid = ❌  Invalid semantic version: {version}
+error_release_version_same = ❌  New version must differ from current version.
+error_release_version_missing = ❌  Could not read current version from packages/holdmybeer/package.json
+error_release_tag_exists = ❌  Release tag already exists. Delete the existing tag or choose a different version.
