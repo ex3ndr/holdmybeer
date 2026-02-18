@@ -1,16 +1,18 @@
 import { Command } from "commander";
+import { workflowRalphLoop } from "@/_workflows/_index.js";
+import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
-import { ralphLoopWorkflow } from "@/_workflows/ralphLoopWorkflow.js";
 
 /**
  * Builds the ralph-loop command entrypoint.
  */
 export function ralphLoopCommand(): Command {
   return new Command("ralph-loop")
-    .description("Ask what to build, generate a plan, execute, and run 3 review rounds")
+    .description(workflowRalphLoop.title)
     .action(async function (this: Command) {
       const options = this.optsWithGlobals<{ project?: string }>();
       const projectPath = pathResolveFromInitCwd(options.project ?? ".");
-      await ralphLoopWorkflow(projectPath);
+      const ctx = await contextGetOrInitialize(projectPath);
+      await workflowRalphLoop.run(ctx);
     });
 }

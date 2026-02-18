@@ -5,7 +5,6 @@ import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.
 import { beerSettingsPathResolve } from "@/modules/beer/beerSettingsPathResolve.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
-import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
 import { gitRepoCheckout } from "@/modules/git/gitRepoCheckout.js";
 import { gitRemoteEnsure } from "@/modules/git/gitRemoteEnsure.js";
 import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
@@ -21,20 +20,20 @@ import { promptConfirm } from "@/modules/prompt/promptConfirm.js";
 import { promptInput } from "@/modules/prompt/promptInput.js";
 import { generateCommit } from "@/_workflows/steps/generateCommit.js";
 import { pushMain } from "@/_workflows/steps/pushMain.js";
+import type { Context } from "@/types";
 import { text, textFormat } from "@text";
 
 /**
  * Runs the interactive bootstrap workflow for holdmybeer.
  */
-export async function bootstrapWorkflow(projectPath: string): Promise<void> {
-  const context = await contextGetOrInitialize(projectPath);
+export async function bootstrapWorkflow(ctx: Context): Promise<void> {
   const showInferenceProgress = true;
   await githubCliEnsure();
 
   const settingsPath = beerSettingsPathResolve();
   const settings = await beerSettingsRead(settingsPath);
 
-  const detectedProviders = context.providers;
+  const detectedProviders = ctx.providers;
   settings.providers = detectedProviders;
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
@@ -105,21 +104,21 @@ export async function bootstrapWorkflow(projectPath: string): Promise<void> {
     await beerSettingsWrite(settingsPath, settings);
   }
 
-  const originalCheckoutPath = beerOriginalPathResolve(context.projectPath);
+  const originalCheckoutPath = beerOriginalPathResolve(ctx.projectPath);
   const sourceRemoteUrl = githubRepoUrlBuild(settings.sourceRepo.fullName);
   const sourceCommitHash = await gitRepoCheckout(sourceRemoteUrl, originalCheckoutPath);
   settings.sourceCommitHash = sourceCommitHash;
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
 
-  const readme = await aiReadmeGenerate(context, {
+  const readme = await aiReadmeGenerate(ctx, {
     sourceFullName: settings.sourceRepo.fullName,
     publishFullName: settings.publishRepo.fullName,
     originalCheckoutPath
   }, {
     showProgress: showInferenceProgress
   });
-  await writeFile(path.join(context.projectPath, "README.md"), `${readme.text.trim()}\n`, "utf-8");
+  await writeFile(path.join(ctx.projectPath, "README.md"), `${readme.text.trim()}\n`, "utf-8");
 
   const commitMessageGenerated = await generateCommit(
     settings.sourceRepo.fullName,
@@ -130,7 +129,7 @@ export async function bootstrapWorkflow(projectPath: string): Promise<void> {
   await beerSettingsWrite(settingsPath, settings);
 
   const publishRemoteUrl = githubRepoUrlBuild(settings.publishRepo.fullName);
-  await gitRemoteEnsure(publishRemoteUrl, context.projectPath);
+  await gitRemoteEnsure(publishRemoteUrl, ctx.projectPath);
   await pushMain(commitMessageGenerated.text, {
     showProgress: showInferenceProgress,
     remote: "origin",
