@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { readFileSync } from "node:fs";
 import { bootstrapCommand } from "./bootstrap/bootstrapCommand.js";
 import { rewriteCommand } from "./commands/rewriteCommand.js";
+import { contextInitialize } from "./context/contextInitialize.js";
 
 const pkg = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8")
@@ -22,4 +23,5 @@ if (process.argv.length <= 2) {
   process.exit(0);
 }
 
+await contextInitialize();
 await program.parseAsync(process.argv);

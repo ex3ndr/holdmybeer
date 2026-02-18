@@ -1,4 +1,5 @@
-import type { ProviderDetection } from "../providers/providerTypes.js";
+import { providerPriorityList } from "../providers/providerPriorityList.js";
+import type { ProviderDetection, ProviderId } from "../providers/providerTypes.js";
 import { commandRun } from "../util/commandRun.js";
 
 export interface AiTextGenerateResult {
@@ -51,12 +52,15 @@ async function providerGenerateCodex(command: string, prompt: string): Promise<s
  * Tries provider CLIs in order and returns the first generated text.
  */
 export async function aiTextGenerate(
-  providers: ProviderDetection[],
+  providers: readonly ProviderDetection[],
+  providerPriority: readonly ProviderId[],
   prompt: string,
   fallbackText: string
 ): Promise<AiTextGenerateResult> {
-  for (const provider of providers) {
-    if (!provider.available || !provider.command) {
+  const prioritizedProviders = providerPriorityList(providers, providerPriority);
+
+  for (const provider of prioritizedProviders) {
+    if (!provider.command) {
       continue;
     }
 

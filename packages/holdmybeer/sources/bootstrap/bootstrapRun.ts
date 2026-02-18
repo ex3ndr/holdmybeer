@@ -4,6 +4,7 @@ import { aiReadmeGenerate } from "../ai/aiReadmeGenerate.js";
 import { beerSettingsPathResolve } from "../beer/beerSettingsPathResolve.js";
 import { beerSettingsRead } from "../beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "../beer/beerSettingsWrite.js";
+import { contextGetOrInitialize } from "../context/contextGetOrInitialize.js";
 import { gitCommitCreate } from "../git/gitCommitCreate.js";
 import { gitPush } from "../git/gitPush.js";
 import { gitRemoteEnsure } from "../git/gitRemoteEnsure.js";
@@ -18,19 +19,18 @@ import { githubRepoUrlBuild } from "../github/githubRepoUrlBuild.js";
 import { githubViewerGet } from "../github/githubViewerGet.js";
 import { promptConfirm } from "../prompt/promptConfirm.js";
 import { promptInput } from "../prompt/promptInput.js";
-import { providerDetect } from "../providers/providerDetect.js";
-import { providerPriorityList } from "../providers/providerPriorityList.js";
 
 /**
  * Runs the interactive bootstrap flow for holdmybeer.
  */
 export async function bootstrapRun(): Promise<void> {
+  const context = await contextGetOrInitialize();
   await githubCliEnsure();
 
   const settingsPath = beerSettingsPathResolve();
   const settings = await beerSettingsRead(settingsPath);
 
-  const detectedProviders = await providerDetect();
+  const detectedProviders = context.providers;
   settings.providers = detectedProviders;
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
@@ -111,15 +111,14 @@ export async function bootstrapRun(): Promise<void> {
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
 
-  const providers = providerPriorityList(settings.providers);
-  const readme = await aiReadmeGenerate(providers, {
+  const readme = await aiReadmeGenerate(context, {
     sourceFullName: settings.sourceRepo.fullName,
     publishFullName: settings.publishRepo.fullName
   });
   await writeFile("README.md", `${readme.text.trim()}\n`, "utf-8");
 
   const commitMessageGenerated = await aiCommitMessageGenerate(
-    providers,
+    context,
     settings.sourceRepo.fullName
   );
 

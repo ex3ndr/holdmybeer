@@ -1,11 +1,10 @@
-import type { ProviderDetection } from "../providers/providerTypes.js";
-import { aiTextGenerate } from "./aiTextGenerate.js";
+import type { Context } from "@/types";
 
 /**
  * Generates an Angular-style initial commit message with fallback.
  */
 export async function aiCommitMessageGenerate(
-  providers: ProviderDetection[],
+  context: Context,
   sourceFullName: string
 ): Promise<{ provider?: string; text: string }> {
   const prompt = [
@@ -14,7 +13,11 @@ export async function aiCommitMessageGenerate(
     `Context: bootstrap rewrite project for source repository ${sourceFullName}.`
   ].join("\n");
 
-  const result = await aiTextGenerate(providers, prompt, "feat: bootstrap holdmybeer flow");
+  const result = await context.inferText({
+    providerPriority: ["claude", "codex"],
+    prompt,
+    fallbackText: "feat: bootstrap holdmybeer flow"
+  });
   const firstLine = result.text.split("\n")[0]?.trim() || "feat: bootstrap holdmybeer flow";
 
   return {

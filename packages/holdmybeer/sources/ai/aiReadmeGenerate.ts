@@ -1,5 +1,4 @@
-import type { ProviderDetection } from "../providers/providerTypes.js";
-import { aiTextGenerate } from "./aiTextGenerate.js";
+import type { Context } from "@/types";
 
 export interface AiReadmeGenerateInput {
   sourceFullName: string;
@@ -10,7 +9,7 @@ export interface AiReadmeGenerateInput {
  * Generates initial README markdown using provider priority with fallback content.
  */
 export async function aiReadmeGenerate(
-  providers: ProviderDetection[],
+  context: Context,
   input: AiReadmeGenerateInput
 ): Promise<{ provider?: string; text: string }> {
   const prompt = [
@@ -23,5 +22,9 @@ export async function aiReadmeGenerate(
 
   const fallback = `# holdmybeer\n\nholdmybeer rewrites an existing codebase into a cleaner, more maintainable structure.\n\n## Source\n\n- Original repository: ${input.sourceFullName}\n- Rewrite repository: ${input.publishFullName}\n\n## Approach\n\n1. Analyze the original repository structure.\n2. Apply deterministic cleanup and refactors.\n3. Produce incremental, reviewable commits.\n\n## Setup\n\n\`\`\`bash\nyarn install\nyarn dev rewrite . --dry-run\n\`\`\`\n`;
 
-  return aiTextGenerate(providers, prompt, fallback);
+  return context.inferText({
+    providerPriority: ["claude", "codex"],
+    prompt,
+    fallbackText: fallback
+  });
 }

@@ -1,10 +1,22 @@
-import type { ProviderDetection } from "./providerTypes.js";
+import type { ProviderDetection, ProviderId } from "./providerTypes.js";
 
 /**
- * Returns available providers ordered by configured priority.
+ * Returns available providers ordered by requested provider id priority.
  */
-export function providerPriorityList(providers: ProviderDetection[]): ProviderDetection[] {
-  return providers
-    .filter((provider) => provider.available)
-    .sort((a, b) => a.priority - b.priority);
+export function providerPriorityList(
+  providers: readonly ProviderDetection[],
+  providerPriority: readonly ProviderId[]
+): ProviderDetection[] {
+  const providersById = new Map(providers.map((provider) => [provider.id, provider]));
+  const orderedProviders: ProviderDetection[] = [];
+
+  for (const providerId of providerPriority) {
+    const provider = providersById.get(providerId);
+    if (!provider?.available) {
+      continue;
+    }
+    orderedProviders.push(provider);
+  }
+
+  return orderedProviders;
 }
