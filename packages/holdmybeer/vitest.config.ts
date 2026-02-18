@@ -3,10 +3,16 @@ import path from "node:path";
 
 export default defineConfig({
   resolve: {
-    alias: {
-      "@text": path.resolve(__dirname, "sources/text/text.ts"),
-      "@/types": path.resolve(__dirname, "sources/types.ts")
-    }
+    alias: [
+      {
+        find: /^@\//,
+        replacement: `${path.resolve(__dirname, "sources")}/`
+      },
+      {
+        find: "@text",
+        replacement: path.resolve(__dirname, "sources/text/text.ts")
+      }
+    ]
   },
   test: {
     include: ["sources/**/*.spec.ts"]

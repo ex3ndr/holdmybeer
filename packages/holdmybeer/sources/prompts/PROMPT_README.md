@@ -85,7 +85,7 @@ Write a comprehensive README that treats this as a real, usable project. The foc
 
 ### Style
 
-- Focus on **what the project does**, not on HoldMyBeer or the rewrite process
+- Focus on **what the project does**, not on HoldMyBeer internals or generation process
 - Write for someone who found this repo and wants to use it — not someone who cares how it was made
 - Clear, direct English — no filler, no hype, no "powerful" or "blazing fast"
 - Present tense: "Parses JSON" not "Will parse JSON"

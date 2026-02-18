@@ -1,7 +1,7 @@
 {
   "name": "holdmybeer",
   "version": "0.1.0",
-  "description": "Holdmybeer CLI bootstrap and rewrite tool",
+  "description": "Holdmybeer CLI bootstrap tool",
   "type": "module",
   "license": "MIT",
   "author": "ex3ndr",

@@ -1,5 +1,5 @@
-export type { BeerSettings, ProviderDetection } from "./beer/beerSettingsTypes.js";
-export type { Context, ContextInferTextInput } from "./context/contextTypes.js";
-export type { GitHubRepoRef, GitHubRepoStatus } from "./github/githubTypes.js";
-export type { ProviderId } from "./providers/providerTypes.js";
-export type { InferenceWritePolicy } from "./sandbox/sandboxInferenceTypes.js";
+export type { BeerSettings, ProviderDetection } from "@/modules/beer/beerSettingsTypes.js";
+export type { Context, ContextInferTextInput } from "@/modules/context/contextTypes.js";
+export type { GitHubRepoRef, GitHubRepoStatus } from "@/modules/github/githubTypes.js";
+export type { ProviderId } from "@/modules/providers/providerTypes.js";
+export type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";

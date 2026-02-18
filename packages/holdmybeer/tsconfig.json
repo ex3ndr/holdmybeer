@@ -5,6 +5,8 @@
     "rootDir": "sources",
     "baseUrl": ".",
     "paths": {
+      "@/": ["./sources/"],
+      "@/*": ["./sources/*"],
       "@/types": ["./sources/types.ts"],
       "@text": ["./sources/text/text.ts"]
     },
