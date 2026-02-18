@@ -63,13 +63,18 @@ export async function providerGenerate(
     }
 
     const outputRaw = providerOutputResolve(input.providerId, result.stdout);
-    if (requireOutputTags && !outputRaw) {
+    if (!outputRaw) {
+      if (!requireOutputTags) {
+        // File-generation mode allows empty assistant text.
+        return { output: "" };
+      }
+
       return {
         output: null,
         failure: {
           providerId: input.providerId,
           exitCode: 1,
-          stderr: "Provider returned empty stdout."
+          stderr: "Provider returned no JSON assistant output."
         }
       };
     }
@@ -122,14 +127,14 @@ function providerSandboxResolve(input: ProviderGenerateInput): CommandSandbox | 
   return input.sandbox;
 }
 
-function providerOutputResolve(providerId: ProviderId, stdout: string): string {
+function providerOutputResolve(providerId: ProviderId, stdout: string): string | null {
   if (providerId !== "pi") {
-    return stdout.trim();
+    return stdout.trim() || null;
   }
   return providerOutputResolvePiJson(stdout);
 }
 
-function providerOutputResolvePiJson(stdout: string): string {
+function providerOutputResolvePiJson(stdout: string): string | null {
   const lines = stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -148,7 +153,8 @@ function providerOutputResolvePiJson(stdout: string): string {
     }
   }
 
-  return finalAssistantText?.trim() ?? stdout.trim();
+  const output = finalAssistantText?.trim();
+  return output && output.length > 0 ? output : null;
 }
 
 function providerPiEventParse(line: string): unknown {
