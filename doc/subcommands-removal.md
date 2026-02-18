@@ -7,7 +7,7 @@ Removed direct CLI subcommands and kept a single interactive entrypoint.
 ```mermaid
 flowchart LR
   A[beer --project <path>] --> B[sources/main.ts action]
-  B --> C[_workflows/workflowRunInteractive.ts]
+  B --> C[workflow resolve + prompt]
   C --> D[_workflows/_index.ts]
   D --> E[selected workflow run(ctx)]
 ```

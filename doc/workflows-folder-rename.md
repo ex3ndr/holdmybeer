@@ -6,7 +6,7 @@ Workflow orchestration has been moved under `sources/_workflows` so the folder s
 
 ```mermaid
 flowchart LR
-  A[sources/main.ts] --> B[_workflows/workflowRunInteractive.ts]
+  A[sources/main.ts] --> B[workflow resolve + prompt]
   B --> C[_workflows/_index.ts]
   C --> D[_workflows/bootstrapWorkflow.ts]
   C --> E[_workflows/ralphLoopWorkflow.ts]

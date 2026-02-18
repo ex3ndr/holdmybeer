@@ -6,8 +6,8 @@ The CLI root command now opens an interactive workflow selector and runs workflo
 
 ```mermaid
 flowchart TD
-  A[beer] --> B[_workflows/workflowRunInteractive.ts]
-  B --> C[workflowBootstrappedResolve]
+  A[beer] --> B[sources/main.ts]
+  B --> C[mainWorkflowBootstrappedResolve]
   C --> D{bootstrapped?}
   D -->|no| E[disable non-bootstrap choices]
   D -->|yes| F[all workflows enabled]

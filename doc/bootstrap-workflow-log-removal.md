@@ -6,7 +6,7 @@ Removed workflow-level logging from the bootstrap orchestration.
 
 ```mermaid
 flowchart LR
-  A[sources/main.ts] --> B[_workflows/workflowRunInteractive.ts]
+  A[sources/main.ts] --> B[workflow resolve + prompt]
   B --> C[_workflows/_index.ts]
   C --> D[_workflows/bootstrapWorkflow.ts]
   D --> E[settings + repo setup]
