@@ -39,7 +39,7 @@ export async function ralphLoopPlanGenerate(
   const result = await runInference(planPromptTemplate, { buildGoal: goal }, {
     progressMessage: text["inference_plan_generating"]!,
     showProgress: options.showProgress,
-    modelSelectionMode: "quality",
+    modelSelectionMode: "codex-xhigh",
     writePolicy: { mode: "read-only" }
   });
 

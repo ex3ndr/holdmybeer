@@ -47,7 +47,7 @@ describe("pushMain", () => {
       ".gitignore",
       {
         showProgress: true,
-        modelSelectionMode: "quality",
+        modelSelectionMode: "codex-xhigh",
         retries: 1
       }
     );

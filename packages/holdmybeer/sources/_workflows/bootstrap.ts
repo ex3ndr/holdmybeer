@@ -1,6 +1,5 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { aiReadmeGenerate } from "@/modules/ai/aiReadmeGenerate.js";
 import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
@@ -17,6 +16,7 @@ import { githubViewerGet } from "@/modules/github/githubViewerGet.js";
 import { promptConfirm } from "@/modules/prompt/promptConfirm.js";
 import { promptInput } from "@/modules/prompt/promptInput.js";
 import { generateCommit } from "@/_workflows/steps/generateCommit.js";
+import { generateReadme } from "@/_workflows/steps/generateReadme.js";
 import { pushMain } from "@/_workflows/steps/pushMain.js";
 import { stepProgressStart } from "@/_workflows/steps/stepProgressStart.js";
 import type { Context } from "@/types";
@@ -126,16 +126,13 @@ export async function bootstrap(ctx: Context): Promise<void> {
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
 
-  const readme = await bootstrapProgressRun(
-    text["bootstrap_readme_generating"]!,
-    () => aiReadmeGenerate(ctx, {
-      sourceFullName: source.fullName,
-      publishFullName: publishRepo.fullName,
-      originalCheckoutPath
-    }, {
-      showProgress: showInferenceProgress
-    })
-  );
+  const readme = await generateReadme({
+    sourceFullName: source.fullName,
+    publishFullName: publishRepo.fullName,
+    originalCheckoutPath
+  }, {
+    showProgress: showInferenceProgress
+  });
   await writeFile(path.join(ctx.projectPath, "README.md"), `${readme.text.trim()}\n`, "utf-8");
 
   const commitMessageGenerated = await generateCommit(

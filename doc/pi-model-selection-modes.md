@@ -1,6 +1,6 @@
-# Pi Model Selection Modes
+# Pi Model Selection Profiles
 
-Model selection now uses live model metadata from `pi` RPC and a mode-based scorer.
+Model selection now uses live model metadata from `pi` RPC and a profile-based scorer.
 
 ## Flow
 
@@ -13,18 +13,20 @@ flowchart TD
   E --> F{modelPriority provided?}
   F -->|yes| G[match explicit priority patterns]
   F -->|no or no match| H[score by mode]
-  H --> I{mode}
-  I -->|quality| J[prefer higher-capability models]
-  I -->|fast| K[prefer lighter models]
-  I -->|balanced| L[prefer broad capacity]
+  H --> I{profile}
+  I -->|sonnet| J[prefer sonnet models]
+  I -->|opus| K[prefer opus models]
+  I -->|codex-high| L[prefer codex high-capability models]
+  I -->|codex-xhigh| N[prefer codex maximum-capability models]
   J --> M[selected model id]
   K --> M
   L --> M
+  N --> M
   G --> M
 ```
 
 ## Notes
 
-- `aiReadmeGenerate` uses `modelSelectionMode: "quality"`.
-- `generateCommit` uses `modelSelectionMode: "fast"`.
+- `generateReadme` uses `modelSelectionMode: "sonnet"`.
+- `generateCommit` uses `modelSelectionMode: "codex-high"`.
 - Explicit `modelPriority` still works and takes precedence.

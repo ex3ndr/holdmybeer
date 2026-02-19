@@ -22,7 +22,7 @@ export async function generateCommit(
   const result = await runInference(promptTemplate, { sourceFullName }, {
     progressMessage: text["inference_commit_generating"]!,
     showProgress: options.showProgress,
-    modelSelectionMode: "fast"
+    modelSelectionMode: "codex-high"
   });
   const firstLine = result.text.split("\n")[0]?.trim();
   if (!firstLine) {

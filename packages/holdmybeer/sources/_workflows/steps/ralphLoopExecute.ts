@@ -36,7 +36,7 @@ export async function ralphLoopExecute(
   }, {
     progressMessage: text["inference_plan_executing"]!,
     showProgress: options.showProgress,
-    modelSelectionMode: "quality",
+    modelSelectionMode: "codex-xhigh",
     writePolicy: {
       mode: "write-whitelist",
       writablePaths: [projectPath]

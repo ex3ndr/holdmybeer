@@ -39,7 +39,7 @@ describe("ralphLoopExecute", () => {
         {
           progressMessage: text["inference_plan_executing"]!,
           showProgress: true,
-          modelSelectionMode: "quality",
+          modelSelectionMode: "codex-xhigh",
           writePolicy: {
             mode: "write-whitelist",
             writablePaths: ["/tmp/project"]

@@ -32,7 +32,7 @@ export async function pushMain(
   const context = contextGet();
   const gitignore = await generateFile(context, gitignorePrompt, ".gitignore", {
     showProgress: options.showProgress,
-    modelSelectionMode: "quality",
+    modelSelectionMode: "codex-xhigh",
     retries: 1
   });
   const committed = await context.stageAndCommit(messageResolved);

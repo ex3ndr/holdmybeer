@@ -1,17 +1,16 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import type { Context } from "@/types";
-import { textFormat } from "@text";
-import { generate } from "@/modules/ai/generate.js";
+import { runInference } from "@/_workflows/steps/runInference.js";
+import { text, textFormat } from "@text";
 
-export interface AiReadmeGenerateInput {
+export interface GenerateReadmeInput {
   sourceFullName: string;
   publishFullName: string;
   originalCheckoutPath: string;
 }
 
-export interface AiReadmeGenerateOptions {
+export interface GenerateReadmeOptions {
   showProgress?: boolean;
 }
 
@@ -21,13 +20,12 @@ const promptTemplate = readFileSync(
 );
 
 /**
- * Generates initial README markdown using quality-biased model selection.
- * Reads the prompt template from PROMPT_README.md and substitutes input values.
+ * Generates README markdown using sonnet-biased inference from global context.
+ * Expects: input fields are non-empty repository identifiers and checkout path.
  */
-export async function aiReadmeGenerate(
-  context: Context,
-  input: AiReadmeGenerateInput,
-  options: AiReadmeGenerateOptions = {}
+export async function generateReadme(
+  input: GenerateReadmeInput,
+  options: GenerateReadmeOptions = {}
 ): Promise<{ provider?: string; text: string }> {
   const prompt = textFormat(promptTemplate, {
     sourceFullName: input.sourceFullName,
@@ -35,9 +33,10 @@ export async function aiReadmeGenerate(
     originalCheckoutPath: input.originalCheckoutPath
   });
 
-  return generate(context, prompt, {
+  return runInference(prompt, {}, {
+    progressMessage: text["bootstrap_readme_generating"]!,
     showProgress: options.showProgress,
-    modelSelectionMode: "quality",
+    modelSelectionMode: "sonnet",
     writePolicy: { mode: "read-only" }
   });
 }

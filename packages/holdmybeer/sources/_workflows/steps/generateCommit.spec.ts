@@ -32,7 +32,7 @@ describe("generateCommit", () => {
         {
           progressMessage: text["inference_commit_generating"]!,
           showProgress: true,
-          modelSelectionMode: "fast"
+          modelSelectionMode: "codex-high"
         }
       );
   });

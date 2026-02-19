@@ -42,7 +42,7 @@ describe("ralphLoopPlanGenerate", () => {
         {
           progressMessage: text["inference_plan_generating"]!,
           showProgress: true,
-          modelSelectionMode: "quality",
+          modelSelectionMode: "codex-xhigh",
           writePolicy: { mode: "read-only" }
         }
       );

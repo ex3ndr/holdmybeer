@@ -39,7 +39,7 @@ describe("ralphLoopReviewRound", () => {
         {
           progressMessage: textFormatKey("inference_review_round", { round: 2 }),
           showProgress: true,
-          modelSelectionMode: "quality",
+          modelSelectionMode: "codex-xhigh",
           writePolicy: {
             mode: "write-whitelist",
             writablePaths: ["/tmp/project"]

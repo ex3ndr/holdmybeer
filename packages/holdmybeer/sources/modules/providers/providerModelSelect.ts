@@ -27,7 +27,7 @@ export function providerModelSelect(
   if (!modelPriority || modelPriority.length === 0) {
     return providerModelScoreBest(
       models,
-      input.mode ?? "balanced"
+      input.mode ?? "codex-high"
     )?.id;
   }
 
@@ -40,7 +40,7 @@ export function providerModelSelect(
 
   return providerModelScoreBest(
     models,
-    input.mode ?? "balanced"
+    input.mode ?? "codex-high"
   )?.id;
 }
 
@@ -104,70 +104,52 @@ function providerModelScore(
   let score = 0;
   const contextWindow = model.contextWindow ?? 0;
   const maxTokens = model.maxTokens ?? 0;
+  score += Math.min(320, Math.floor(contextWindow / 1_000));
+  score += Math.min(240, Math.floor(maxTokens / 1_000));
+  score += model.reasoning ? 25 : 0;
 
-  if (mode === "fast") {
-    // Prefer lighter models for short utility tasks.
-    score += Math.max(0, 260 - Math.floor(contextWindow / 2_000));
-    score += Math.max(0, 120 - Math.floor(maxTokens / 1_000));
-    score += model.reasoning ? -10 : 10;
-  } else {
-    score += Math.min(300, Math.floor(contextWindow / 1_000));
-    score += Math.min(200, Math.floor(maxTokens / 1_000));
-    score += model.reasoning ? 20 : 0;
+  switch (mode) {
+    case "sonnet":
+      score += providerModelKeywordBonus(searchText, ["sonnet"], 220);
+      score += providerModelKeywordBonus(searchText, ["claude"], 30);
+      score += model.reasoning ? 10 : 0;
+      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku"], 20);
+      return score;
+    case "opus":
+      score += providerModelKeywordBonus(searchText, ["opus"], 260);
+      score += providerModelKeywordBonus(searchText, ["claude"], 35);
+      score += providerModelKeywordBonus(searchText, ["xhigh", "ultra", "max", "high", "thinking", "reasoning"], 18);
+      score += model.reasoning ? 20 : 0;
+      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku"], 24);
+      return score;
+    case "codex-xhigh":
+      score += providerModelKeywordBonus(searchText, ["codex"], 270);
+      score += providerModelKeywordBonus(searchText, ["xhigh", "x_high", "ultra", "max", "high", "pro"], 20);
+      score += providerModelKeywordBonus(searchText, ["gpt-5", "gpt5", "o3", "o1", "reasoning", "thinking"], 18);
+      score += model.reasoning ? 20 : 0;
+      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku", "low"], 28);
+      return score;
+    case "codex-high":
+      score += providerModelKeywordBonus(searchText, ["codex"], 240);
+      score += providerModelKeywordBonus(searchText, ["high", "pro", "reasoning", "thinking", "gpt-5", "gpt5"], 14);
+      score += model.reasoning ? 12 : 0;
+      score -= providerModelKeywordBonus(searchText, ["xhigh", "x_high"], 220);
+      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku", "low"], 20);
+      return score;
+    default:
+      return score;
   }
-
-  if (mode === "quality") {
-    score += model.reasoning ? 25 : 0;
-    score += providerModelKeywordBonus(searchText, [
-      "pro",
-      "max",
-      "ultra",
-      "high",
-      "thinking",
-      "large",
-      "sonnet",
-      "opus"
-    ]);
-    score -= providerModelKeywordBonus(searchText, [
-      "mini",
-      "small",
-      "lite",
-      "nano",
-      "flash",
-      "haiku",
-      "low"
-    ]);
-  } else if (mode === "fast") {
-    score += providerModelKeywordBonus(searchText, [
-      "mini",
-      "small",
-      "lite",
-      "nano",
-      "flash",
-      "haiku",
-      "low"
-    ]);
-    score -= providerModelKeywordBonus(searchText, [
-      "pro",
-      "max",
-      "ultra",
-      "high",
-      "thinking",
-      "large",
-      "sonnet",
-      "opus"
-    ]);
-    score -= model.reasoning ? 10 : 0;
-  }
-
-  return score;
 }
 
-function providerModelKeywordBonus(searchText: string, keywords: readonly string[]): number {
+function providerModelKeywordBonus(
+  searchText: string,
+  keywords: readonly string[],
+  weight = 12
+): number {
   let score = 0;
   for (const keyword of keywords) {
     if (searchText.includes(keyword)) {
-      score += 12;
+      score += weight;
     }
   }
   return score;

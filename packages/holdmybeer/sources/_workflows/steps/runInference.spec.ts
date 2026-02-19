@@ -43,7 +43,7 @@ describe("runInference", () => {
     }, {
       progressMessage: "Generating test output",
       showProgress: true,
-      modelSelectionMode: "fast"
+      modelSelectionMode: "codex-high"
     });
 
     expect(result).toEqual({ provider: "pi", text: "done" });
@@ -59,7 +59,7 @@ describe("runInference", () => {
       "Say hello for owner/repo",
       expect.objectContaining({
         showProgress: true,
-        modelSelectionMode: "fast",
+        modelSelectionMode: "codex-high",
         onEvent: expect.any(Function)
       })
     );

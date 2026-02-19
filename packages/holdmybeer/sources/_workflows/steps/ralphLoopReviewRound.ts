@@ -40,7 +40,7 @@ export async function ralphLoopReviewRound(
   }, {
     progressMessage: textFormatKey("inference_review_round", { round }),
     showProgress: options.showProgress,
-    modelSelectionMode: "quality",
+    modelSelectionMode: "codex-xhigh",
     writePolicy: {
       mode: "write-whitelist",
       writablePaths: [projectPath]

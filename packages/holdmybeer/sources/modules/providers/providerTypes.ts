@@ -1,5 +1,9 @@
 export type ProviderId = "pi";
-export type ProviderModelSelectionMode = "balanced" | "quality" | "fast";
+export type ProviderModelSelectionMode =
+  | "sonnet"
+  | "opus"
+  | "codex-high"
+  | "codex-xhigh";
 
 export interface ProviderModel {
   id: string;
