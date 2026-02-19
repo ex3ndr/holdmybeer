@@ -157,19 +157,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
                     }
                 },
                 {
-                    progressMessage: text.inference_research_pitch_final_generating!,
-                    verify: ({ fileContent }) => {
-                        if (!matter.test(fileContent)) {
-                            throw new Error("Final pitch must include YAML frontmatter with deepResearchQuery");
-                        }
-                        const parsed = matter(fileContent);
-                        const result = pitchFrontmatterSchema.safeParse(parsed.data);
-                        if (!result.success) {
-                            throw new Error(
-                                `Invalid final pitch frontmatter: ${result.error.issues.map((i) => i.message).join("; ")}`
-                            );
-                        }
-                    }
+                    progressMessage: text.inference_research_pitch_final_generating!
                 }
             );
             pitchFinalGenerated = true;
@@ -177,9 +165,10 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
             // No deep research — ask user whether to wait or skip
             const skipDeepResearch = await promptConfirm(text.prompt_deep_research_skip!, true);
             if (skipDeepResearch) {
-                // Copy draft pitch as final
+                // Copy draft pitch as final, stripping frontmatter
                 const draftContent = await readFile(path.resolve(ctx.projectPath, "doc/product-pitch.md"), "utf-8");
-                await ctx.writeFile("doc/product-pitch-final.md", draftContent);
+                const { content } = matter(draftContent);
+                await ctx.writeFile("doc/product-pitch-final.md", content.trimStart());
                 pitchFinalGenerated = true;
             } else {
                 beerLogLine(

@@ -27,7 +27,7 @@ You are refining a product pitch using a deep research report that validates and
    - Soften or remove claims the research contradicts
    - Add new insights the research revealed that the draft missed
    - Update the competitive landscape with real tool names and comparisons
-4. **Keep the same frontmatter format** with an updated `deepResearchQuery` reflecting what further research would now be most valuable (post-refinement).
+4. **Strip the frontmatter.** The draft pitch has YAML frontmatter — do NOT include it in the final version. The final pitch is clean markdown, no frontmatter.
 
 ## Rules
 
@@ -41,4 +41,4 @@ You are refining a product pitch using a deep research report that validates and
 
 ## Output
 
-Output only raw markdown with YAML frontmatter. No preamble, no explanation, no commentary outside the document structure.
+Output only raw markdown. No YAML frontmatter. No preamble, no explanation, no commentary outside the document structure.
