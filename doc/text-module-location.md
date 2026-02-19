@@ -6,7 +6,7 @@ The text catalog, generated types, and loader now live under `sources/text`.
 
 ```mermaid
 flowchart LR
-  A[sources/text/all.txt] --> B[sources/text/textGenMacro.ts]
+  A[sources/text/all.txt] --> B[sources/text/textGenGenerate.ts]
   B --> C[sources/text/textGenBuild.ts]
   C --> D[sources/text/text.gen.ts]
   D --> E[sources/text/text.ts]

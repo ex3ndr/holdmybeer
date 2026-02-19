@@ -2,11 +2,11 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { textGenMacro } from "@/text/textGenMacro.js";
+import { textGenGenerate } from "@/text/textGenGenerate.js";
 
-describe("textGenMacro", () => {
+describe("textGenGenerate", () => {
   it("builds text catalog and placeholder value types", async () => {
-    const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-text-macro-"));
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-text-generate-"));
     const catalogPath = path.join(tempDir, "all.txt");
     try {
       await writeFile(
@@ -19,7 +19,7 @@ describe("textGenMacro", () => {
         "utf-8"
       );
 
-      const output = textGenMacro(catalogPath);
+      const output = textGenGenerate(catalogPath);
       expect(output).toContain("plain_key: \"Plain value\"");
       expect(output).toContain("value_key: \"Value with {name} and {count}\"");
       expect(output).toContain("plain_key: Record<never, never>;");
