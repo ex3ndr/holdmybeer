@@ -85,6 +85,26 @@ describe("runInference", () => {
     );
   });
 
+  it("humanizes provider message events with role details", async () => {
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+    const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
+    contextGetMock.mockReturnValue(context);
+    stepProgressStartMock.mockReturnValue(progress);
+    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
+      permissions.onEvent?.("provider=pi event=message_start role=assistant");
+      return { provider: "pi", text: "done" };
+    });
+
+    await runInference("Prompt", {}, {
+      progressMessage: "Generating README.md",
+      showProgress: true
+    });
+
+    expect(progress.update).toHaveBeenCalledWith(
+      "Generating README.md (PI assistant message started)"
+    );
+  });
+
   it("requires non-empty progress message", async () => {
     await expect(
       runInference("Test prompt", {}, {

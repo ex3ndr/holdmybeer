@@ -46,7 +46,7 @@ function inferOutputMessage(
   chunk: string,
   options?: GenerateOptions
 ): void {
-  if (!options?.onMessage) {
+  if (!options?.onMessage && !options?.onEvent) {
     return;
   }
 
@@ -56,7 +56,7 @@ function inferOutputMessage(
     .filter((line) => line.length > 0);
 
   for (const line of lines) {
-    options.onMessage(`[beer][infer] ${providerId}:${stream} ${line}`);
+    options.onMessage?.(`[beer][infer] ${providerId}:${stream} ${line}`);
     options.onEvent?.(
       stream === "stderr"
         ? `provider=${providerId} stderr`
@@ -67,14 +67,50 @@ function inferOutputMessage(
 
 function inferOutputEventResolve(line: string): string {
   try {
-    const parsed = JSON.parse(line) as { type?: unknown };
-    if (typeof parsed.type === "string" && parsed.type.trim().length > 0) {
-      return `event=${parsed.type.trim()}`;
+    const parsed = JSON.parse(line) as {
+      type?: unknown;
+      message?: { role?: unknown; type?: unknown };
+      content_block?: { type?: unknown };
+      delta?: { type?: unknown; stop_reason?: unknown };
+    };
+    const eventType = inferOutputEventTokenResolve(parsed.type);
+    if (!eventType) {
+      return "stdout";
     }
+    const parts = [`event=${eventType}`];
+    const role = inferOutputEventTokenResolve(parsed.message?.role);
+    const messageType = inferOutputEventTokenResolve(parsed.message?.type);
+    const contentType = inferOutputEventTokenResolve(parsed.content_block?.type);
+    const deltaType = inferOutputEventTokenResolve(parsed.delta?.type);
+    const stopReason = inferOutputEventTokenResolve(parsed.delta?.stop_reason);
+    if (role) {
+      parts.push(`role=${role}`);
+    }
+    if (messageType) {
+      parts.push(`message=${messageType}`);
+    }
+    if (contentType) {
+      parts.push(`content=${contentType}`);
+    }
+    if (deltaType) {
+      parts.push(`delta=${deltaType}`);
+    }
+    if (stopReason) {
+      parts.push(`stop=${stopReason}`);
+    }
+    return parts.join(" ");
   } catch {
     // Ignore parse errors and keep compact generic event for loader updates.
   }
   return "stdout";
+}
+
+function inferOutputEventTokenResolve(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : undefined;
 }
 
 function inferPromptResolve(

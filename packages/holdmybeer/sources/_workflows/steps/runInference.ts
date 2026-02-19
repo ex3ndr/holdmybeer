@@ -78,9 +78,9 @@ function runInferenceEventHumanize(event: string): string {
   const providerPrefix = provider ? `${provider} ` : "";
 
   if (provider && normalized.includes(" event=")) {
-    const eventMatch = normalized.match(/(?:^|\s)event=([^\s]+)/);
-    if (eventMatch?.[1]) {
-      return `${providerPrefix}${runInferenceProviderEventHumanize(eventMatch[1])}`;
+    const eventName = runInferenceEventTokenResolve(normalized, "event");
+    if (eventName) {
+      return `${providerPrefix}${runInferenceProviderEventHumanize(eventName, normalized)}`;
     }
   }
 
@@ -121,23 +121,73 @@ function runInferenceEventHumanize(event: string): string {
     .trim();
 }
 
-function runInferenceProviderEventHumanize(eventName: string): string {
+function runInferenceProviderEventHumanize(eventName: string, rawEvent: string): string {
+  const role = runInferenceEventTokenResolve(rawEvent, "role");
+  const messageType = runInferenceEventTokenResolve(rawEvent, "message");
+  const contentType = runInferenceEventTokenResolve(rawEvent, "content");
+  const deltaType = runInferenceEventTokenResolve(rawEvent, "delta");
+  const stopReason = runInferenceEventTokenResolve(rawEvent, "stop");
+
   switch (eventName) {
     case "turn_start":
       return "turn started";
     case "turn_end":
       return "turn completed";
     case "message_start":
-      return "message started";
+      return role ? `${role} message started` : "message started";
     case "message_end":
-      return "message completed";
+      return role ? `${role} message completed` : "message completed";
+    case "message_delta":
+      return role ? `${role} message updated` : "message updated";
     case "content_block_start":
-      return "content started";
+      return `${runInferenceContentTypeHumanize(contentType)} started`;
     case "content_block_delta":
-      return "content updated";
+      return runInferenceDeltaTypeHumanize(deltaType);
     case "content_block_end":
-      return "content completed";
+      return `${runInferenceContentTypeHumanize(contentType)} completed`;
+    case "session":
+      return "session started";
+    case "response_completed":
+      return stopReason ? `response completed (${stopReason})` : "response completed";
     default:
-      return eventName.replace(/_/g, " ").trim();
+      const parts = [eventName.replace(/_/g, " ").trim()];
+      if (role) {
+        parts.push(role);
+      }
+      if (messageType) {
+        parts.push(messageType);
+      }
+      return parts.join(" ");
+  }
+}
+
+function runInferenceEventTokenResolve(event: string, key: string): string | undefined {
+  const match = event.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`));
+  return match?.[1];
+}
+
+function runInferenceContentTypeHumanize(contentType: string | undefined): string {
+  switch (contentType) {
+    case "tool_use":
+      return "tool call";
+    case "tool_result":
+      return "tool result";
+    case "text":
+      return "text";
+    default:
+      return "content";
+  }
+}
+
+function runInferenceDeltaTypeHumanize(deltaType: string | undefined): string {
+  switch (deltaType) {
+    case "text_delta":
+      return "text streaming";
+    case "input_json_delta":
+      return "tool input streaming";
+    case "thinking_delta":
+      return "reasoning updated";
+    default:
+      return "content updated";
   }
 }
