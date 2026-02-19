@@ -63,6 +63,30 @@ describe("providerGenerate", () => {
         expect(result).toEqual({ output: "", sessionId: undefined, tokenUsage: undefined });
     });
 
+    it("passes pure flag to pi provider generate", async () => {
+        piProviderGenerateMock.mockResolvedValue({
+            exitCode: 0,
+            stderr: "",
+            output: "ok"
+        });
+
+        const result = await providerGenerate({
+            providerId: "pi",
+            command: "pi",
+            prompt: "hello",
+            pure: true,
+            sandbox: { wrapCommand: async (command) => command },
+            requireOutputTags: false
+        });
+
+        expect(result).toEqual({ output: "ok", sessionId: undefined, tokenUsage: undefined });
+        expect(piProviderGenerateMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pure: true
+            })
+        );
+    });
+
     it("converts pi session event to common session_started", async () => {
         piProviderGenerateMock.mockImplementation(async (input) => {
             input.onEvent?.({ type: "session", sessionId: "session-1" });

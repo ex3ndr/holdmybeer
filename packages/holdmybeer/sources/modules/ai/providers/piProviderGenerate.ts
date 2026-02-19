@@ -6,6 +6,7 @@ export interface PiProviderGenerateInput {
     command: string;
     model?: string;
     prompt: string;
+    pure?: boolean;
     cwd?: string;
     sessionId?: string;
     sandbox: CommandSandbox;
@@ -28,9 +29,12 @@ export interface PiProviderGenerateResult {
 export async function piProviderGenerate(input: PiProviderGenerateInput): Promise<PiProviderGenerateResult> {
     let finalAssistantText: string | undefined;
 
+    // Delay to avoid lock problems
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const result = await commandJSONL({
         command: input.command,
-        args: piProviderArgsResolve(input.prompt, input.model, input.sessionId),
+        args: piProviderArgsResolve(input.prompt, input.model, input.sessionId, input.pure),
         cwd: input.cwd,
         sandbox: input.sandbox,
         abortSignal: input.abortSignal,
@@ -54,8 +58,16 @@ export async function piProviderGenerate(input: PiProviderGenerateInput): Promis
     };
 }
 
-function piProviderArgsResolve(prompt: string, model: string | undefined, sessionId: string | undefined): string[] {
+function piProviderArgsResolve(
+    prompt: string,
+    model: string | undefined,
+    sessionId: string | undefined,
+    pure: boolean | undefined
+): string[] {
     const args = ["--mode", "json", "--print"];
+    if (pure) {
+        args.push("--no-tools", "--no-extensions", "--no-skills");
+    }
     if (sessionId && sessionId.trim().length > 0) {
         args.push("--session", sessionId.trim());
     }

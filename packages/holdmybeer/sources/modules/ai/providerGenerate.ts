@@ -18,6 +18,7 @@ export interface ProviderGenerateInput {
     command: string;
     model?: string;
     prompt: string;
+    pure?: boolean;
     sessionId?: string;
     projectPath?: string;
     sandbox: CommandSandbox;
@@ -65,6 +66,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             command: input.command,
             model: input.model,
             prompt,
+            pure: input.pure,
             cwd: input.projectPath,
             sessionId,
             sandbox: input.sandbox,

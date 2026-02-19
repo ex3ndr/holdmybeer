@@ -125,4 +125,50 @@ describe("piProviderGenerate", () => {
             })
         );
     });
+
+    it("adds no-tools flags when pure mode is enabled", async () => {
+        commandJSONLMock.mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" });
+
+        await piProviderGenerate({
+            command: "pi",
+            prompt: "hello",
+            pure: true,
+            sandbox: { wrapCommand: async (command) => command }
+        });
+
+        expect(commandJSONLMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                args: ["--mode", "json", "--print", "--no-tools", "--no-extensions", "--no-skills", "hello"]
+            })
+        );
+    });
+
+    it("does not add no-tools flags when pure mode is disabled or omitted", async () => {
+        commandJSONLMock.mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" });
+
+        await piProviderGenerate({
+            command: "pi",
+            prompt: "hello",
+            pure: false,
+            sandbox: { wrapCommand: async (command) => command }
+        });
+        await piProviderGenerate({
+            command: "pi",
+            prompt: "world",
+            sandbox: { wrapCommand: async (command) => command }
+        });
+
+        expect(commandJSONLMock).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                args: ["--mode", "json", "--print", "hello"]
+            })
+        );
+        expect(commandJSONLMock).toHaveBeenNthCalledWith(
+            2,
+            expect.objectContaining({
+                args: ["--mode", "json", "--print", "world"]
+            })
+        );
+    });
 });
