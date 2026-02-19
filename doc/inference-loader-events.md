@@ -20,3 +20,4 @@ flowchart TD
 - Provider inference execution timeout is disabled (`timeoutMs: null`).
 - Inference event details continue to be logged to `.beer/logs/*`.
 - Terminal output remains a single loader line that refreshes on incoming events.
+- Loader updates use human-readable event text (for example, `PI turn started`) instead of raw token payloads.

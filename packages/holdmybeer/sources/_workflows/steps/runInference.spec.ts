@@ -50,7 +50,7 @@ describe("runInference", () => {
     expect(contextGetMock).toHaveBeenCalledTimes(1);
     expect(stepProgressStartMock).toHaveBeenCalledWith("Generating test output");
     expect(progress.update).toHaveBeenCalledWith(
-      "Generating test output (provider=pi started)"
+      "Generating test output (PI started)"
     );
     expect(progress.done).toHaveBeenCalledTimes(1);
     expect(progress.fail).not.toHaveBeenCalled();
@@ -62,6 +62,26 @@ describe("runInference", () => {
         modelSelectionMode: "fast",
         onEvent: expect.any(Function)
       })
+    );
+  });
+
+  it("humanizes provider event labels for loader updates", async () => {
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+    const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
+    contextGetMock.mockReturnValue(context);
+    stepProgressStartMock.mockReturnValue(progress);
+    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
+      permissions.onEvent?.("provider=pi event=turn_start");
+      return { provider: "pi", text: "done" };
+    });
+
+    await runInference("Prompt", {}, {
+      progressMessage: "Generating README.md",
+      showProgress: true
+    });
+
+    expect(progress.update).toHaveBeenCalledWith(
+      "Generating README.md (PI turn started)"
     );
   });
 
