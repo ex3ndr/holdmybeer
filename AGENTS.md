@@ -11,6 +11,7 @@
 - sources live in `sources/`
 - tests use `*.spec.ts`
 - tests must be minimal and live next to the file under test
+- do not unit test steps and workflows
 
 ## Build, Test, and Development Commands
 - Runtime baseline: Bun **1.3+**.
