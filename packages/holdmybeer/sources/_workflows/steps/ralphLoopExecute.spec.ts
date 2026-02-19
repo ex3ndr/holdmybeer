@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { text } from "@text";
 
 const runInferenceMock = vi.hoisted(() => vi.fn());
 
@@ -36,6 +37,7 @@ describe("ralphLoopExecute", () => {
           planContent: "# Plan\n- [ ] step\n"
         },
         {
+          progressMessage: text["inference_plan_executing"]!,
           showProgress: true,
           modelSelectionMode: "quality",
           writePolicy: {

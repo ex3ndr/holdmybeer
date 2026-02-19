@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { runInference } from "@/_workflows/steps/runInference.js";
+import { text } from "@text";
 
 export interface RalphLoopExecuteOptions {
   showProgress?: boolean;
@@ -33,6 +34,7 @@ export async function ralphLoopExecute(
     buildGoal: buildGoal.trim(),
     planContent
   }, {
+    progressMessage: text["inference_plan_executing"]!,
     showProgress: options.showProgress,
     modelSelectionMode: "quality",
     writePolicy: {

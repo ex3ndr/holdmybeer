@@ -1,4 +1,5 @@
 import { runInference } from "@/_workflows/steps/runInference.js";
+import { text } from "@text";
 
 export interface GenerateCommitOptions {
   showProgress?: boolean;
@@ -19,6 +20,7 @@ export async function generateCommit(
   options: GenerateCommitOptions = {}
 ): Promise<{ provider?: string; text: string }> {
   const result = await runInference(promptTemplate, { sourceFullName }, {
+    progressMessage: text["inference_commit_generating"]!,
     showProgress: options.showProgress,
     modelSelectionMode: "fast"
   });

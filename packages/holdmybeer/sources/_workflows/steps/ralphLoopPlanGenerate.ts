@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { runInference } from "@/_workflows/steps/runInference.js";
 import { ralphLoopPlanPathResolve } from "@/_workflows/steps/ralphLoopPlanPathResolve.js";
+import { text } from "@text";
 
 export interface RalphLoopPlanGenerateOptions {
   showProgress?: boolean;
@@ -36,22 +37,23 @@ export async function ralphLoopPlanGenerate(
 
   const planPath = options.planPath ?? ralphLoopPlanPathResolve(goal);
   const result = await runInference(planPromptTemplate, { buildGoal: goal }, {
+    progressMessage: text["inference_plan_generating"]!,
     showProgress: options.showProgress,
     modelSelectionMode: "quality",
     writePolicy: { mode: "read-only" }
   });
 
-  const text = result.text.trim();
-  if (!text) {
+  const planText = result.text.trim();
+  if (!planText) {
     throw new Error("Inference returned empty plan.");
   }
 
   const absolutePath = path.resolve(options.projectPath ?? process.cwd(), planPath);
   await mkdir(path.dirname(absolutePath), { recursive: true });
-  await writeFile(absolutePath, `${text}\n`, "utf-8");
+  await writeFile(absolutePath, `${planText}\n`, "utf-8");
   return {
     planPath,
     provider: result.provider,
-    text
+    text: planText
   };
 }

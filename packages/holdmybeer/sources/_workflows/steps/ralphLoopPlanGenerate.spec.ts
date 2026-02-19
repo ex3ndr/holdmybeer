@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { text } from "@text";
 
 const runInferenceMock = vi.hoisted(() => vi.fn());
 
@@ -39,6 +40,7 @@ describe("ralphLoopPlanGenerate", () => {
         expect.stringContaining("{{buildGoal}}"),
         { buildGoal: "add feature" },
         {
+          progressMessage: text["inference_plan_generating"]!,
           showProgress: true,
           modelSelectionMode: "quality",
           writePolicy: { mode: "read-only" }

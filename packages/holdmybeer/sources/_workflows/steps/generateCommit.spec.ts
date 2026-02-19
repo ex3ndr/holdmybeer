@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { text } from "@text";
 
 const runInferenceMock = vi.hoisted(() => vi.fn());
 
@@ -25,13 +26,14 @@ describe("generateCommit", () => {
       provider: "pi",
       text: "feat: initial bootstrap"
     });
-    expect(runInferenceMock).toHaveBeenCalledWith(
-      expect.stringContaining("{{sourceFullName}}"),
-      { sourceFullName: "owner/repo" },
-      {
-        showProgress: true,
-        modelSelectionMode: "fast"
-      }
-    );
+      expect(runInferenceMock).toHaveBeenCalledWith(
+        expect.stringContaining("{{sourceFullName}}"),
+        { sourceFullName: "owner/repo" },
+        {
+          progressMessage: text["inference_commit_generating"]!,
+          showProgress: true,
+          modelSelectionMode: "fast"
+        }
+      );
   });
 });

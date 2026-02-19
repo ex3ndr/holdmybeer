@@ -62,6 +62,10 @@ export const text = {
   prompt_release_custom: "Enter custom semantic version",
   prompt_ralph_loop_build: "🧠  What should I build?",
   prompt_workflow_select: "Select a workflow",
+  inference_commit_generating: "Generating bootstrap commit message",
+  inference_plan_generating: "Generating implementation plan",
+  inference_plan_executing: "Executing implementation plan",
+  inference_review_round: "Running review round {round}/3",
   error_gh_required: "❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`",
   error_gh_user_resolve: "❌  Unable to resolve authenticated GitHub user from gh",
   error_repo_status_check: "❌  Unable to check repository status for {repo}: {detail}",
@@ -81,6 +85,7 @@ export const text = {
   error_release_version_missing: "❌  Could not read current version from packages/holdmybeer/package.json",
   error_release_tag_exists: "❌  Release tag already exists. Delete the existing tag or choose a different version.",
   error_ralph_loop_goal_required: "❌  Build goal is required for ralph-loop.",
+  error_inference_progress_message_required: "❌  Inference progress message is required.",
   workflow_bootstrap_title: "Initialize .beer settings, source/publish repos, README, and first push",
   workflow_ralph_loop_title: "Ask what to build, generate a plan, execute, and run 3 review rounds",
   workflow_bootstrap_required: "Available after bootstrap completes",
@@ -218,6 +223,12 @@ export type TextValuesByKey = {
   prompt_release_custom: Record<never, never>;
   prompt_ralph_loop_build: Record<never, never>;
   prompt_workflow_select: Record<never, never>;
+  inference_commit_generating: Record<never, never>;
+  inference_plan_generating: Record<never, never>;
+  inference_plan_executing: Record<never, never>;
+  inference_review_round: {
+    round: string | number;
+  };
   error_gh_required: Record<never, never>;
   error_gh_user_resolve: Record<never, never>;
   error_repo_status_check: {
@@ -252,6 +263,7 @@ export type TextValuesByKey = {
   error_release_version_missing: Record<never, never>;
   error_release_tag_exists: Record<never, never>;
   error_ralph_loop_goal_required: Record<never, never>;
+  error_inference_progress_message_required: Record<never, never>;
   workflow_bootstrap_title: Record<never, never>;
   workflow_ralph_loop_title: Record<never, never>;
   workflow_bootstrap_required: Record<never, never>;

@@ -67,6 +67,13 @@ prompt_release_custom = Enter custom semantic version
 prompt_ralph_loop_build = 🧠  What should I build?
 prompt_workflow_select = Select a workflow
 
+# Inference
+
+inference_commit_generating = Generating bootstrap commit message
+inference_plan_generating = Generating implementation plan
+inference_plan_executing = Executing implementation plan
+inference_review_round = Running review round {round}/3
+
 # Errors
 
 error_gh_required = ❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`
@@ -88,6 +95,7 @@ error_release_version_same = ❌  New version must differ from current version.
 error_release_version_missing = ❌  Could not read current version from packages/holdmybeer/package.json
 error_release_tag_exists = ❌  Release tag already exists. Delete the existing tag or choose a different version.
 error_ralph_loop_goal_required = ❌  Build goal is required for ralph-loop.
+error_inference_progress_message_required = ❌  Inference progress message is required.
 
 # Workflows
 

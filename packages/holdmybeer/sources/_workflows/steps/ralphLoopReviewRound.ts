@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { runInference } from "@/_workflows/steps/runInference.js";
+import { textFormatKey } from "@text";
 
 export interface RalphLoopReviewRoundOptions {
   showProgress?: boolean;
@@ -37,6 +38,7 @@ export async function ralphLoopReviewRound(
     round,
     planContent
   }, {
+    progressMessage: textFormatKey("inference_review_round", { round }),
     showProgress: options.showProgress,
     modelSelectionMode: "quality",
     writePolicy: {
