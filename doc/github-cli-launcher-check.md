@@ -15,5 +15,5 @@ flowchart LR
 
 ## Notes
 
-- `githubCliEnsure` was removed from `bootstrapWorkflow`.
+- `githubCliEnsure` was removed from `bootstrap`.
 - The precheck now fails fast before any workflow prompt is shown.

@@ -28,7 +28,7 @@ flowchart TD
   end
 
   subgraph Workflows
-    A1[_workflows/bootstrapWorkflow.ts]
+    A1[_workflows/bootstrap.ts]
     A2[_workflows/ralphLoopWorkflow.ts]
   end
 ```

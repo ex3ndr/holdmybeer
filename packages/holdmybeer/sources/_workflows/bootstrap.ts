@@ -24,7 +24,7 @@ import { text, textFormatKey } from "@text";
 /**
  * Runs the interactive bootstrap workflow for holdmybeer.
  */
-export async function bootstrapWorkflow(ctx: Context): Promise<void> {
+export async function bootstrap(ctx: Context): Promise<void> {
   const showInferenceProgress = true;
 
   const settingsPath = path.join(ctx.projectPath, ".beer", "settings.json");

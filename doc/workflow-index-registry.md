@@ -10,7 +10,7 @@ flowchart LR
   B --> C[_workflows/_index.ts]
   C --> D[workflowBootstrap title + run(ctx)]
   C --> E[workflowRalphLoop title + run(ctx)]
-  D --> F[bootstrapWorkflow(ctx: Context)]
+  D --> F[bootstrap(ctx: Context)]
   E --> G[ralphLoopWorkflow(ctx: Context)]
 ```
 

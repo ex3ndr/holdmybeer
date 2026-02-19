@@ -1,5 +1,5 @@
 import type { Context } from "@/types";
-import { bootstrapWorkflow } from "@/_workflows/bootstrapWorkflow.js";
+import { bootstrap } from "@/_workflows/bootstrap.js";
 import { ralphLoopWorkflow } from "@/_workflows/ralphLoopWorkflow.js";
 import { text } from "@text";
 
@@ -12,7 +12,7 @@ export interface Workflow {
 export const workflowBootstrap: Workflow = {
   id: "bootstrap",
   title: text["workflow_bootstrap_title"]!,
-  run: bootstrapWorkflow
+  run: bootstrap
 };
 
 export const workflowRalphLoop: Workflow = {
