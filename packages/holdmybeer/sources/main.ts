@@ -4,7 +4,7 @@ import path from "node:path";
 import select from "@inquirer/select";
 import { workflows, type Workflow } from "@/_workflows/_index.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
-import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
+import { contextInitialize } from "@/modules/context/contextInitialize.js";
 import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 import { text } from "@text";
@@ -25,7 +25,7 @@ program
     const projectPath = pathResolveFromInitCwd(options.project ?? ".");
     process.env.BEER_PROJECT_PATH = projectPath;
     await githubCliEnsure();
-    const ctx = await contextGetOrInitialize(projectPath);
+    const ctx = await contextInitialize(projectPath);
     const bootstrapped = await mainWorkflowBootstrappedResolve(projectPath);
     const selectedWorkflowId = await select({
       message: text["prompt_workflow_select"]!,

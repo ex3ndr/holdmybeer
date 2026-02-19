@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "@/types";
 
-const contextGetOrInitializeMock = vi.hoisted(() => vi.fn());
+const contextGetMock = vi.hoisted(() => vi.fn());
 const generateMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/modules/context/contextGetOrInitialize.js", () => ({
-  contextGetOrInitialize: contextGetOrInitializeMock
+vi.mock("@/modules/context/contextGet.js", () => ({
+  contextGet: contextGetMock
 }));
 
 vi.mock("@/modules/ai/generate.js", () => ({
@@ -16,13 +16,13 @@ import { runInference } from "@/_workflows/steps/runInference.js";
 
 describe("runInference", () => {
   beforeEach(() => {
-    contextGetOrInitializeMock.mockReset();
+    contextGetMock.mockReset();
     generateMock.mockReset();
   });
 
   it("loads global context and resolves handlebars in prompt", async () => {
     const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
-    contextGetOrInitializeMock.mockResolvedValue(context);
+    contextGetMock.mockReturnValue(context);
     generateMock.mockResolvedValue({ provider: "pi", text: "done" });
 
     const result = await runInference("Say {{word}} for {{repo}}", {
@@ -33,7 +33,7 @@ describe("runInference", () => {
     });
 
     expect(result).toEqual({ provider: "pi", text: "done" });
-    expect(contextGetOrInitializeMock).toHaveBeenCalledWith(process.cwd());
+    expect(contextGetMock).toHaveBeenCalledTimes(1);
     expect(generateMock).toHaveBeenCalledWith(
       context,
       "Say hello for owner/repo",

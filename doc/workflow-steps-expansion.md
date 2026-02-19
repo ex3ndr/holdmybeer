@@ -8,7 +8,7 @@ Added explicit workflow steps for inference, commit generation, and push orchest
 flowchart TD
   A[bootstrap] --> B[generateCommit]
   B --> C[runInference]
-  C --> D[global context auto-load]
+  C --> D[global context read]
   C --> E[handlebars prompt resolve]
   C --> F[generate]
   A --> G[pushMain]

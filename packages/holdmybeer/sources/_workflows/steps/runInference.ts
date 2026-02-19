@@ -3,10 +3,10 @@ import {
   type GeneratePermissions,
   type GenerateResult
 } from "@/modules/ai/generate.js";
-import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
+import { contextGet } from "@/modules/context/contextGet.js";
 
 /**
- * Runs inference with global context for the current project directory.
+ * Runs inference with already initialized global context.
  * Expects: promptTemplate may include {{key}} placeholders from values.
  */
 export async function runInference(
@@ -14,7 +14,7 @@ export async function runInference(
   values: Record<string, string | number> = {},
   permissions: GeneratePermissions = {}
 ): Promise<GenerateResult> {
-  const context = await contextGetOrInitialize(process.cwd());
+  const context = contextGet();
   const prompt = runInferencePromptResolve(promptTemplate, values);
   return generate(context, prompt, permissions);
 }
