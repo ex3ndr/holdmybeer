@@ -1,6 +1,6 @@
 # Log File Output
 
-Application logs now write to `.beer/logs/beer-YYYY-MM-DD.log` instead of stdout.
+Application logs now write to `.beer/local/logs/beer-YYYY-MM-DD.log` instead of stdout.
 
 ## Flow
 
@@ -8,7 +8,7 @@ Application logs now write to `.beer/logs/beer-YYYY-MM-DD.log` instead of stdout
 flowchart LR
   A[beer command] --> B[beerLog or beerLogLine]
   B --> C[resolve project path]
-  C --> D[ensure .beer/logs directory]
+  C --> D[ensure .beer/local/logs directory]
   D --> E[append timestamped line to beer-YYYY-MM-DD.log]
 ```
 

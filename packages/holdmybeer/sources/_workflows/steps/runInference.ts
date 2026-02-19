@@ -33,7 +33,12 @@ export async function runInference(
     ...permissionsBase,
     onEvent: (event: string) => {
       permissionsBase.onEvent?.(event);
-      progress?.update(runInferenceProgressMessageResolve(progressMessage, event));
+      if (progress) {
+        const updated = runInferenceProgressMessageResolve(progressMessage, event);
+        if (updated) {
+          progress.update(updated);
+        }
+      }
     }
   };
 
@@ -59,12 +64,18 @@ function runInferencePromptResolve(
   });
 }
 
-function runInferenceProgressMessageResolve(baseMessage: string, event: string): string {
-  const eventHumanized = runInferenceEventHumanize(event);
-  if (!eventHumanized) {
-    return baseMessage;
+/**
+ * Returns an updated progress string when the event is user-meaningful, or null to keep the
+ * current spinner text unchanged. Only content-level events (thinking, writing, tool use)
+ * produce visible updates; protocol-level events (turn/message start/end, selected, etc.)
+ * are suppressed.
+ */
+function runInferenceProgressMessageResolve(baseMessage: string, event: string): string | null {
+  const label = runInferenceEventHumanize(event);
+  if (!label) {
+    return null;
   }
-  return `${baseMessage} (${eventHumanized})`;
+  return `${baseMessage} (${label})`;
 }
 
 function runInferenceEventHumanize(event: string): string {
@@ -73,121 +84,35 @@ function runInferenceEventHumanize(event: string): string {
     return "";
   }
 
-  const providerMatch = normalized.match(/(?:^|\s)provider=([^\s]+)/);
-  const provider = providerMatch?.[1]?.toUpperCase();
-  const providerPrefix = provider ? `${provider} ` : "";
-
-  if (provider && normalized.includes(" event=")) {
-    const eventName = runInferenceEventTokenResolve(normalized, "event");
-    if (eventName) {
-      return `${providerPrefix}${runInferenceProviderEventHumanize(eventName, normalized)}`;
-    }
+  const eventName = runInferenceEventTokenResolve(normalized, "event");
+  if (eventName) {
+    return runInferenceStreamEventHumanize(eventName, normalized);
   }
 
-  if (provider && normalized.includes(" model=")) {
-    const modelMatch = normalized.match(/(?:^|\s)model=([^\s]+)/);
-    if (modelMatch?.[1]) {
-      return `${providerPrefix}model ${modelMatch[1]}`;
-    }
-  }
-
-  if (provider && normalized.endsWith(" selected")) {
-    return `${providerPrefix}selected`.trim();
-  }
-  if (provider && normalized.endsWith(" started")) {
-    return `${providerPrefix}started`.trim();
-  }
-  if (provider && normalized.endsWith(" completed")) {
-    return `${providerPrefix}completed`.trim();
-  }
-  if (provider && normalized.endsWith(" stderr")) {
-    return `${providerPrefix}stderr output`.trim();
-  }
-
-  if (provider && normalized.includes(" exit=")) {
-    const exitMatch = normalized.match(/(?:^|\s)exit=([^\s]+)/);
-    if (exitMatch?.[1]) {
-      return `${providerPrefix}failed (exit ${exitMatch[1]})`;
-    }
-  }
-
-  if (normalized === "all providers failed") {
-    return "all providers failed";
-  }
-
-  return normalized
-    .replace(/_/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return "";
 }
 
-function runInferenceProviderEventHumanize(eventName: string, rawEvent: string): string {
-  const role = runInferenceEventTokenResolve(rawEvent, "role");
-  const messageType = runInferenceEventTokenResolve(rawEvent, "message");
+/** Maps SSE stream event types to short user-facing labels. */
+function runInferenceStreamEventHumanize(eventName: string, rawEvent: string): string {
   const contentType = runInferenceEventTokenResolve(rawEvent, "content");
   const deltaType = runInferenceEventTokenResolve(rawEvent, "delta");
-  const stopReason = runInferenceEventTokenResolve(rawEvent, "stop");
 
   switch (eventName) {
-    case "turn_start":
-      return "turn started";
-    case "turn_end":
-      return "turn completed";
-    case "message_start":
-      return role ? `${role} message started` : "message started";
-    case "message_end":
-      return role ? `${role} message completed` : "message completed";
-    case "message_delta":
-      return role ? `${role} message updated` : "message updated";
     case "content_block_start":
-      return `${runInferenceContentTypeHumanize(contentType)} started`;
+      if (contentType === "tool_use") return "using tools";
+      if (contentType === "text") return "writing";
+      return "";
     case "content_block_delta":
-      return runInferenceDeltaTypeHumanize(deltaType);
-    case "content_block_end":
-      return `${runInferenceContentTypeHumanize(contentType)} completed`;
-    case "session":
-      return "session started";
-    case "response_completed":
-      return stopReason ? `response completed (${stopReason})` : "response completed";
+      if (deltaType === "thinking_delta") return "thinking";
+      if (deltaType === "text_delta") return "writing";
+      if (deltaType === "input_json_delta") return "using tools";
+      return "";
     default:
-      const parts = [eventName.replace(/_/g, " ").trim()];
-      if (role) {
-        parts.push(role);
-      }
-      if (messageType) {
-        parts.push(messageType);
-      }
-      return parts.join(" ");
+      return "";
   }
 }
 
 function runInferenceEventTokenResolve(event: string, key: string): string | undefined {
   const match = event.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`));
   return match?.[1];
-}
-
-function runInferenceContentTypeHumanize(contentType: string | undefined): string {
-  switch (contentType) {
-    case "tool_use":
-      return "tool call";
-    case "tool_result":
-      return "tool result";
-    case "text":
-      return "text";
-    default:
-      return "content";
-  }
-}
-
-function runInferenceDeltaTypeHumanize(deltaType: string | undefined): string {
-  switch (deltaType) {
-    case "text_delta":
-      return "text streaming";
-    case "input_json_delta":
-      return "tool input streaming";
-    case "thinking_delta":
-      return "reasoning updated";
-    default:
-      return "content updated";
-  }
 }

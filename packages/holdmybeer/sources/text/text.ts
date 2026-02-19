@@ -37,7 +37,7 @@ export function textFormatKey<K extends TextKey>(
   return textFormat(text[key], values as TextFormatValues);
 }
 
-/** Writes a plain log line to the daily .beer/logs file. */
+/** Writes a plain log line to the daily .beer/local/logs file. */
 export function beerLogLine(message: string): void {
   try {
     const logFilePath = beerLogFilePathResolve();
@@ -66,7 +66,7 @@ function beerLogFilePathResolve(): string {
   const projectPath = process.env.BEER_PROJECT_PATH
     ?? process.env.INIT_CWD
     ?? process.cwd();
-  return path.join(projectPath, ".beer", "logs", `beer-${beerLogDateResolve()}.log`);
+  return path.join(projectPath, ".beer", "local", "logs", `beer-${beerLogDateResolve()}.log`);
 }
 
 function beerLogDateResolve(): string {

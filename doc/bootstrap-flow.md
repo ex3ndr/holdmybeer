@@ -18,7 +18,7 @@ flowchart TD
   J -->|No| K[Create repo via gh]
   J -->|Empty| L[Reuse empty repo]
   J -->|Non-empty| I
-  K --> M[Checkout source to .beer/original]
+  K --> M[Checkout source to .beer/local/original]
   L --> M
   M --> N[Generate README via pi]
   N --> O[generateCommit step]
@@ -35,7 +35,7 @@ flowchart TD
 
 - Source input accepts URL, SSH remote, or `owner/repo` shorthand.
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes on non-empty collisions.
-- Source is checked out to `<projectPath>/.beer/original` before inference.
+- Source is checked out to `<projectPath>/.beer/local/original` before inference.
 - README and commit generation resolve workflow model priorities against live `pi` model availability.
 - Push step updates `.gitignore` via inference before staging and commit.
 - Inference failures fail the operation.

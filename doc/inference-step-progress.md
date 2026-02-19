@@ -20,4 +20,4 @@ flowchart TD
 
 - `runInference` now requires `progressMessage` in options.
 - Caller steps provide user-facing messages from `sources/text/all.txt`.
-- Spinner output is screen-only and separate from `.beer/logs/*` file logging.
+- Spinner output is screen-only and separate from `.beer/local/logs/*` file logging.

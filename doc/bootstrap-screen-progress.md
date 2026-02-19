@@ -17,4 +17,4 @@ flowchart TD
 ## Notes
 
 - Progress is rendered with `stepProgressStart` and appears on screen only.
-- Detailed logs remain in `.beer/logs/beer-YYYY-MM-DD.log`.
+- Detailed logs remain in `.beer/local/logs/beer-YYYY-MM-DD.log`.

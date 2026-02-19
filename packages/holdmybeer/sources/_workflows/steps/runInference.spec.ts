@@ -33,7 +33,7 @@ describe("runInference", () => {
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
-      permissions.onEvent?.("provider=pi started");
+      permissions.onEvent?.("provider=pi event=content_block_delta delta=text_delta");
       return { provider: "pi", text: "done" };
     });
 
@@ -50,7 +50,7 @@ describe("runInference", () => {
     expect(contextGetMock).toHaveBeenCalledTimes(1);
     expect(stepProgressStartMock).toHaveBeenCalledWith("Generating test output");
     expect(progress.update).toHaveBeenCalledWith(
-      "Generating test output (PI started)"
+      "Generating test output (writing)"
     );
     expect(progress.done).toHaveBeenCalledTimes(1);
     expect(progress.fail).not.toHaveBeenCalled();
@@ -65,32 +65,13 @@ describe("runInference", () => {
     );
   });
 
-  it("humanizes provider event labels for loader updates", async () => {
+  it("suppresses protocol-level events from spinner", async () => {
     const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
     const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
       permissions.onEvent?.("provider=pi event=turn_start");
-      return { provider: "pi", text: "done" };
-    });
-
-    await runInference("Prompt", {}, {
-      progressMessage: "Generating README.md",
-      showProgress: true
-    });
-
-    expect(progress.update).toHaveBeenCalledWith(
-      "Generating README.md (PI turn started)"
-    );
-  });
-
-  it("humanizes provider message events with role details", async () => {
-    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
-    const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
-    contextGetMock.mockReturnValue(context);
-    stepProgressStartMock.mockReturnValue(progress);
-    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
       permissions.onEvent?.("provider=pi event=message_start role=assistant");
       return { provider: "pi", text: "done" };
     });
@@ -100,8 +81,66 @@ describe("runInference", () => {
       showProgress: true
     });
 
+    expect(progress.update).not.toHaveBeenCalled();
+  });
+
+  it("shows 'thinking' for thinking delta events", async () => {
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+    const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
+    contextGetMock.mockReturnValue(context);
+    stepProgressStartMock.mockReturnValue(progress);
+    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
+      permissions.onEvent?.("provider=pi event=content_block_delta delta=thinking_delta");
+      return { provider: "pi", text: "done" };
+    });
+
+    await runInference("Prompt", {}, {
+      progressMessage: "Generating README.md",
+      showProgress: true
+    });
+
     expect(progress.update).toHaveBeenCalledWith(
-      "Generating README.md (PI assistant message started)"
+      "Generating README.md (thinking)"
+    );
+  });
+
+  it("shows 'writing' for text delta events", async () => {
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+    const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
+    contextGetMock.mockReturnValue(context);
+    stepProgressStartMock.mockReturnValue(progress);
+    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
+      permissions.onEvent?.("provider=pi event=content_block_delta delta=text_delta");
+      return { provider: "pi", text: "done" };
+    });
+
+    await runInference("Prompt", {}, {
+      progressMessage: "Generating README.md",
+      showProgress: true
+    });
+
+    expect(progress.update).toHaveBeenCalledWith(
+      "Generating README.md (writing)"
+    );
+  });
+
+  it("shows 'using tools' for tool use events", async () => {
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+    const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
+    contextGetMock.mockReturnValue(context);
+    stepProgressStartMock.mockReturnValue(progress);
+    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
+      permissions.onEvent?.("provider=pi event=content_block_start content=tool_use");
+      return { provider: "pi", text: "done" };
+    });
+
+    await runInference("Prompt", {}, {
+      progressMessage: "Generating README.md",
+      showProgress: true
+    });
+
+    expect(progress.update).toHaveBeenCalledWith(
+      "Generating README.md (using tools)"
     );
   });
 

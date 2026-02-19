@@ -25,4 +25,4 @@ flowchart TD
 ## Bootstrap Usage
 
 `bootstrap` enables this flag for README and commit message generation so long-running calls are visible before timeout.
-Before README inference, bootstrap checks out the source repository into `.beer/original` and passes that path in the prompt as read-only context.
+Before README inference, bootstrap checks out the source repository into `.beer/local/original` and passes that path in the prompt as read-only context.

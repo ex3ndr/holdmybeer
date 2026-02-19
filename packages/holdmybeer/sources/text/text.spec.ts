@@ -15,14 +15,14 @@ describe("text logging", () => {
     }
   });
 
-  it("writes catalog logs to .beer/logs daily file without console output", async () => {
+  it("writes catalog logs to .beer/local/logs daily file without console output", async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-logs-"));
     const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
       process.env.BEER_PROJECT_PATH = tempDir;
       beerLog("release_start");
 
-      const logsDir = path.join(tempDir, ".beer", "logs");
+      const logsDir = path.join(tempDir, ".beer", "local", "logs");
       const files = await readdir(logsDir);
       expect(files.length).toBe(1);
       expect(files[0]).toMatch(/^beer-\d{4}-\d{2}-\d{2}\.log$/);
@@ -42,7 +42,7 @@ describe("text logging", () => {
       process.env.BEER_PROJECT_PATH = tempDir;
       beerLogLine("custom-line");
 
-      const logsDir = path.join(tempDir, ".beer", "logs");
+      const logsDir = path.join(tempDir, ".beer", "local", "logs");
       const files = await readdir(logsDir);
       const content = await readFile(path.join(logsDir, files[0]!), "utf-8");
       expect(content).toContain("custom-line");

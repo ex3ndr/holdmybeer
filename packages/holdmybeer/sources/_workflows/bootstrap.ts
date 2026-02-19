@@ -5,6 +5,7 @@ import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
 import { gitRepoEnsure } from "@/modules/git/gitRepoEnsure.js";
 import { gitRepoCheckout } from "@/modules/git/gitRepoCheckout.js";
+import { gitignoreEnsure } from "@/modules/git/gitignoreEnsure.js";
 import { gitRemoteEnsure } from "@/modules/git/gitRemoteEnsure.js";
 import { githubOwnerChoicesGet } from "@/modules/github/githubOwnerChoicesGet.js";
 import { githubRepoCreate } from "@/modules/github/githubRepoCreate.js";
@@ -135,6 +136,7 @@ export async function bootstrap(ctx: Context): Promise<void> {
     showProgress: showInferenceProgress
   });
   await writeFile(path.join(ctx.projectPath, "README.md"), `${readme.text.trim()}\n`, "utf-8");
+  await gitignoreEnsure(ctx.projectPath);
 
   const commitMessageGenerated = await generateCommit(
     source.fullName,
