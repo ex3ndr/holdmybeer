@@ -1,6 +1,7 @@
 import { text } from "@text";
 import { bootstrap } from "@/_workflows/bootstrap.js";
 import { ralphLoopWorkflow } from "@/_workflows/ralphLoopWorkflow.js";
+import { researchWorkflow } from "@/_workflows/researchWorkflow.js";
 import type { Context } from "@/types";
 
 export interface Workflow {
@@ -21,4 +22,10 @@ export const workflowRalphLoop: Workflow = {
     run: ralphLoopWorkflow
 };
 
-export const workflows: readonly Workflow[] = [workflowBootstrap, workflowRalphLoop];
+export const workflowResearch: Workflow = {
+    id: "research",
+    title: text.workflow_research_title!,
+    run: researchWorkflow
+};
+
+export const workflows: readonly Workflow[] = [workflowBootstrap, workflowRalphLoop, workflowResearch];

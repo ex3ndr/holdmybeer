@@ -75,6 +75,9 @@ inference_commit_generating = Generating bootstrap commit message
 inference_plan_generating = Generating implementation plan
 inference_plan_executing = Executing implementation plan
 inference_review_round = Running review round {round}/3
+inference_research_document_generating = Generating research document
+inference_research_summary_opus_generating = Generating research summary with opus
+inference_research_problems_codex_generating = Generating unresolved questions with codex
 
 # Errors
 
@@ -105,4 +108,5 @@ error_inference_progress_message_required = ❌  Inference progress message is r
 
 workflow_bootstrap_title = Initialize .beer settings, source/publish repos, README, and first push
 workflow_ralph_loop_title = Ask what to build, generate a plan, execute, and run 3 review rounds
+workflow_research_title = Run repository research and unresolved-questions docs with opus/codex in parallel
 workflow_bootstrap_required = Available after bootstrap completes

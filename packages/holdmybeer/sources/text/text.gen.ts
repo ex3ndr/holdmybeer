@@ -68,6 +68,9 @@ export const text = {
   inference_plan_generating: "Generating implementation plan",
   inference_plan_executing: "Executing implementation plan",
   inference_review_round: "Running review round {round}/3",
+  inference_research_document_generating: "Generating research document",
+  inference_research_summary_opus_generating: "Generating research summary with opus",
+  inference_research_problems_codex_generating: "Generating unresolved questions with codex",
   error_gh_required: "❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`",
   error_gh_user_resolve: "❌  Unable to resolve authenticated GitHub user from gh",
   error_repo_status_check: "❌  Unable to check repository status for {repo}: {detail}",
@@ -92,6 +95,7 @@ export const text = {
   error_inference_progress_message_required: "❌  Inference progress message is required.",
   workflow_bootstrap_title: "Initialize .beer settings, source/publish repos, README, and first push",
   workflow_ralph_loop_title: "Ask what to build, generate a plan, execute, and run 3 review rounds",
+  workflow_research_title: "Run repository research and unresolved-questions docs with opus/codex in parallel",
   workflow_bootstrap_required: "Available after bootstrap completes",
 } as const;
 
@@ -235,6 +239,9 @@ export type TextValuesByKey = {
   inference_review_round: {
     round: string | number;
   };
+  inference_research_document_generating: Record<never, never>;
+  inference_research_summary_opus_generating: Record<never, never>;
+  inference_research_problems_codex_generating: Record<never, never>;
   error_gh_required: Record<never, never>;
   error_gh_user_resolve: Record<never, never>;
   error_repo_status_check: {
@@ -274,6 +281,7 @@ export type TextValuesByKey = {
   error_inference_progress_message_required: Record<never, never>;
   workflow_bootstrap_title: Record<never, never>;
   workflow_ralph_loop_title: Record<never, never>;
+  workflow_research_title: Record<never, never>;
   workflow_bootstrap_required: Record<never, never>;
 };
 
