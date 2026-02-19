@@ -32,7 +32,10 @@ describe("runInference", () => {
     const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
-    generateMock.mockResolvedValue({ provider: "pi", text: "done" });
+    generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
+      permissions.onEvent?.("provider=pi started");
+      return { provider: "pi", text: "done" };
+    });
 
     const result = await runInference("Say {{word}} for {{repo}}", {
       word: "hello",
@@ -46,12 +49,19 @@ describe("runInference", () => {
     expect(result).toEqual({ provider: "pi", text: "done" });
     expect(contextGetMock).toHaveBeenCalledTimes(1);
     expect(stepProgressStartMock).toHaveBeenCalledWith("Generating test output");
+    expect(progress.update).toHaveBeenCalledWith(
+      "Generating test output (provider=pi started)"
+    );
     expect(progress.done).toHaveBeenCalledTimes(1);
     expect(progress.fail).not.toHaveBeenCalled();
     expect(generateMock).toHaveBeenCalledWith(
       context,
       "Say hello for owner/repo",
-      { showProgress: true, modelSelectionMode: "fast" }
+      expect.objectContaining({
+        showProgress: true,
+        modelSelectionMode: "fast",
+        onEvent: expect.any(Function)
+      })
     );
   });
 

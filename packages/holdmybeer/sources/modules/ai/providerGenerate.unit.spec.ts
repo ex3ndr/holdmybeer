@@ -30,7 +30,7 @@ describe("providerGenerate", () => {
     expect(commandRunMock).toHaveBeenCalledWith(
       "pi",
       ["--mode", "json", "--print", "--no-session", "hello"],
-      expect.objectContaining({ allowFailure: true, timeoutMs: 90_000 })
+      expect.objectContaining({ allowFailure: true, timeoutMs: null })
     );
     expect(result).toEqual({
       output: null,

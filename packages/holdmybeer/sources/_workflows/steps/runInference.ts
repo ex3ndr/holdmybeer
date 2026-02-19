@@ -25,10 +25,17 @@ export async function runInference(
     throw new Error(text["error_inference_progress_message_required"]!);
   }
 
-  const { progressMessage: _progressMessage, ...permissions } = options;
+  const { progressMessage: _progressMessage, ...permissionsBase } = options;
   const context = contextGet();
   const prompt = runInferencePromptResolve(promptTemplate, values);
-  const progress = permissions.showProgress ? stepProgressStart(progressMessage) : null;
+  const progress = permissionsBase.showProgress ? stepProgressStart(progressMessage) : null;
+  const permissions: GeneratePermissions = {
+    ...permissionsBase,
+    onEvent: (event: string) => {
+      permissionsBase.onEvent?.(event);
+      progress?.update(`${progressMessage} (${event})`);
+    }
+  };
 
   try {
     const result = await generate(context, prompt, permissions);

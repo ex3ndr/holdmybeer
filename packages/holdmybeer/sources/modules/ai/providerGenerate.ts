@@ -45,7 +45,7 @@ export async function providerGenerate(
   for (let attempt = 0; attempt < prompts.length; attempt += 1) {
     const result = await commandRun(input.command, providerArgs(input.providerId, prompts[attempt]!, input.model), {
       allowFailure: true,
-      timeoutMs: 90_000,
+      timeoutMs: null,
       sandbox: providerSandboxResolve(input),
       onStdoutText: input.onStdoutText,
       onStderrText: input.onStderrText

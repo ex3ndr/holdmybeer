@@ -60,6 +60,16 @@ describe("commandRun", () => {
     expect(spawnMock.mock.calls[0]?.[2]?.cwd).toBe("/tmp/explicit-cwd");
   });
 
+  it("skips timeout timer when timeoutMs is null", async () => {
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    try {
+      await commandRun("echo", ["ok"], { timeoutMs: null });
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+    } finally {
+      setTimeoutSpy.mockRestore();
+    }
+  });
+
   afterAll(() => {
     process.env.INIT_CWD = initCwd;
   });

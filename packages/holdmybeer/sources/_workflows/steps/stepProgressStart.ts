@@ -23,7 +23,7 @@ export function stepProgressStart(initialMessage: string): StepProgress {
   let active = true;
 
   const render = () => {
-    stream.write(`\r${stepProgressFrames[frame]!} ${message}`);
+    stream.write(`\r\x1b[2K${stepProgressFrames[frame]!} ${message}`);
   };
 
   let timer: ReturnType<typeof setInterval> | undefined;
@@ -50,7 +50,7 @@ export function stepProgressStart(initialMessage: string): StepProgress {
       message = nextMessage.trim();
     }
     if (interactive) {
-      stream.write(`\r${symbol} ${message}\n`);
+      stream.write(`\r\x1b[2K${symbol} ${message}\n`);
     } else {
       stream.write(`${symbol} ${message}\n`);
     }

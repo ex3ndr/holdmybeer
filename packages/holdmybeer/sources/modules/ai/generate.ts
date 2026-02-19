@@ -24,6 +24,7 @@ export interface GeneratePermissions {
   modelPriority?: readonly string[];
   modelSelectionMode?: ProviderModelSelectionMode;
   showProgress?: boolean;
+  onEvent?: (event: string) => void;
   writePolicy?: InferenceWritePolicy;
   enableWeakerNetworkIsolation?: boolean;
   expectedOutput?: GenerateExpectedOutput;
@@ -31,10 +32,12 @@ export interface GeneratePermissions {
 
 interface GenerateOptions {
   onMessage?: (message: string) => void;
+  onEvent?: (event: string) => void;
 }
 
 function inferMessage(message: string, options?: GenerateOptions): void {
   options?.onMessage?.(`[beer][infer] ${message}`);
+  options?.onEvent?.(message);
 }
 
 function inferOutputMessage(
@@ -54,7 +57,24 @@ function inferOutputMessage(
 
   for (const line of lines) {
     options.onMessage(`[beer][infer] ${providerId}:${stream} ${line}`);
+    options.onEvent?.(
+      stream === "stderr"
+        ? `provider=${providerId} stderr`
+        : `provider=${providerId} ${inferOutputEventResolve(line)}`
+    );
   }
+}
+
+function inferOutputEventResolve(line: string): string {
+  try {
+    const parsed = JSON.parse(line) as { type?: unknown };
+    if (typeof parsed.type === "string" && parsed.type.trim().length > 0) {
+      return `event=${parsed.type.trim()}`;
+    }
+  } catch {
+    // Ignore parse errors and keep compact generic event for loader updates.
+  }
+  return "stdout";
 }
 
 function inferPromptResolve(
@@ -128,7 +148,10 @@ export async function generate(
   const onMessage = permissions.showProgress
     ? (message: string) => { beerLogLine(message); }
     : undefined;
-  const options: GenerateOptions = { onMessage };
+  const options: GenerateOptions = {
+    onMessage,
+    onEvent: permissions.onEvent
+  };
   const sandbox = await sandboxInferenceGet({
     writePolicy,
     enableWeakerNetworkIsolation: permissions.enableWeakerNetworkIsolation

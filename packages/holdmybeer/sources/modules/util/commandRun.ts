@@ -5,7 +5,7 @@ import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js
 
 export interface CommandRunOptions {
   cwd?: string;
-  timeoutMs?: number;
+  timeoutMs?: number | null;
   input?: string;
   allowFailure?: boolean;
   onStdoutText?: (text: string) => void;
@@ -29,7 +29,7 @@ export async function commandRun(
   args: string[],
   options: CommandRunOptions = {}
 ): Promise<CommandRunResult> {
-  const timeoutMs = options.timeoutMs ?? 60_000;
+  const timeoutMs = options.timeoutMs === undefined ? 60_000 : options.timeoutMs;
   const cwdResolved = options.cwd ?? pathResolveFromInitCwd(".");
   const displayCommand = `${command} ${args.join(" ")}`;
   const abortController = new AbortController();
@@ -48,22 +48,25 @@ export async function commandRun(
     let stderr = "";
     let settled = false;
 
-    const timeout = setTimeout(() => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      abortController.abort();
-      child.kill("SIGTERM");
-      reject(
-        new Error(
-          textFormatKey("error_command_timeout", {
-            ms: timeoutMs,
-            command: displayCommand
-          })
-        )
-      );
-    }, timeoutMs);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    if (timeoutMs !== null) {
+      timeout = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        abortController.abort();
+        child.kill("SIGTERM");
+        reject(
+          new Error(
+            textFormatKey("error_command_timeout", {
+              ms: timeoutMs,
+              command: displayCommand
+            })
+          )
+        );
+      }, timeoutMs);
+    }
 
     child.stdout.on("data", (chunk: Buffer) => {
       const text = chunk.toString("utf-8");
@@ -82,7 +85,9 @@ export async function commandRun(
         return;
       }
       settled = true;
-      clearTimeout(timeout);
+      if (timeout) {
+        clearTimeout(timeout);
+      }
       reject(error);
     });
 
@@ -91,7 +96,9 @@ export async function commandRun(
         return;
       }
       settled = true;
-      clearTimeout(timeout);
+      if (timeout) {
+        clearTimeout(timeout);
+      }
       resolve({
         exitCode: code ?? 1,
         stdout,
