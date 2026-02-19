@@ -4,14 +4,17 @@ import { aiOutputExtract } from "@/modules/ai/aiOutputExtract.js";
 import { piProviderGenerate } from "@/modules/ai/providers/piProviderGenerate.js";
 import type {
     PiProviderAssistantMessageEvent,
+    PiProviderMessage,
+    PiProviderMessageEndEvent,
     PiProviderMessageUpdateEvent,
     PiProviderSessionEvent,
+    PiProviderToolCallContent,
     PiProviderToolExecutionEvent
 } from "@/modules/ai/providers/piProviderTypes.js";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
 import type { CommandSandbox } from "@/modules/sandbox/sandboxTypes.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
-import type { ProviderEvent, ProviderId } from "@/types";
+import type { ProviderEvent, ProviderId, ProviderTokenUsage } from "@/types";
 
 export interface ProviderGenerateInput {
     providerId: ProviderId;
@@ -39,6 +42,7 @@ export interface ProviderGenerateFailure {
 export interface ProviderGenerateResult {
     output: string | null;
     sessionId?: string;
+    tokenUsage?: ProviderTokenUsage;
     failure?: ProviderGenerateFailure;
 }
 
@@ -58,6 +62,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
     let continueSession = false;
     let outputRetryUsed = false;
     let outputValidationRetryCount = 0;
+    let tokenUsage: ProviderTokenUsage | undefined;
 
     while (true) {
         const result = await piProviderGenerate({
@@ -75,6 +80,9 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
                     if (providerEvent.type === "session_started") {
                         sessionId = providerEvent.sessionId;
                     }
+                    if ("tokens" in providerEvent && providerEvent.tokens) {
+                        tokenUsage = providerEvent.tokens;
+                    }
                     input.onEvent?.(providerEvent);
                 }
             },
@@ -87,6 +95,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             return {
                 output: null,
                 sessionId,
+                tokenUsage,
                 failure: {
                     providerId: input.providerId,
                     exitCode: result.exitCode,
@@ -101,6 +110,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             return {
                 output: null,
                 sessionId,
+                tokenUsage,
                 failure: {
                     providerId: input.providerId,
                     exitCode: 1,
@@ -114,6 +124,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
                 return {
                     output: null,
                     sessionId,
+                    tokenUsage,
                     failure: {
                         providerId: input.providerId,
                         exitCode: 1,
@@ -134,6 +145,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
                     return {
                         output: null,
                         sessionId,
+                        tokenUsage,
                         failure: {
                             providerId: input.providerId,
                             exitCode: 1,
@@ -147,7 +159,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             }
         }
 
-        return { output: output.text, sessionId };
+        return { output: output.text, sessionId, tokenUsage };
     }
 }
 
@@ -171,7 +183,7 @@ function providerEventResolvePi(event: unknown): ProviderEvent | undefined {
     }
 
     const typed = event as { type?: unknown };
-    const type = providerEventTokenResolve(typed.type);
+    const type = providerEventTypeResolve(typed.type);
     if (!type) {
         return undefined;
     }
@@ -185,16 +197,22 @@ function providerEventResolvePi(event: unknown): ProviderEvent | undefined {
         return providerEventResolvePiMessageUpdate(event as PiProviderMessageUpdateEvent);
     }
 
+    if (type === "message_end" || type === "turn_end") {
+        return providerEventResolvePiUsage(event as PiProviderMessageEndEvent);
+    }
+
     if (type === "tool_execution_start") {
         return {
-            type: "tool_call_start",
+            type: "tool_call",
+            status: "started",
             toolName: providerEventTokenResolve((event as PiProviderToolExecutionEvent).toolName)
         };
     }
 
     if (type === "tool_execution_end") {
         return {
-            type: "tool_call_stop",
+            type: "tool_call",
+            status: "stopped",
             toolName: providerEventTokenResolve((event as PiProviderToolExecutionEvent).toolName)
         };
     }
@@ -208,51 +226,66 @@ function providerEventResolvePiMessageUpdate(event: PiProviderMessageUpdateEvent
         return undefined;
     }
 
-    const innerType = providerEventTokenResolve(inner.type);
+    const innerType = providerEventTypeResolve(inner.type);
     if (!innerType) {
         return undefined;
     }
 
-    if (innerType === "thinking_start" || innerType === "thought_start") {
-        return { type: "thinking_start" };
+    const status = providerEventResolvePiStreamStatus(innerType);
+    if (!status) {
+        return undefined;
     }
+    const tokens = providerPiMessageUsageResolve(event.message);
 
-    if (innerType === "thinking_delta" || innerType === "thought_delta") {
-        const delta = providerEventTokenResolve(inner.delta);
-        return delta ? { type: "thinking_delta", delta } : undefined;
-    }
-
-    if (innerType === "thinking_stop" || innerType === "thinking_end" || innerType === "thought_end") {
-        return { type: "thinking_stop" };
-    }
-
-    if (innerType === "toolcall_start") {
+    if (innerType.startsWith("thinking_") || innerType.startsWith("thought_")) {
         return {
-            type: "tool_call_start",
-            toolName: providerEventResolvePiToolName(inner)
+            type: "thinking",
+            status,
+            text: providerEventResolvePiThinkingText(event.message, inner),
+            tokens
         };
     }
 
-    if (innerType === "toolcall_end") {
+    if (innerType.startsWith("toolcall_")) {
+        const toolCall = providerEventResolvePiToolCall(event.message, inner);
         return {
-            type: "tool_call_stop",
-            toolName: providerEventResolvePiToolName(inner)
+            type: "tool_call",
+            status,
+            toolName: toolCall.toolName,
+            toolCallId: toolCall.toolCallId,
+            arguments: toolCall.arguments,
+            partialJson: toolCall.partialJson,
+            tokens
         };
     }
 
-    if (innerType === "text_start") {
-        return { type: "text_start" };
+    if (innerType.startsWith("text_")) {
+        return {
+            type: "text",
+            status,
+            text: providerEventResolvePiText(event.message, inner),
+            tokens
+        };
     }
 
-    if (innerType === "text_delta") {
-        const delta = providerEventTokenResolve(inner.delta);
-        return delta ? { type: "text_delta", delta } : undefined;
-    }
+    return undefined;
+}
 
-    if (innerType === "text_end" || innerType === "text_stop") {
-        return { type: "text_stop" };
-    }
+function providerEventResolvePiUsage(event: PiProviderMessageEndEvent): ProviderEvent | undefined {
+    const tokens = providerPiMessageUsageResolve(event.message);
+    return tokens ? { type: "usage", tokens } : undefined;
+}
 
+function providerEventResolvePiStreamStatus(innerType: string): "started" | "updated" | "stopped" | undefined {
+    if (innerType.endsWith("_start")) {
+        return "started";
+    }
+    if (innerType.endsWith("_delta")) {
+        return "updated";
+    }
+    if (innerType.endsWith("_end") || innerType.endsWith("_stop")) {
+        return "stopped";
+    }
     return undefined;
 }
 
@@ -264,20 +297,205 @@ function providerPiSessionIdResolve(event: PiProviderSessionEvent): string | und
     );
 }
 
-function providerEventResolvePiToolName(event: PiProviderAssistantMessageEvent): string | undefined {
-    const toolCallName = providerEventTokenResolve(event.toolCall?.name);
-    if (toolCallName) {
-        return toolCallName;
+function providerEventResolvePiThinkingText(
+    message: PiProviderMessage | undefined,
+    event: PiProviderAssistantMessageEvent
+): string {
+    const content = providerPiContentResolve(message, event);
+    const indexed = providerPiContentEntryResolve(content, event);
+    const indexedText = providerPiThinkingTextResolve(indexed);
+    if (indexedText !== undefined) {
+        return indexedText;
     }
 
-    const content = event.partial?.content;
-    if (!Array.isArray(content) || content.length === 0) {
+    for (const entry of content) {
+        const text = providerPiThinkingTextResolve(entry);
+        if (text !== undefined) {
+            return text;
+        }
+    }
+
+    return providerEventTokenResolve(event.delta) ?? "";
+}
+
+function providerEventResolvePiText(
+    message: PiProviderMessage | undefined,
+    event: PiProviderAssistantMessageEvent
+): string {
+    const content = providerPiContentResolve(message, event);
+    const indexed = providerPiContentEntryResolve(content, event);
+    const indexedText = providerPiTextResolve(indexed);
+    if (indexedText !== undefined) {
+        return indexedText;
+    }
+
+    for (const entry of content) {
+        const text = providerPiTextResolve(entry);
+        if (text !== undefined) {
+            return text;
+        }
+    }
+
+    return providerEventTokenResolve(event.delta) ?? "";
+}
+
+function providerEventResolvePiToolCall(
+    message: PiProviderMessage | undefined,
+    event: PiProviderAssistantMessageEvent
+): {
+    toolName?: string;
+    toolCallId?: string;
+    arguments?: unknown;
+    partialJson?: string;
+} {
+    const fromToolCall = providerPiToolCallResolve(event.toolCall);
+    const content = providerPiContentResolve(message, event);
+    const indexed = providerPiContentEntryResolve(content, event);
+    const fromIndexed = providerPiToolCallResolve(indexed);
+    const fromAny = providerPiToolCallResolveFromContent(content);
+
+    return {
+        toolName: fromToolCall.toolName ?? fromIndexed.toolName ?? fromAny.toolName,
+        toolCallId: fromToolCall.toolCallId ?? fromIndexed.toolCallId ?? fromAny.toolCallId,
+        arguments: fromToolCall.arguments ?? fromIndexed.arguments ?? fromAny.arguments,
+        partialJson: fromToolCall.partialJson ?? fromIndexed.partialJson ?? fromAny.partialJson
+    };
+}
+
+function providerPiContentResolve(
+    message: PiProviderMessage | undefined,
+    event: PiProviderAssistantMessageEvent
+): unknown[] {
+    if (Array.isArray(message?.content)) {
+        return message.content;
+    }
+    if (Array.isArray(event.partial?.content)) {
+        return event.partial.content;
+    }
+    return [];
+}
+
+function providerPiContentEntryResolve(
+    content: unknown[],
+    event: PiProviderAssistantMessageEvent
+): unknown | undefined {
+    if (content.length === 0) {
+        return undefined;
+    }
+    const indexRaw = event.contentIndex;
+    if (typeof indexRaw === "number" && Number.isInteger(indexRaw) && indexRaw >= 0 && indexRaw < content.length) {
+        return content[indexRaw];
+    }
+    return content[content.length - 1];
+}
+
+function providerPiThinkingTextResolve(entry: unknown): string | undefined {
+    if (!entry || typeof entry !== "object") {
+        return undefined;
+    }
+    const typed = entry as { type?: unknown; thinking?: unknown };
+    const type = providerEventTypeResolve(typed.type);
+    if (type !== "thinking" && type !== "thought") {
+        return undefined;
+    }
+    return providerEventTokenResolve(typed.thinking) ?? "";
+}
+
+function providerPiTextResolve(entry: unknown): string | undefined {
+    if (!entry || typeof entry !== "object") {
+        return undefined;
+    }
+    const typed = entry as { type?: unknown; text?: unknown };
+    const type = providerEventTypeResolve(typed.type);
+    if (type !== "text") {
+        return undefined;
+    }
+    return providerEventTokenResolve(typed.text) ?? "";
+}
+
+function providerPiToolCallResolve(entry: unknown): {
+    toolName?: string;
+    toolCallId?: string;
+    arguments?: unknown;
+    partialJson?: string;
+} {
+    if (!entry || typeof entry !== "object") {
+        return {};
+    }
+    const typed = entry as PiProviderToolCallContent;
+    const type = providerEventTypeResolve(typed.type);
+    const toolName = providerEventTokenResolve(typed.name);
+    if (type && type !== "toolcall") {
+        return toolName ? { toolName } : {};
+    }
+    return {
+        toolName,
+        toolCallId: providerEventTokenResolve(typed.id),
+        arguments: typed.arguments,
+        partialJson: providerEventTokenResolve(typed.partialJson)
+    };
+}
+
+function providerPiToolCallResolveFromContent(content: unknown[]): {
+    toolName?: string;
+    toolCallId?: string;
+    arguments?: unknown;
+    partialJson?: string;
+} {
+    for (let index = content.length - 1; index >= 0; index -= 1) {
+        const resolved = providerPiToolCallResolve(content[index]);
+        if (resolved.toolName || resolved.toolCallId || resolved.arguments !== undefined || resolved.partialJson) {
+            return resolved;
+        }
+    }
+    return {};
+}
+
+function providerPiMessageUsageResolve(message: PiProviderMessage | undefined): ProviderTokenUsage | undefined {
+    return providerPiUsageResolve(message?.usage);
+}
+
+function providerPiUsageResolve(usage: unknown): ProviderTokenUsage | undefined {
+    if (!usage || typeof usage !== "object") {
         return undefined;
     }
 
-    const index = typeof event.contentIndex === "number" ? event.contentIndex : content.length - 1;
-    const entry = content[index] as { name?: unknown } | undefined;
-    return providerEventTokenResolve(entry?.name);
+    const typed = usage as {
+        input?: unknown;
+        output?: unknown;
+        cacheRead?: unknown;
+        cacheWrite?: unknown;
+        totalTokens?: unknown;
+    };
+    const input = providerNumberResolve(typed.input) ?? 0;
+    const output = providerNumberResolve(typed.output) ?? 0;
+    const cacheRead = providerNumberResolve(typed.cacheRead) ?? 0;
+    const cacheWrite = providerNumberResolve(typed.cacheWrite) ?? 0;
+    const total = providerNumberResolve(typed.totalTokens) ?? input + output + cacheRead + cacheWrite;
+
+    if (input === 0 && output === 0 && cacheRead === 0 && cacheWrite === 0 && total === 0) {
+        return undefined;
+    }
+
+    return {
+        input,
+        output,
+        cacheRead,
+        cacheWrite,
+        total
+    };
+}
+
+function providerNumberResolve(value: unknown): number | undefined {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+        return undefined;
+    }
+    return value;
+}
+
+function providerEventTypeResolve(value: unknown): string | undefined {
+    const token = providerEventTokenResolve(value);
+    return token ? token.toLowerCase() : undefined;
 }
 
 function providerEventTokenResolve(value: unknown): string | undefined {

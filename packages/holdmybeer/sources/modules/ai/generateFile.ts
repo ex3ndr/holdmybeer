@@ -1,6 +1,7 @@
 import { stat } from "node:fs/promises";
 import path from "node:path";
 import { type GenerateExpectedFileOutputVerify, type GeneratePermissions, generate } from "@/modules/ai/generate.js";
+import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
 import type { Context } from "@/types";
 
 export interface GenerateFilePermissions extends Omit<GeneratePermissions, "expectedOutput"> {
@@ -20,9 +21,14 @@ export async function generateFile(
 ): Promise<{ provider?: string; sessionId?: string; text: string }> {
     const { retries, verify, ...permissionsBase } = permissions;
     const resolvedOutputPath = pathResolveInProject(context.projectPath, outputFilePath);
+    const promptTemplateValues = {
+        originalCheckoutPath: beerOriginalPathResolve(context.projectPath),
+        outputPath: resolvedOutputPath,
+        sourceFullName: context.settings.sourceRepo?.fullName
+    };
     const maxRetries = Math.max(0, retries ?? 1);
     const basePrompt = [
-        prompt,
+        promptFormat(prompt, promptTemplateValues),
         `Write the final result only to this file: ${resolvedOutputPath}.`,
         "Do not write to any other files."
     ].join("\n\n");
@@ -67,4 +73,14 @@ async function fileExists(filePath: string): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+function promptFormat(
+    prompt: string,
+    values: { originalCheckoutPath: string; outputPath: string; sourceFullName?: string }
+): string {
+    return prompt.replace(/\{(\w+)\}/g, (match: string, key: string) => {
+        const value = values[key as keyof typeof values];
+        return value === undefined ? match : value;
+    });
 }

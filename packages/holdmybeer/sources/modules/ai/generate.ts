@@ -5,7 +5,15 @@ import { providerModelSelect } from "@/modules/providers/providerModelSelect.js"
 import { providerPriorityList } from "@/modules/providers/providerPriorityList.js";
 import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
-import type { Context, ProviderEvent, ProviderId, ProviderModelSelectionMode } from "@/types";
+import type {
+    Context,
+    GenerateEvent,
+    GenerateProviderFailure,
+    ProviderEvent,
+    ProviderId,
+    ProviderModelSelectionMode,
+    ProviderTokenUsage
+} from "@/types";
 
 export interface GenerateResult {
     provider?: string;
@@ -28,7 +36,7 @@ export interface GeneratePermissions {
     modelPriority?: readonly string[];
     modelSelectionMode?: ProviderModelSelectionMode;
     showProgress?: boolean;
-    onEvent?: (event: string) => void;
+    onEvent?: (event: GenerateEvent) => void;
     writePolicy?: InferenceWritePolicy;
     enableWeakerNetworkIsolation?: boolean;
     expectedOutput?: GenerateExpectedOutput;
@@ -36,12 +44,15 @@ export interface GeneratePermissions {
 
 interface GenerateOptions {
     onMessage?: (message: string) => void;
-    onEvent?: (event: string) => void;
+    onEvent?: (event: GenerateEvent) => void;
 }
 
 function inferMessage(message: string, options?: GenerateOptions): void {
     options?.onMessage?.(`[beer][infer] ${message}`);
-    options?.onEvent?.(message);
+}
+
+function inferEvent(event: GenerateEvent, options?: GenerateOptions): void {
+    options?.onEvent?.(event);
 }
 
 function inferOutputMessage(
@@ -62,24 +73,63 @@ function inferOutputMessage(
     for (const line of lines) {
         options.onMessage?.(`[beer][infer] ${providerId}:${stream} ${line}`);
         if (stream === "stderr") {
-            options.onEvent?.(`provider=${providerId} stderr`);
+            inferEvent(
+                {
+                    type: "provider_stderr",
+                    providerId,
+                    text: line
+                },
+                options
+            );
         }
     }
 }
 
 function inferProviderEvent(providerId: ProviderId, event: ProviderEvent, options?: GenerateOptions): void {
-    if (!options?.onEvent) {
-        return;
-    }
+    inferEvent({ providerId, ...event }, options);
+}
 
-    const parts = [`provider=${providerId}`, `event=${event.type}`];
-    if (event.type === "session_started") {
-        parts.push(`session=${event.sessionId}`);
+function inferProviderStatusEvent(
+    event: {
+        providerId: ProviderId;
+        status: "selected" | "started" | "completed" | "failed";
+        model?: string;
+        sessionId?: string;
+        exitCode?: number;
+        tokens?: ProviderTokenUsage;
+    },
+    options?: GenerateOptions
+): void {
+    const detailParts: string[] = [];
+    if (event.model) {
+        detailParts.push(`model=${event.model}`);
     }
-    if ((event.type === "tool_call_start" || event.type === "tool_call_stop") && event.toolName) {
-        parts.push(`tool=${event.toolName}`);
+    if (event.sessionId) {
+        detailParts.push(`session=${event.sessionId}`);
     }
-    options.onEvent(parts.join(" "));
+    if (typeof event.exitCode === "number") {
+        detailParts.push(`exit=${event.exitCode}`);
+    }
+    if (event.tokens) {
+        detailParts.push(`tokens=${event.tokens.total}`);
+    }
+    const details = detailParts.length > 0 ? ` ${detailParts.join(" ")}` : "";
+    inferMessage(`provider=${event.providerId} ${event.status}${details}`, options);
+    inferEvent(
+        {
+            type: "provider_status",
+            ...event
+        },
+        options
+    );
+}
+
+function inferFailureForEvent(failure: ProviderGenerateFailure): GenerateProviderFailure {
+    return {
+        providerId: failure.providerId,
+        exitCode: failure.exitCode,
+        stderr: failure.stderr
+    };
 }
 
 function inferPromptResolve(
@@ -168,16 +218,26 @@ export async function generate(
             continue;
         }
 
-        inferMessage(`provider=${provider.id} selected`, options);
-        inferMessage(`provider=${provider.id} started`, options);
+        inferProviderStatusEvent(
+            {
+                providerId: provider.id,
+                status: "selected"
+            },
+            options
+        );
         const model = providerModelSelect({
             provider,
             modelPriority: permissions.modelPriority,
             mode: permissions.modelSelectionMode
         });
-        if (model) {
-            inferMessage(`provider=${provider.id} model=${model}`, options);
-        }
+        inferProviderStatusEvent(
+            {
+                providerId: provider.id,
+                status: "started",
+                model
+            },
+            options
+        );
         const result = await providerGenerate({
             providerId: provider.id,
             command: provider.command,
@@ -194,7 +254,15 @@ export async function generate(
         });
 
         if (result.output !== null) {
-            inferMessage(`provider=${provider.id} completed`, options);
+            inferProviderStatusEvent(
+                {
+                    providerId: provider.id,
+                    status: "completed",
+                    sessionId: result.sessionId,
+                    tokens: result.tokenUsage
+                },
+                options
+            );
             const output: GenerateResult = {
                 provider: provider.id,
                 text: result.output
@@ -206,12 +274,27 @@ export async function generate(
         }
 
         if (result.failure) {
-            inferMessage(`provider=${provider.id} exit=${result.failure.exitCode}`, options);
+            inferProviderStatusEvent(
+                {
+                    providerId: provider.id,
+                    status: "failed",
+                    exitCode: result.failure.exitCode,
+                    tokens: result.tokenUsage
+                },
+                options
+            );
             failures.push(result.failure);
         }
     }
 
     inferMessage("all providers failed", options);
+    inferEvent(
+        {
+            type: "all_providers_failed",
+            failures: failures.map((entry) => inferFailureForEvent(entry))
+        },
+        options
+    );
     const details = failures
         .map((entry) => {
             const suffix = entry.stderr ? `, stderr=${entry.stderr}` : "";

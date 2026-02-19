@@ -47,14 +47,18 @@ describe("generate event parsing", () => {
 
         await generate(context, "hello", { onEvent });
 
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=session_started session=session-1");
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "session_started",
+            providerId: "pi",
+            sessionId: "session-1"
+        });
     });
 
-    it("forwards provider thinking start/delta/stop events", async () => {
+    it("forwards provider full-state thinking events", async () => {
         providerGenerateMock.mockImplementation(async (input) => {
-            input.onEvent?.({ type: "thinking_start" });
-            input.onEvent?.({ type: "thinking_delta", delta: "analysis" });
-            input.onEvent?.({ type: "thinking_stop" });
+            input.onEvent?.({ type: "thinking", status: "started", text: "" });
+            input.onEvent?.({ type: "thinking", status: "updated", text: "analysis" });
+            input.onEvent?.({ type: "thinking", status: "stopped", text: "analysis done" });
             return { output: "ok" };
         });
 
@@ -63,15 +67,41 @@ describe("generate event parsing", () => {
 
         await generate(context, "hello", { onEvent });
 
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=thinking_start");
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=thinking_delta");
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=thinking_stop");
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "thinking",
+            providerId: "pi",
+            status: "started",
+            text: ""
+        });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "thinking",
+            providerId: "pi",
+            status: "updated",
+            text: "analysis"
+        });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "thinking",
+            providerId: "pi",
+            status: "stopped",
+            text: "analysis done"
+        });
     });
 
-    it("forwards provider tool call start/stop events", async () => {
+    it("forwards provider full-state tool call events", async () => {
         providerGenerateMock.mockImplementation(async (input) => {
-            input.onEvent?.({ type: "tool_call_start", toolName: "read" });
-            input.onEvent?.({ type: "tool_call_stop", toolName: "read" });
+            input.onEvent?.({
+                type: "tool_call",
+                status: "started",
+                toolName: "read",
+                partialJson: '{"path"'
+            });
+            input.onEvent?.({
+                type: "tool_call",
+                status: "stopped",
+                toolName: "read",
+                arguments: { path: "README.md" },
+                partialJson: '{"path":"README.md"}'
+            });
             return { output: "ok" };
         });
 
@@ -80,15 +110,28 @@ describe("generate event parsing", () => {
 
         await generate(context, "hello", { onEvent });
 
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=tool_call_start tool=read");
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=tool_call_stop tool=read");
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "tool_call",
+            providerId: "pi",
+            status: "started",
+            toolName: "read",
+            partialJson: '{"path"'
+        });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "tool_call",
+            providerId: "pi",
+            status: "stopped",
+            toolName: "read",
+            arguments: { path: "README.md" },
+            partialJson: '{"path":"README.md"}'
+        });
     });
 
-    it("forwards provider text start/delta/stop events", async () => {
+    it("forwards provider full-state text events", async () => {
         providerGenerateMock.mockImplementation(async (input) => {
-            input.onEvent?.({ type: "text_start" });
-            input.onEvent?.({ type: "text_delta", delta: "hello" });
-            input.onEvent?.({ type: "text_stop" });
+            input.onEvent?.({ type: "text", status: "started", text: "" });
+            input.onEvent?.({ type: "text", status: "updated", text: "hello" });
+            input.onEvent?.({ type: "text", status: "stopped", text: "hello world" });
             return { output: "ok" };
         });
 
@@ -97,9 +140,57 @@ describe("generate event parsing", () => {
 
         await generate(context, "hello", { onEvent });
 
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_start");
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_delta");
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_stop");
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "text",
+            providerId: "pi",
+            status: "started",
+            text: ""
+        });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "text",
+            providerId: "pi",
+            status: "updated",
+            text: "hello"
+        });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "text",
+            providerId: "pi",
+            status: "stopped",
+            text: "hello world"
+        });
+    });
+
+    it("forwards token usage events", async () => {
+        providerGenerateMock.mockImplementation(async (input) => {
+            input.onEvent?.({
+                type: "usage",
+                tokens: {
+                    input: 10,
+                    output: 5,
+                    cacheRead: 2,
+                    cacheWrite: 0,
+                    total: 17
+                }
+            });
+            return { output: "ok", tokenUsage: { input: 10, output: 5, cacheRead: 2, cacheWrite: 0, total: 17 } };
+        });
+
+        const onEvent = vi.fn();
+        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+        await generate(context, "hello", { onEvent });
+
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "usage",
+            providerId: "pi",
+            tokens: {
+                input: 10,
+                output: 5,
+                cacheRead: 2,
+                cacheWrite: 0,
+                total: 17
+            }
+        });
     });
 
     it("returns sessionId from providerGenerate result", async () => {

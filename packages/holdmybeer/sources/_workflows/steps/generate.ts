@@ -1,6 +1,6 @@
 import { text } from "@text";
 import { type GeneratePermissions, type GenerateResult, generate as generateAi } from "@/modules/ai/generate.js";
-import type { Context } from "@/types";
+import type { Context, GenerateEvent } from "@/types";
 
 export interface RunInferenceOptions extends GeneratePermissions {
     progressMessage: string;
@@ -34,7 +34,7 @@ export async function generate(
         generateAi(ctx, prompt, {
             ...permissionsBase,
             showProgress: false,
-            onEvent: (event: string) => {
+            onEvent: (event: GenerateEvent) => {
                 permissionsBase.onEvent?.(event);
                 const updated = runInferenceProgressMessageResolve(progressMessage, event);
                 if (updated) {
@@ -56,11 +56,9 @@ function runInferencePromptResolve(template: string, values: Record<string, stri
 
 /**
  * Returns an updated progress string when the event is user-meaningful, or null to keep the
- * current spinner text unchanged. Only content-level events (thinking, writing, tool use)
- * produce visible updates; protocol-level events (turn/message start/end, selected, etc.)
- * are suppressed.
+ * current spinner text unchanged.
  */
-function runInferenceProgressMessageResolve(baseMessage: string, event: string): string | null {
+function runInferenceProgressMessageResolve(baseMessage: string, event: GenerateEvent): string | null {
     const label = runInferenceEventHumanize(event);
     if (!label) {
         return null;
@@ -68,45 +66,18 @@ function runInferenceProgressMessageResolve(baseMessage: string, event: string):
     return `${baseMessage} (${label})`;
 }
 
-function runInferenceEventHumanize(event: string): string {
-    const normalized = event.trim();
-    if (!normalized) {
-        return "";
-    }
-
-    const eventName = runInferenceEventTokenResolve(normalized, "event");
-    if (eventName) {
-        return runInferenceStreamEventHumanize(eventName, normalized);
-    }
-
-    // Status events without event= token (e.g. "provider=pi started")
-    if (normalized.endsWith(" started")) {
-        return "starting";
-    }
-
-    return "";
-}
-
-/** Maps PI event types to short user-facing labels. Handles both unwrapped
- * AssistantMessageEvent types and direct tool_execution events. */
-function runInferenceStreamEventHumanize(eventName: string, rawEvent: string): string {
-    switch (eventName) {
-        case "text_start":
-        case "text_delta":
-        case "text_end":
-            return "writing";
-        case "thinking_start":
-        case "thinking_delta":
-        case "thinking_end":
+function runInferenceEventHumanize(event: GenerateEvent): string {
+    switch (event.type) {
+        case "provider_status":
+            return event.status === "started" ? "starting" : "";
+        case "thinking":
             return "thinking";
-        case "toolcall_start":
-        case "toolcall_delta":
-        case "toolcall_end":
-        case "tool_execution_start":
-        case "tool_execution_end": {
-            const tool = runInferenceEventTokenResolve(rawEvent, "tool");
-            return tool ? runInferenceToolHumanize(tool) : "using tools";
-        }
+        case "tool_call":
+            return event.toolName ? runInferenceToolHumanize(event.toolName) : "using tools";
+        case "text":
+            return "writing";
+        case "usage":
+            return `tokens ${event.tokens.total}`;
         default:
             return "";
     }
@@ -145,9 +116,4 @@ function runInferenceToolHumanize(toolName: string): string {
         default:
             return `using ${toolName}`;
     }
-}
-
-function runInferenceEventTokenResolve(event: string, key: string): string | undefined {
-    const match = event.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`));
-    return match?.[1];
 }

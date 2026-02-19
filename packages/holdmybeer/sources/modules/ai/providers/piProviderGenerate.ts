@@ -1,5 +1,5 @@
 import { commandJSONL } from "@/modules/ai/providers/commandJSONL.js";
-import type { PiProviderContent, PiProviderEvent } from "@/modules/ai/providers/piProviderTypes.js";
+import type { PiProviderEvent } from "@/modules/ai/providers/piProviderTypes.js";
 import type { CommandSandbox } from "@/modules/sandbox/sandboxTypes.js";
 
 export interface PiProviderGenerateInput {
@@ -99,7 +99,7 @@ function piProviderContentText(content: unknown): string {
                 return "";
             }
 
-            const typed = entry as PiProviderContent;
+            const typed = entry as { type?: unknown; text?: unknown };
             return typed.type === "text" && typeof typed.text === "string" ? typed.text : "";
         })
         .join("");

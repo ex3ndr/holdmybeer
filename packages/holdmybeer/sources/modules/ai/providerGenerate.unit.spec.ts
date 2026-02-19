@@ -36,6 +36,7 @@ describe("providerGenerate", () => {
         expect(result).toEqual({
             output: null,
             sessionId: undefined,
+            tokenUsage: undefined,
             failure: {
                 providerId: "pi",
                 exitCode: 1,
@@ -59,7 +60,7 @@ describe("providerGenerate", () => {
             requireOutputTags: false
         });
 
-        expect(result).toEqual({ output: "", sessionId: undefined });
+        expect(result).toEqual({ output: "", sessionId: undefined, tokenUsage: undefined });
     });
 
     it("converts pi session event to common session_started", async () => {
@@ -78,33 +79,103 @@ describe("providerGenerate", () => {
             onEvent
         });
 
-        expect(result).toEqual({ output: "ok", sessionId: "session-1" });
+        expect(result).toEqual({ output: "ok", sessionId: "session-1", tokenUsage: undefined });
         expect(onEvent).toHaveBeenCalledWith({ type: "session_started", sessionId: "session-1" });
     });
 
-    it("converts pi stream events to common thinking/tool/text events", async () => {
+    it("converts pi stream events to common full-state thinking/tool/text events", async () => {
         piProviderGenerateMock.mockImplementation(async (input) => {
-            input.onEvent?.({ type: "message_update", assistantMessageEvent: { type: "thinking_start" } });
             input.onEvent?.({
                 type: "message_update",
-                assistantMessageEvent: { type: "thinking_delta", delta: "analyze" }
-            });
-            input.onEvent?.({ type: "message_update", assistantMessageEvent: { type: "thinking_end" } });
-            input.onEvent?.({
-                type: "message_update",
-                assistantMessageEvent: {
-                    type: "toolcall_start",
-                    partial: { content: [{ name: "Read" }] },
-                    contentIndex: 0
+                assistantMessageEvent: { type: "thinking_start", contentIndex: 0 },
+                message: {
+                    content: [{ type: "thinking", thinking: "" }]
                 }
             });
             input.onEvent?.({
                 type: "message_update",
-                assistantMessageEvent: { type: "toolcall_end", toolCall: { name: "Read" } }
+                assistantMessageEvent: {
+                    type: "thinking_delta",
+                    contentIndex: 0,
+                    delta: "alyze"
+                },
+                message: {
+                    content: [{ type: "thinking", thinking: "analyze" }]
+                }
             });
-            input.onEvent?.({ type: "message_update", assistantMessageEvent: { type: "text_start" } });
-            input.onEvent?.({ type: "message_update", assistantMessageEvent: { type: "text_delta", delta: "hello" } });
-            input.onEvent?.({ type: "message_update", assistantMessageEvent: { type: "text_end" } });
+            input.onEvent?.({
+                type: "message_update",
+                assistantMessageEvent: { type: "thinking_end", contentIndex: 0 },
+                message: {
+                    content: [{ type: "thinking", thinking: "analyze complete" }]
+                }
+            });
+            input.onEvent?.({
+                type: "message_update",
+                assistantMessageEvent: { type: "toolcall_start", contentIndex: 1 },
+                message: {
+                    content: [
+                        { type: "thinking", thinking: "analyze complete" },
+                        { type: "toolCall", id: "tool-1", name: "Read", partialJson: '{"path"' }
+                    ]
+                }
+            });
+            input.onEvent?.({
+                type: "message_update",
+                assistantMessageEvent: { type: "toolcall_end", contentIndex: 1 },
+                message: {
+                    content: [
+                        { type: "thinking", thinking: "analyze complete" },
+                        {
+                            type: "toolCall",
+                            id: "tool-1",
+                            name: "Read",
+                            arguments: { path: "README.md" },
+                            partialJson: '{"path":"README.md"}'
+                        }
+                    ]
+                }
+            });
+            input.onEvent?.({
+                type: "message_update",
+                assistantMessageEvent: { type: "text_start", contentIndex: 2 },
+                message: {
+                    content: [
+                        { type: "thinking", thinking: "analyze complete" },
+                        { type: "toolCall", id: "tool-1", name: "Read", arguments: { path: "README.md" } },
+                        { type: "text", text: "" }
+                    ]
+                }
+            });
+            input.onEvent?.({
+                type: "message_update",
+                assistantMessageEvent: { type: "text_delta", contentIndex: 2, delta: "hello" },
+                message: {
+                    content: [
+                        { type: "thinking", thinking: "analyze complete" },
+                        { type: "toolCall", id: "tool-1", name: "Read", arguments: { path: "README.md" } },
+                        { type: "text", text: "hello" }
+                    ],
+                    usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 }
+                }
+            });
+            input.onEvent?.({
+                type: "message_update",
+                assistantMessageEvent: { type: "text_end", contentIndex: 2 },
+                message: {
+                    content: [
+                        { type: "thinking", thinking: "analyze complete" },
+                        { type: "toolCall", id: "tool-1", name: "Read", arguments: { path: "README.md" } },
+                        { type: "text", text: "hello" }
+                    ]
+                }
+            });
+            input.onEvent?.({
+                type: "message_end",
+                message: {
+                    usage: { input: 12, output: 7, cacheRead: 1, cacheWrite: 0, totalTokens: 20 }
+                }
+            });
             return { exitCode: 0, stderr: "", output: "ok" };
         });
 
@@ -118,15 +189,51 @@ describe("providerGenerate", () => {
             onEvent
         });
 
-        expect(result).toEqual({ output: "ok", sessionId: undefined });
-        expect(onEvent).toHaveBeenCalledWith({ type: "thinking_start" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "thinking_delta", delta: "analyze" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "thinking_stop" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "tool_call_start", toolName: "Read" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "tool_call_stop", toolName: "Read" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "text_start" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "text_delta", delta: "hello" });
-        expect(onEvent).toHaveBeenCalledWith({ type: "text_stop" });
+        expect(result).toEqual({
+            output: "ok",
+            sessionId: undefined,
+            tokenUsage: {
+                input: 12,
+                output: 7,
+                cacheRead: 1,
+                cacheWrite: 0,
+                total: 20
+            }
+        });
+        expect(onEvent).toHaveBeenCalledWith({ type: "thinking", status: "started", text: "" });
+        expect(onEvent).toHaveBeenCalledWith({ type: "thinking", status: "updated", text: "analyze" });
+        expect(onEvent).toHaveBeenCalledWith({ type: "thinking", status: "stopped", text: "analyze complete" });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "tool_call",
+            status: "started",
+            toolName: "Read",
+            toolCallId: "tool-1",
+            arguments: undefined,
+            partialJson: '{"path"',
+            tokens: undefined
+        });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "tool_call",
+            status: "stopped",
+            toolName: "Read",
+            toolCallId: "tool-1",
+            arguments: { path: "README.md" },
+            partialJson: '{"path":"README.md"}',
+            tokens: undefined
+        });
+        expect(onEvent).toHaveBeenCalledWith({ type: "text", status: "started", text: "", tokens: undefined });
+        expect(onEvent).toHaveBeenCalledWith({ type: "text", status: "updated", text: "hello", tokens: undefined });
+        expect(onEvent).toHaveBeenCalledWith({ type: "text", status: "stopped", text: "hello", tokens: undefined });
+        expect(onEvent).toHaveBeenCalledWith({
+            type: "usage",
+            tokens: {
+                input: 12,
+                output: 7,
+                cacheRead: 1,
+                cacheWrite: 0,
+                total: 20
+            }
+        });
     });
 
     it("retries by continuing existing session with error message", async () => {
@@ -149,7 +256,7 @@ describe("providerGenerate", () => {
             sandbox: { wrapCommand: async (command) => command }
         });
 
-        expect(result).toEqual({ output: "ok", sessionId: undefined });
+        expect(result).toEqual({ output: "ok", sessionId: undefined, tokenUsage: undefined });
 
         const firstCall = piProviderGenerateMock.mock.calls[0]?.[0] as
             | { prompt?: string; continueSession?: boolean; sessionDir?: string }
@@ -195,7 +302,7 @@ describe("providerGenerate", () => {
             validateOutput
         });
 
-        expect(result).toEqual({ output: "second", sessionId: undefined });
+        expect(result).toEqual({ output: "second", sessionId: undefined, tokenUsage: undefined });
         expect(validateOutput).toHaveBeenCalledTimes(2);
         expect(validateOutput).toHaveBeenNthCalledWith(1, "first");
         expect(validateOutput).toHaveBeenNthCalledWith(2, "second");
@@ -229,6 +336,7 @@ describe("providerGenerate", () => {
         expect(result).toEqual({
             output: null,
             sessionId: undefined,
+            tokenUsage: undefined,
             failure: {
                 providerId: "pi",
                 exitCode: 1,
@@ -259,6 +367,7 @@ describe("providerGenerate", () => {
         expect(result).toEqual({
             output: null,
             sessionId: undefined,
+            tokenUsage: undefined,
             failure: {
                 providerId: "pi",
                 exitCode: 1,

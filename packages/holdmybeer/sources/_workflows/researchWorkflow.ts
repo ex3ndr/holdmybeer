@@ -1,6 +1,6 @@
 import { text } from "@text";
 import { type GenerateDocumentInput, generateDocument } from "@/_workflows/steps/generateDocument.js";
-import type { Context } from "@/types";
+import type { Context, GenerateEvent } from "@/types";
 
 const researchRuns: readonly (GenerateDocumentInput & { progressMessage: string })[] = [
     {
@@ -28,7 +28,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
                 const { progressMessage, ...input } = run;
                 return progresses.run(progressMessage, async (report) => {
                     await generateDocument(ctx, input, {
-                        onEvent: (event: string) => {
+                        onEvent: (event: GenerateEvent) => {
                             const updated = researchProgressMessageResolve(progressMessage, event);
                             if (updated) {
                                 report(updated);
@@ -41,7 +41,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
     });
 }
 
-function researchProgressMessageResolve(baseMessage: string, event: string): string | null {
+function researchProgressMessageResolve(baseMessage: string, event: GenerateEvent): string | null {
     const label = researchEventHumanize(event);
     if (!label) {
         return null;
@@ -49,42 +49,18 @@ function researchProgressMessageResolve(baseMessage: string, event: string): str
     return `${baseMessage} (${label})`;
 }
 
-function researchEventHumanize(event: string): string {
-    const normalized = event.trim();
-    if (!normalized) {
-        return "";
-    }
-
-    const eventName = researchEventTokenResolve(normalized, "event");
-    if (eventName) {
-        return researchStreamEventHumanize(eventName, normalized);
-    }
-
-    if (normalized.endsWith(" started")) {
-        return "starting";
-    }
-
-    return "";
-}
-
-function researchStreamEventHumanize(eventName: string, rawEvent: string): string {
-    switch (eventName) {
-        case "text_start":
-        case "text_delta":
-        case "text_end":
-            return "writing";
-        case "thinking_start":
-        case "thinking_delta":
-        case "thinking_end":
+function researchEventHumanize(event: GenerateEvent): string {
+    switch (event.type) {
+        case "provider_status":
+            return event.status === "started" ? "starting" : "";
+        case "thinking":
             return "thinking";
-        case "toolcall_start":
-        case "toolcall_delta":
-        case "toolcall_end":
-        case "tool_execution_start":
-        case "tool_execution_end": {
-            const tool = researchEventTokenResolve(rawEvent, "tool");
-            return tool ? researchToolHumanize(tool) : "using tools";
-        }
+        case "tool_call":
+            return event.toolName ? researchToolHumanize(event.toolName) : "using tools";
+        case "text":
+            return "writing";
+        case "usage":
+            return `tokens ${event.tokens.total}`;
         default:
             return "";
     }
@@ -122,9 +98,4 @@ function researchToolHumanize(toolName: string): string {
         default:
             return `using ${toolName}`;
     }
-}
-
-function researchEventTokenResolve(event: string, key: string): string | undefined {
-    const match = event.match(new RegExp(`(?:^|\\s)${key}=([^\\s]+)`));
-    return match?.[1];
 }

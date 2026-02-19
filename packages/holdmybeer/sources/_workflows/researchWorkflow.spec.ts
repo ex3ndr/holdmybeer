@@ -42,9 +42,9 @@ describe("researchWorkflow", () => {
         expect(generateDocumentMock).toHaveBeenCalledWith(
             context,
             {
-            promptId: "PROMPT_RESEARCH",
-            outputPath: "doc/research.md",
-            modelSelectionMode: "opus"
+                promptId: "PROMPT_RESEARCH",
+                outputPath: "doc/research.md",
+                modelSelectionMode: "opus"
             },
             expect.objectContaining({
                 onEvent: expect.any(Function)
@@ -64,8 +64,18 @@ describe("researchWorkflow", () => {
 
         const firstOptions = generateDocumentMock.mock.calls[0]?.[2];
         const secondOptions = generateDocumentMock.mock.calls[1]?.[2];
-        firstOptions?.onEvent?.("provider=pi event=thinking_delta");
-        secondOptions?.onEvent?.("provider=pi event=tool_execution_start tool=Read");
+        firstOptions?.onEvent?.({
+            type: "thinking",
+            providerId: "pi",
+            status: "updated",
+            text: "analysis"
+        });
+        secondOptions?.onEvent?.({
+            type: "tool_call",
+            providerId: "pi",
+            status: "started",
+            toolName: "Read"
+        });
 
         expect(reports).toContain(`${text.inference_research_summary_opus_generating} (thinking)`);
         expect(reports).toContain(`${text.inference_research_problems_codex_generating} (reading files)`);

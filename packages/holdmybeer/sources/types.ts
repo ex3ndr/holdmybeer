@@ -1,5 +1,6 @@
 export { Context } from "@/_workflows/context/context.js";
-export type { ProviderEvent } from "@/modules/ai/providerEventTypes.js";
+export type { GenerateEvent, GenerateProviderFailure } from "@/modules/ai/generateEventTypes.js";
+export type { ProviderEvent, ProviderTokenUsage } from "@/modules/ai/providerEventTypes.js";
 export type { BeerSettings, ProviderDetection } from "@/modules/beer/beerSettingsTypes.js";
 export type { GitHubRepoRef, GitHubRepoStatus } from "@/modules/github/githubTypes.js";
 export type {
