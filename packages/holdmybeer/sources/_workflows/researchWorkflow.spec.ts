@@ -17,7 +17,12 @@ describe("researchWorkflow", () => {
     });
 
     it("runs both research documents via multiline progress", async () => {
-        const runMock: ContextProgresses["run"] = vi.fn(async (_message, operation) => operation(() => {}));
+        const reports: string[] = [];
+        const runMock: ContextProgresses["run"] = vi.fn(async (_message, operation) =>
+            operation((message: string) => {
+                reports.push(message);
+            })
+        );
         const progressesMock = vi.fn<Context["progresses"]>(async (operation) => {
             const progresses: ContextProgresses = {
                 add: vi.fn(),
@@ -34,15 +39,35 @@ describe("researchWorkflow", () => {
         expect(runMock).toHaveBeenCalledWith(text.inference_research_summary_opus_generating, expect.any(Function));
         expect(runMock).toHaveBeenCalledWith(text.inference_research_problems_codex_generating, expect.any(Function));
         expect(generateDocumentMock).toHaveBeenCalledTimes(2);
-        expect(generateDocumentMock).toHaveBeenCalledWith(context, {
+        expect(generateDocumentMock).toHaveBeenCalledWith(
+            context,
+            {
             promptId: "PROMPT_RESEARCH",
             outputPath: "doc/research.md",
             modelSelectionMode: "opus"
-        });
-        expect(generateDocumentMock).toHaveBeenCalledWith(context, {
-            promptId: "PROMPT_RESEARCH_PROBLEMS",
-            outputPath: "doc/research-problems.md",
-            modelSelectionMode: "codex-xhigh"
-        });
+            },
+            expect.objectContaining({
+                onEvent: expect.any(Function)
+            })
+        );
+        expect(generateDocumentMock).toHaveBeenCalledWith(
+            context,
+            {
+                promptId: "PROMPT_RESEARCH_PROBLEMS",
+                outputPath: "doc/research-problems.md",
+                modelSelectionMode: "codex-xhigh"
+            },
+            expect.objectContaining({
+                onEvent: expect.any(Function)
+            })
+        );
+
+        const firstOptions = generateDocumentMock.mock.calls[0]?.[2];
+        const secondOptions = generateDocumentMock.mock.calls[1]?.[2];
+        firstOptions?.onEvent?.("provider=pi event=thinking_delta");
+        secondOptions?.onEvent?.("provider=pi event=tool_execution_start tool=Read");
+
+        expect(reports).toContain(`${text.inference_research_summary_opus_generating} (thinking)`);
+        expect(reports).toContain(`${text.inference_research_problems_codex_generating} (reading files)`);
     });
 });
