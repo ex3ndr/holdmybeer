@@ -134,6 +134,41 @@ describe("generateFile", () => {
         }
     });
 
+    it("creates parent folders before generation for nested output paths", async () => {
+        const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-generate-file-"));
+        try {
+            const outputPath = path.join(tempDir, "doc", "nested", "README.md");
+            const context = {
+                projectPath: tempDir,
+                settings: {
+                    version: 1,
+                    updatedAt: 1
+                }
+            } as Context;
+
+            generateMock.mockImplementation(async () => {
+                await writeFile(outputPath, "# nested\n", "utf-8");
+                return { provider: "pi", text: "done" };
+            });
+
+            const result = await generateFile(context, "Create nested readme", outputPath);
+
+            expect(result).toEqual({ provider: "pi", text: "done" });
+            expect(generateMock).toHaveBeenCalledWith(
+                context,
+                expect.any(String),
+                expect.objectContaining({
+                    writePolicy: {
+                        mode: "write-whitelist",
+                        writablePaths: [outputPath]
+                    }
+                })
+            );
+        } finally {
+            await rm(tempDir, { recursive: true, force: true });
+        }
+    });
+
     it("keeps sourceFullName placeholder when source repo is not configured", async () => {
         const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-generate-file-"));
         try {

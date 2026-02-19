@@ -1,4 +1,4 @@
-import { stat } from "node:fs/promises";
+import { mkdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { type GenerateExpectedFileOutputVerify, type GeneratePermissions, generate } from "@/modules/ai/generate.js";
 import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
@@ -21,6 +21,7 @@ export async function generateFile(
 ): Promise<{ provider?: string; sessionId?: string; text: string }> {
     const { retries, verify, ...permissionsBase } = permissions;
     const resolvedOutputPath = pathResolveInProject(context.projectPath, outputFilePath);
+    await mkdir(path.dirname(resolvedOutputPath), { recursive: true });
     const promptTemplateValues = {
         originalCheckoutPath: beerOriginalPathResolve(context.projectPath),
         outputPath: resolvedOutputPath,
