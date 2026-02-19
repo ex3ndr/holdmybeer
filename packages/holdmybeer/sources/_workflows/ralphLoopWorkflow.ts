@@ -17,20 +17,11 @@ export async function ralphLoopWorkflow(ctx: Context): Promise<void> {
         throw new Error(text.error_ralph_loop_goal_required!);
     }
 
-    const plan = await ralphLoopPlanGenerate(buildGoal, {
-        showProgress: showInferenceProgress,
-        projectPath: ctx.projectPath
-    });
+    const plan = await ralphLoopPlanGenerate(ctx, buildGoal, { showProgress: showInferenceProgress });
 
-    await ralphLoopExecute(buildGoal, plan.planPath, {
-        showProgress: showInferenceProgress,
-        projectPath: ctx.projectPath
-    });
+    await ralphLoopExecute(ctx, buildGoal, plan.planPath, { showProgress: showInferenceProgress });
 
     for (let round = 1; round <= 3; round += 1) {
-        await ralphLoopReviewRound(round, plan.planPath, {
-            showProgress: showInferenceProgress,
-            projectPath: ctx.projectPath
-        });
+        await ralphLoopReviewRound(ctx, round, plan.planPath, { showProgress: showInferenceProgress });
     }
 }

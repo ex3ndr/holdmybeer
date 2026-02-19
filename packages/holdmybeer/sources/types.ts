@@ -1,5 +1,5 @@
+export { Context } from "@/_workflows/context/context.js";
 export type { BeerSettings, ProviderDetection } from "@/modules/beer/beerSettingsTypes.js";
-export type { Context, ContextInferTextInput } from "@/modules/context/contextTypes.js";
 export type { GitHubRepoRef, GitHubRepoStatus } from "@/modules/github/githubTypes.js";
 export type {
     ProviderId,

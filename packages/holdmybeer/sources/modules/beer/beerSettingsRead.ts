@@ -7,16 +7,17 @@ import type { BeerSettings } from "@/modules/beer/beerSettingsTypes.js";
 export async function beerSettingsRead(settingsPath: string): Promise<BeerSettings> {
     const fallback: BeerSettings = {
         version: 1,
-        providers: [],
         updatedAt: Date.now()
     };
 
     try {
         const content = await readFile(settingsPath, "utf-8");
-        const parsed = JSON.parse(content) as BeerSettings;
+        const parsed = JSON.parse(content) as BeerSettings & { providers?: unknown };
+        const { providers: _providers, ...settingsWithoutProviders } = parsed;
         return {
             ...fallback,
-            ...parsed,
+            ...settingsWithoutProviders,
+            version: 1,
             updatedAt: Date.now()
         };
     } catch (error) {

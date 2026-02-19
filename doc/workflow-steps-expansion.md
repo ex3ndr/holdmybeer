@@ -11,12 +11,15 @@ flowchart TD
   C --> D[global context read]
   C --> E[handlebars prompt resolve]
   C --> F[generate]
-  A --> G[generateReadme]
-  G --> H[write README.md]
-  H --> I[gitignoreEnsure]
-  A --> J[pushMain]
-  J --> K[stageAndCommit]
-  J --> L[gitPush origin/main]
+  A --> G{README.md exists?}
+  G -->|No| H[generateReadme]
+  H --> I[write README.md]
+  G -->|Yes| J[skip generateReadme]
+  I --> K[gitignoreEnsure]
+  J --> K
+  A --> L[pushMain]
+  L --> M[stageAndCommit]
+  L --> N[gitPush origin/main]
 ```
 
 ## Notes

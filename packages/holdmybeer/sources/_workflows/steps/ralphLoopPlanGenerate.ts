@@ -1,13 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { text } from "@text";
+import { generate } from "@/_workflows/steps/generate.js";
 import { ralphLoopPlanPathResolve } from "@/_workflows/steps/ralphLoopPlanPathResolve.js";
-import { runInference } from "@/_workflows/steps/runInference.js";
+import type { Context } from "@/types";
 
 export interface RalphLoopPlanGenerateOptions {
     showProgress?: boolean;
     planPath?: string;
-    projectPath?: string;
 }
 
 const planPromptTemplate = [
@@ -27,6 +27,7 @@ const planPromptTemplate = [
  * Expects: buildGoal is non-empty user intent and planPath is repo-relative when provided.
  */
 export async function ralphLoopPlanGenerate(
+    ctx: Context,
     buildGoal: string,
     options: RalphLoopPlanGenerateOptions = {}
 ): Promise<{ planPath: string; provider?: string; text: string }> {
@@ -35,8 +36,9 @@ export async function ralphLoopPlanGenerate(
         throw new Error("Build goal is required.");
     }
 
-    const planPath = options.planPath ?? ralphLoopPlanPathResolve(goal);
-    const result = await runInference(
+    const planPath = options.planPath ?? ralphLoopPlanPathResolve(ctx, goal);
+    const result = await generate(
+        ctx,
         planPromptTemplate,
         { buildGoal: goal },
         {
@@ -52,7 +54,7 @@ export async function ralphLoopPlanGenerate(
         throw new Error("Inference returned empty plan.");
     }
 
-    const absolutePath = path.resolve(options.projectPath ?? process.cwd(), planPath);
+    const absolutePath = path.resolve(ctx.projectPath, planPath);
     await mkdir(path.dirname(absolutePath), { recursive: true });
     await writeFile(absolutePath, `${planText}\n`, "utf-8");
     return {

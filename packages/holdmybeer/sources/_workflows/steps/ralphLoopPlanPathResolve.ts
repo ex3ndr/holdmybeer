@@ -1,8 +1,10 @@
+import type { Context } from "@/types";
+
 /**
  * Resolves a deterministic plan file path for ralph-loop.
  * Expects: buildGoal is user-entered free text describing what to build.
  */
-export function ralphLoopPlanPathResolve(buildGoal: string, nowMs: number = Date.now()): string {
+export function ralphLoopPlanPathResolve(_ctx: Context, buildGoal: string, nowMs: number = Date.now()): string {
     const date = new Date(nowMs).toISOString().slice(0, 10).replace(/-/g, "");
     const slug = ralphLoopSlugResolve(buildGoal);
     return `doc/plans/${date}-${slug}.md`;

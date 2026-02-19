@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { text } from "@text";
-import { runInference } from "@/_workflows/steps/runInference.js";
+import { generate } from "@/_workflows/steps/generate.js";
+import type { Context } from "@/types";
 
 export interface RalphLoopExecuteOptions {
     showProgress?: boolean;
-    projectPath?: string;
 }
 
 const executePromptTemplate = [
@@ -24,13 +24,15 @@ const executePromptTemplate = [
  * Expects: planPath points to an existing markdown plan file.
  */
 export async function ralphLoopExecute(
+    ctx: Context,
     buildGoal: string,
     planPath: string,
     options: RalphLoopExecuteOptions = {}
 ): Promise<{ provider?: string; text: string }> {
-    const projectPath = options.projectPath ?? process.cwd();
+    const projectPath = ctx.projectPath;
     const planContent = await readFile(path.resolve(projectPath, planPath), "utf-8");
-    const result = await runInference(
+    const result = await generate(
+        ctx,
         executePromptTemplate,
         {
             buildGoal: buildGoal.trim(),

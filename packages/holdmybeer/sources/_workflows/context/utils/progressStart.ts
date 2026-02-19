@@ -1,20 +1,20 @@
-export interface StepProgress {
+export interface Progress {
     update(message: string): void;
     done(message?: string): void;
     fail(message?: string): void;
 }
 
-const stepProgressFrames = ["|", "/", "-", "\\"];
-const stepProgressTickMs = 120;
+const progressFrames = ["|", "/", "-", "\\"];
+const progressTickMs = 120;
 
 /**
  * Starts a single-character ASCII spinner with an initial message.
  * Expects: initialMessage is non-empty user-facing text.
  */
-export function stepProgressStart(initialMessage: string): StepProgress {
+export function progressStart(initialMessage: string): Progress {
     let message = initialMessage.trim();
     if (!message) {
-        throw new Error("stepProgressStart expects non-empty initialMessage.");
+        throw new Error("progressStart expects non-empty initialMessage.");
     }
 
     const stream = process.stderr;
@@ -23,16 +23,16 @@ export function stepProgressStart(initialMessage: string): StepProgress {
     let active = true;
 
     const render = () => {
-        stream.write(`\r\x1b[2K${stepProgressFrames[frame]!} ${message}`);
+        stream.write(`\r\x1b[2K${progressFrames[frame]!} ${message}`);
     };
 
     let timer: ReturnType<typeof setInterval> | undefined;
     if (interactive) {
         render();
         timer = setInterval(() => {
-            frame = (frame + 1) % stepProgressFrames.length;
+            frame = (frame + 1) % progressFrames.length;
             render();
-        }, stepProgressTickMs);
+        }, progressTickMs);
     } else {
         stream.write(`| ${message}\n`);
     }

@@ -1,11 +1,9 @@
 import { readFileSync } from "node:fs";
-import path from "node:path";
 import select from "@inquirer/select";
 import { text } from "@text";
 import { Command } from "commander";
 import { type Workflow, workflows } from "@/_workflows/_index.js";
-import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
-import { contextInitialize } from "@/modules/context/contextInitialize.js";
+import { Context } from "@/_workflows/context/context.js";
 import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 
@@ -23,8 +21,8 @@ program
         const projectPath = pathResolveFromInitCwd(options.project ?? ".");
         process.env.BEER_PROJECT_PATH = projectPath;
         await githubCliEnsure();
-        const ctx = await contextInitialize(projectPath);
-        const bootstrapped = await mainWorkflowBootstrappedResolve(projectPath);
+        const ctx = await Context.create(projectPath);
+        const bootstrapped = mainWorkflowBootstrappedResolve(ctx);
         const selectedWorkflowId = await select({
             message: text.prompt_workflow_select!,
             choices: workflows.map((workflow) => ({
@@ -49,8 +47,7 @@ function mainWorkflowDisabledReasonResolve(workflow: Workflow, bootstrapped: boo
     return text.workflow_bootstrap_required!;
 }
 
-async function mainWorkflowBootstrappedResolve(projectPath: string): Promise<boolean> {
-    const settingsPath = path.join(projectPath, ".beer", "settings.json");
-    const settings = await beerSettingsRead(settingsPath);
+function mainWorkflowBootstrappedResolve(ctx: Context): boolean {
+    const settings = ctx.settings;
     return Boolean(settings.sourceRepo && settings.publishRepo && settings.sourceCommitHash);
 }

@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { textFormatKey } from "@text";
-import { runInference } from "@/_workflows/steps/runInference.js";
+import { generate } from "@/_workflows/steps/generate.js";
+import type { Context } from "@/types";
 
 export interface RalphLoopReviewRoundOptions {
     showProgress?: boolean;
-    projectPath?: string;
 }
 
 const reviewPromptTemplate = [
@@ -24,6 +24,7 @@ const reviewPromptTemplate = [
  * Expects: round is 1..3 and planPath points to an existing plan file.
  */
 export async function ralphLoopReviewRound(
+    ctx: Context,
     round: number,
     planPath: string,
     options: RalphLoopReviewRoundOptions = {}
@@ -32,9 +33,10 @@ export async function ralphLoopReviewRound(
         throw new Error(`Invalid review round: ${round}`);
     }
 
-    const projectPath = options.projectPath ?? process.cwd();
+    const projectPath = ctx.projectPath;
     const planContent = await readFile(path.resolve(projectPath, planPath), "utf-8");
-    const result = await runInference(
+    const result = await generate(
+        ctx,
         reviewPromptTemplate,
         {
             round,

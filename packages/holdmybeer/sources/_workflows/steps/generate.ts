@@ -1,17 +1,17 @@
 import { text } from "@text";
-import { stepProgressStart } from "@/_workflows/steps/stepProgressStart.js";
-import { type GeneratePermissions, type GenerateResult, generate } from "@/modules/ai/generate.js";
-import { contextGet } from "@/modules/context/contextGet.js";
+import { type GeneratePermissions, type GenerateResult, generate as generateAi } from "@/modules/ai/generate.js";
+import type { Context } from "@/types";
 
 export interface RunInferenceOptions extends GeneratePermissions {
     progressMessage: string;
 }
 
 /**
- * Runs inference with already initialized global context.
+ * Runs inference for a workflow step using the provided context.
  * Expects: promptTemplate may include {{key}} placeholders from values and progressMessage is non-empty.
  */
-export async function runInference(
+export async function generate(
+    ctx: Context,
     promptTemplate: string,
     values: Record<string, string | number> = {},
     options: RunInferenceOptions
@@ -22,30 +22,27 @@ export async function runInference(
     }
 
     const { progressMessage: _progressMessage, ...permissionsBase } = options;
-    const context = contextGet();
     const prompt = runInferencePromptResolve(promptTemplate, values);
-    const progress = permissionsBase.showProgress ? stepProgressStart(progressMessage) : null;
-    const permissions: GeneratePermissions = {
-        ...permissionsBase,
-        onEvent: (event: string) => {
-            permissionsBase.onEvent?.(event);
-            if (progress) {
+    if (!permissionsBase.showProgress) {
+        return generateAi(ctx, prompt, {
+            ...permissionsBase,
+            showProgress: false
+        });
+    }
+
+    return ctx.progress(progressMessage, async (report) =>
+        generateAi(ctx, prompt, {
+            ...permissionsBase,
+            showProgress: false,
+            onEvent: (event: string) => {
+                permissionsBase.onEvent?.(event);
                 const updated = runInferenceProgressMessageResolve(progressMessage, event);
                 if (updated) {
-                    progress.update(updated);
+                    report(updated);
                 }
             }
-        }
-    };
-
-    try {
-        const result = await generate(context, prompt, permissions);
-        progress?.done();
-        return result;
-    } catch (error) {
-        progress?.fail();
-        throw error;
-    }
+        })
+    );
 }
 
 function runInferencePromptResolve(template: string, values: Record<string, string | number>): string {

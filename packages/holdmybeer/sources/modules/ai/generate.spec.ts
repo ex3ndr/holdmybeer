@@ -23,16 +23,8 @@ function errorTextResolve(error: unknown): string {
 function contextForProvider(providerId: ProviderId, command: string): Context {
     return {
         projectPath: "/tmp/test-project",
-        providers: [{ id: providerId, available: true, command, priority: 1 }],
-        inferText: (input) =>
-            generate(contextForProvider(providerId, command), input.prompt, {
-                providerPriority: input.providerPriority,
-                modelPriority: input.modelPriority,
-                showProgress: input.showProgress,
-                writePolicy: input.writePolicy
-            }),
-        stageAndCommit: async () => false
-    };
+        providers: [{ id: providerId, available: true, command, priority: 1 }]
+    } as unknown as Context;
 }
 
 async function runRealProviderInference(providerId: ProviderId, command: string): Promise<void> {

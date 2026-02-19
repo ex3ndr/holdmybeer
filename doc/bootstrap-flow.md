@@ -20,15 +20,19 @@ flowchart TD
   J -->|Non-empty| I
   K --> M[Checkout source to .beer/local/original]
   L --> M
-  M --> N[Generate README via pi]
-  N --> O[Ensure root .gitignore includes .beer/local/]
-  O --> P[generateCommit step]
-  P --> Q[runInference step]
-  Q --> R[Update settings]
-  R --> S[Ensure git origin remote]
-  S --> T[pushMain step]
-  T --> U[Commit]
-  U --> V[Push HEAD to main]
+  M --> N{README.md exists?}
+  N -->|No| O[Generate README via pi]
+  O --> P[Write README.md]
+  N -->|Yes| Q[Keep existing README.md]
+  P --> R[Ensure root .gitignore includes .beer/local/]
+  Q --> R
+  R --> S[generateCommit step]
+  S --> T[runInference step]
+  T --> U[Update settings]
+  U --> V[Ensure git origin remote]
+  V --> W[pushMain step]
+  W --> X[Commit]
+  X --> Y[Push HEAD to main]
 ```
 
 ## Notes
@@ -36,6 +40,7 @@ flowchart TD
 - Source input accepts URL, SSH remote, or `owner/repo` shorthand.
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes on non-empty collisions.
 - Source is checked out to `<projectPath>/.beer/local/original` before inference.
+- Bootstrap skips README inference when `README.md` already exists.
 - Bootstrap creates/updates root `.gitignore` in the README phase before the first commit.
 - README and commit generation resolve workflow model priorities against live `pi` model availability.
 - Inference failures fail the operation.
