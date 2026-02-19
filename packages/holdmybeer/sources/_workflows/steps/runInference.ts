@@ -1,11 +1,7 @@
-import {
-  generate,
-  type GeneratePermissions,
-  type GenerateResult
-} from "@/modules/ai/generate.js";
-import { contextGet } from "@/modules/context/contextGet.js";
-import { stepProgressStart } from "@/_workflows/steps/stepProgressStart.js";
 import { text } from "@text";
+import { stepProgressStart } from "@/_workflows/steps/stepProgressStart.js";
+import { type GeneratePermissions, type GenerateResult, generate } from "@/modules/ai/generate.js";
+import { contextGet } from "@/modules/context/contextGet.js";
 
 export interface RunInferenceOptions extends GeneratePermissions {
   progressMessage: string;
@@ -22,7 +18,7 @@ export async function runInference(
 ): Promise<GenerateResult> {
   const progressMessage = options.progressMessage.trim();
   if (!progressMessage) {
-    throw new Error(text["error_inference_progress_message_required"]!);
+    throw new Error(text.error_inference_progress_message_required!);
   }
 
   const { progressMessage: _progressMessage, ...permissionsBase } = options;
@@ -52,10 +48,7 @@ export async function runInference(
   }
 }
 
-function runInferencePromptResolve(
-  template: string,
-  values: Record<string, string | number>
-): string {
+function runInferencePromptResolve(template: string, values: Record<string, string | number>): string {
   return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match: string, key: string) => {
     if (values[key] === undefined) {
       return match;
@@ -97,11 +90,9 @@ function runInferenceEventHumanize(event: string): string {
   return "";
 }
 
-/** Maps stream event types to short user-facing labels. Handles PI native format
- * (text_delta, thinking_delta, toolcall_start) and raw Anthropic format as fallback. */
+/** Maps PI native AssistantMessageEvent types to short user-facing labels. */
 function runInferenceStreamEventHumanize(eventName: string, rawEvent: string): string {
   switch (eventName) {
-    // PI native events (@mariozechner/pi-ai AssistantMessageEvent)
     case "text_start":
     case "text_delta":
     case "text_end":
@@ -112,26 +103,47 @@ function runInferenceStreamEventHumanize(eventName: string, rawEvent: string): s
       return "thinking";
     case "toolcall_start":
     case "toolcall_delta":
-    case "toolcall_end":
-      return "using tools";
-
-    // Anthropic raw SSE fallback
-    case "content_block_start": {
-      const contentType = runInferenceEventTokenResolve(rawEvent, "content");
-      if (contentType === "tool_use") return "using tools";
-      if (contentType === "text") return "writing";
-      return "";
+    case "toolcall_end": {
+      const tool = runInferenceEventTokenResolve(rawEvent, "tool");
+      return tool ? runInferenceToolHumanize(tool) : "using tools";
     }
-    case "content_block_delta": {
-      const deltaType = runInferenceEventTokenResolve(rawEvent, "delta");
-      if (deltaType === "thinking_delta") return "thinking";
-      if (deltaType === "text_delta") return "writing";
-      if (deltaType === "input_json_delta") return "using tools";
-      return "";
-    }
-
     default:
       return "";
+  }
+}
+
+/** Maps PI tool names to short user-facing labels. */
+function runInferenceToolHumanize(toolName: string): string {
+  switch (toolName) {
+    case "Read":
+    case "read_file":
+      return "reading files";
+    case "Write":
+    case "write_file":
+      return "writing files";
+    case "Edit":
+    case "edit_file":
+      return "editing files";
+    case "Bash":
+    case "bash":
+    case "execute_command":
+      return "running command";
+    case "Grep":
+    case "grep":
+    case "search":
+      return "searching code";
+    case "Glob":
+    case "glob":
+    case "list_files":
+      return "finding files";
+    case "WebFetch":
+    case "web_fetch":
+      return "fetching web content";
+    case "WebSearch":
+    case "web_search":
+      return "searching web";
+    default:
+      return `using ${toolName}`;
   }
 }
 

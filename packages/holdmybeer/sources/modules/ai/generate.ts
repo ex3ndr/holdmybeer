@@ -1,23 +1,17 @@
-import { providerPriorityList } from "@/modules/providers/providerPriorityList.js";
-import { providerModelSelect } from "@/modules/providers/providerModelSelect.js";
-import type { ProviderId, ProviderModelSelectionMode } from "@/types";
-import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
-import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
-import {
-  providerGenerate,
-  type ProviderGenerateFailure
-} from "@/modules/ai/providerGenerate.js";
-import type { Context } from "@/types";
 import { beerLogLine } from "@text";
+import { type ProviderGenerateFailure, providerGenerate } from "@/modules/ai/providerGenerate.js";
+import { providerModelSelect } from "@/modules/providers/providerModelSelect.js";
+import { providerPriorityList } from "@/modules/providers/providerPriorityList.js";
+import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
+import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
+import type { Context, ProviderId, ProviderModelSelectionMode } from "@/types";
 
 export interface GenerateResult {
   provider?: string;
   text: string;
 }
 
-export type GenerateExpectedOutput =
-  | { type: "text" }
-  | { type: "file"; filePath: string };
+export type GenerateExpectedOutput = { type: "text" } | { type: "file"; filePath: string };
 
 export interface GeneratePermissions {
   providerPriority?: readonly ProviderId[];
@@ -58,51 +52,59 @@ function inferOutputMessage(
   for (const line of lines) {
     options.onMessage?.(`[beer][infer] ${providerId}:${stream} ${line}`);
     options.onEvent?.(
-      stream === "stderr"
-        ? `provider=${providerId} stderr`
-        : `provider=${providerId} ${inferOutputEventResolve(line)}`
+      stream === "stderr" ? `provider=${providerId} stderr` : `provider=${providerId} ${inferOutputEventResolve(line)}`
     );
   }
 }
 
+/** Parses a PI native JSON event line into a compact key=value event string. */
 function inferOutputEventResolve(line: string): string {
   try {
     const parsed = JSON.parse(line) as {
       type?: unknown;
-      message?: { role?: unknown; type?: unknown };
-      content_block?: { type?: unknown };
-      delta?: { type?: unknown; stop_reason?: unknown };
+      contentIndex?: unknown;
+      toolCall?: { name?: unknown };
+      partial?: { content?: unknown[] };
+      reason?: unknown;
     };
     const eventType = inferOutputEventTokenResolve(parsed.type);
     if (!eventType) {
       return "stdout";
     }
     const parts = [`event=${eventType}`];
-    const role = inferOutputEventTokenResolve(parsed.message?.role);
-    const messageType = inferOutputEventTokenResolve(parsed.message?.type);
-    const contentType = inferOutputEventTokenResolve(parsed.content_block?.type);
-    const deltaType = inferOutputEventTokenResolve(parsed.delta?.type);
-    const stopReason = inferOutputEventTokenResolve(parsed.delta?.stop_reason);
-    if (role) {
-      parts.push(`role=${role}`);
+    const toolName = inferOutputToolNameResolve(parsed, eventType);
+    if (toolName) {
+      parts.push(`tool=${toolName}`);
     }
-    if (messageType) {
-      parts.push(`message=${messageType}`);
-    }
-    if (contentType) {
-      parts.push(`content=${contentType}`);
-    }
-    if (deltaType) {
-      parts.push(`delta=${deltaType}`);
-    }
-    if (stopReason) {
-      parts.push(`stop=${stopReason}`);
+    const reason = inferOutputEventTokenResolve(parsed.reason);
+    if (reason) {
+      parts.push(`reason=${reason}`);
     }
     return parts.join(" ");
   } catch {
     // Ignore parse errors and keep compact generic event for loader updates.
   }
   return "stdout";
+}
+
+/** Extracts tool name from PI toolcall events. */
+function inferOutputToolNameResolve(
+  parsed: { type?: unknown; contentIndex?: unknown; toolCall?: { name?: unknown }; partial?: { content?: unknown[] } },
+  eventType: string
+): string | undefined {
+  if (eventType === "toolcall_end") {
+    return inferOutputEventTokenResolve(parsed.toolCall?.name);
+  }
+  if (eventType === "toolcall_start" || eventType === "toolcall_delta") {
+    const content = parsed.partial?.content;
+    if (!Array.isArray(content)) {
+      return undefined;
+    }
+    const idx = typeof parsed.contentIndex === "number" ? parsed.contentIndex : content.length - 1;
+    const entry = content[idx] as { name?: unknown } | undefined;
+    return inferOutputEventTokenResolve(entry?.name);
+  }
+  return undefined;
 }
 
 function inferOutputEventTokenResolve(value: unknown): string | undefined {
@@ -118,11 +120,7 @@ function inferPromptResolve(
   writePolicy: InferenceWritePolicy,
   expectedOutput: GenerateExpectedOutput
 ): string {
-  return [
-    inferSandboxPrompt(writePolicy),
-    prompt,
-    inferExpectedOutputPrompt(expectedOutput)
-  ].join("\n\n");
+  return [inferSandboxPrompt(writePolicy), prompt, inferExpectedOutputPrompt(expectedOutput)].join("\n\n");
 }
 
 function inferSandboxPrompt(writePolicy: InferenceWritePolicy): string {
@@ -136,12 +134,9 @@ function inferSandboxPrompt(writePolicy: InferenceWritePolicy): string {
     ].join("\n");
   }
 
-  const writablePaths = writePolicy.writablePaths
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-  const writableLine = writablePaths.length > 0
-    ? `- writable paths: ${writablePaths.join(", ")}`
-    : "- writable paths: none";
+  const writablePaths = writePolicy.writablePaths.map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+  const writableLine =
+    writablePaths.length > 0 ? `- writable paths: ${writablePaths.join(", ")}` : "- writable paths: none";
 
   return [
     "Current sandbox parameters:",
@@ -182,7 +177,9 @@ export async function generate(
   const writePolicy: InferenceWritePolicy = permissions.writePolicy ?? { mode: "read-only" };
   const expectedOutput: GenerateExpectedOutput = permissions.expectedOutput ?? { type: "text" };
   const onMessage = permissions.showProgress
-    ? (message: string) => { beerLogLine(message); }
+    ? (message: string) => {
+        beerLogLine(message);
+      }
     : undefined;
   const options: GenerateOptions = {
     onMessage,

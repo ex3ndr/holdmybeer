@@ -36,18 +36,73 @@ describe("generate event parsing", () => {
     sandboxInferenceGetMock.mockResolvedValue({ wrapCommand: async (command: string) => command });
   });
 
-  it("parses provider message events and includes role tokens", async () => {
+  it("parses PI text_delta event", async () => {
     providerGenerateMock.mockImplementation(async (input) => {
-      input.onStdoutText?.("{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\"}}\n");
+      input.onStdoutText?.('{"type":"text_delta","contentIndex":0,"delta":"Hello"}\n');
       return { output: "ok" };
     });
 
     const onEvent = vi.fn();
     const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
 
-    const result = await generate(context, "hello", { onEvent });
+    await generate(context, "hello", { onEvent });
 
-    expect(result).toEqual({ provider: "pi", text: "ok" });
-    expect(onEvent).toHaveBeenCalledWith("provider=pi event=message_start role=assistant");
+    expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_delta");
+  });
+
+  it("parses PI toolcall_start event with tool name", async () => {
+    const event = JSON.stringify({
+      type: "toolcall_start",
+      contentIndex: 0,
+      partial: {
+        role: "assistant",
+        content: [{ type: "toolCall", name: "Read", id: "t1", arguments: {} }]
+      }
+    });
+    providerGenerateMock.mockImplementation(async (input) => {
+      input.onStdoutText?.(`${event}\n`);
+      return { output: "ok" };
+    });
+
+    const onEvent = vi.fn();
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+    await generate(context, "hello", { onEvent });
+
+    expect(onEvent).toHaveBeenCalledWith("provider=pi event=toolcall_start tool=Read");
+  });
+
+  it("parses PI toolcall_end event with tool name", async () => {
+    const event = JSON.stringify({
+      type: "toolcall_end",
+      contentIndex: 0,
+      toolCall: { type: "toolCall", name: "Bash", id: "t1", arguments: {} }
+    });
+    providerGenerateMock.mockImplementation(async (input) => {
+      input.onStdoutText?.(`${event}\n`);
+      return { output: "ok" };
+    });
+
+    const onEvent = vi.fn();
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+    await generate(context, "hello", { onEvent });
+
+    expect(onEvent).toHaveBeenCalledWith("provider=pi event=toolcall_end tool=Bash");
+  });
+
+  it("parses PI done event with reason", async () => {
+    const event = JSON.stringify({ type: "done", reason: "stop" });
+    providerGenerateMock.mockImplementation(async (input) => {
+      input.onStdoutText?.(`${event}\n`);
+      return { output: "ok" };
+    });
+
+    const onEvent = vi.fn();
+    const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+    await generate(context, "hello", { onEvent });
+
+    expect(onEvent).toHaveBeenCalledWith("provider=pi event=done reason=stop");
   });
 });
