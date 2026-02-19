@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { beerLogLine } from "@text";
 import { type ProviderGenerateFailure, providerGenerate } from "@/modules/ai/providerGenerate.js";
 import { providerModelSelect } from "@/modules/providers/providerModelSelect.js";
@@ -12,7 +13,15 @@ export interface GenerateResult {
     text: string;
 }
 
-export type GenerateExpectedOutput = { type: "text" } | { type: "file"; filePath: string };
+export type GenerateExpectedTextOutputVerify = (output: { text: string }) => void | Promise<void>;
+export type GenerateExpectedFileOutputVerify = (output: {
+    text: string;
+    filePath: string;
+    fileContent: string;
+}) => void | Promise<void>;
+export type GenerateExpectedOutput =
+    | { type: "text"; verify?: GenerateExpectedTextOutputVerify }
+    | { type: "file"; filePath: string; verify?: GenerateExpectedFileOutputVerify };
 
 export interface GeneratePermissions {
     providerPriority?: readonly ProviderId[];
@@ -178,6 +187,7 @@ export async function generate(
             sandbox,
             writePolicy,
             requireOutputTags: expectedOutput.type === "text",
+            validateOutput: inferExpectedOutputVerifier(expectedOutput),
             onEvent: (event) => inferProviderEvent(provider.id, event, options),
             onStdoutText: (chunk) => inferOutputMessage(provider.id, "stdout", chunk, options),
             onStderrText: (chunk) => inferOutputMessage(provider.id, "stderr", chunk, options)
@@ -209,4 +219,30 @@ export async function generate(
         })
         .join("; ");
     throw new Error(`Inference failed for all providers${details ? `: ${details}` : "."}`);
+}
+
+function inferExpectedOutputVerifier(
+    expectedOutput: GenerateExpectedOutput
+): ((output: string) => Promise<void>) | undefined {
+    if (expectedOutput.type === "text") {
+        const verify = expectedOutput.verify;
+        if (!verify) {
+            return undefined;
+        }
+        return async (text) => verify({ text });
+    }
+
+    const verify = expectedOutput.verify;
+    if (!verify) {
+        return undefined;
+    }
+
+    return async (text) => {
+        const fileContent = await readFile(expectedOutput.filePath, "utf-8");
+        await verify({
+            text,
+            filePath: expectedOutput.filePath,
+            fileContent
+        });
+    };
 }

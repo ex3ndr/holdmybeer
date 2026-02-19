@@ -72,4 +72,34 @@ describe("generateFile", () => {
             await rm(tempDir, { recursive: true, force: true });
         }
     });
+
+    it("forwards verify callback into file expected output", async () => {
+        const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-generate-file-"));
+        try {
+            const outputPath = path.join(tempDir, "README.md");
+            const verify = vi.fn();
+            const context = { projectPath: tempDir } as Context;
+
+            generateMock.mockImplementation(async () => {
+                await writeFile(outputPath, "# ok\n", "utf-8");
+                return { provider: "pi", text: "done" };
+            });
+
+            await generateFile(context, "Create readme", outputPath, { verify });
+
+            expect(generateMock).toHaveBeenCalledWith(
+                context,
+                expect.any(String),
+                expect.objectContaining({
+                    expectedOutput: {
+                        type: "file",
+                        filePath: outputPath,
+                        verify
+                    }
+                })
+            );
+        } finally {
+            await rm(tempDir, { recursive: true, force: true });
+        }
+    });
 });

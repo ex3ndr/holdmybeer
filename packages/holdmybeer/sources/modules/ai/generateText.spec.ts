@@ -32,4 +32,18 @@ describe("generateText", () => {
             expectedOutput: { type: "text" }
         });
     });
+
+    it("forwards verify callback into expected output", async () => {
+        const context = { projectPath: "/tmp/test-project", providers: [] } as unknown as Context;
+        const verify = vi.fn();
+        generateMock.mockResolvedValue({ provider: "pi", text: "ok" });
+
+        await generateText(context, "hello", {
+            verify
+        });
+
+        expect(generateMock).toHaveBeenCalledWith(context, "hello", {
+            expectedOutput: { type: "text", verify }
+        });
+    });
 });

@@ -23,6 +23,8 @@ export interface ProviderGenerateInput {
     abortSignal?: AbortSignal;
     writePolicy?: InferenceWritePolicy;
     requireOutputTags?: boolean;
+    validateOutput?: (output: string) => void | Promise<void>;
+    outputValidationRetries?: number;
     onEvent?: (event: ProviderEvent) => void;
     onStdoutText?: (chunk: string) => void;
     onStderrText?: (chunk: string) => void;
@@ -49,18 +51,22 @@ const OUTPUT_RETRY_PROMPT =
  */
 export async function providerGenerate(input: ProviderGenerateInput): Promise<ProviderGenerateResult> {
     const requireOutputTags = input.requireOutputTags ?? true;
-    const prompts = [input.prompt, OUTPUT_RETRY_PROMPT];
+    const outputValidationRetries = Math.max(0, input.outputValidationRetries ?? 1);
     const sessionDir = providerSessionDirResolve(input.projectPath);
     let sessionId: string | undefined;
+    let prompt = input.prompt;
+    let continueSession = false;
+    let outputRetryUsed = false;
+    let outputValidationRetryCount = 0;
 
-    for (let attempt = 0; attempt < prompts.length; attempt += 1) {
+    while (true) {
         const result = await piProviderGenerate({
             command: input.command,
             model: input.model,
-            prompt: prompts[attempt]!,
+            prompt,
             cwd: input.projectPath,
             sessionDir,
-            continueSession: attempt > 0,
+            continueSession,
             sandbox: input.sandbox,
             abortSignal: input.abortSignal,
             onEvent: (event) => {
@@ -75,6 +81,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             onStdoutText: input.onStdoutText,
             onStderrText: input.onStderrText
         });
+        continueSession = true;
 
         if (result.exitCode !== 0) {
             return {
@@ -89,12 +96,8 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
         }
 
         const outputRaw = result.output;
-        if (!outputRaw) {
-            if (!requireOutputTags) {
-                // File-generation mode allows empty assistant text.
-                return { output: "", sessionId };
-            }
-
+        const output = providerOutputResolve(outputRaw, requireOutputTags);
+        if (output.mode === "missing_json_output") {
             return {
                 output: null,
                 sessionId,
@@ -106,37 +109,46 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             };
         }
 
-        if (!requireOutputTags) {
-            return { output: outputRaw, sessionId };
+        if (output.mode === "missing_output_tags") {
+            if (outputRetryUsed) {
+                return {
+                    output: null,
+                    sessionId,
+                    failure: {
+                        providerId: input.providerId,
+                        exitCode: 1,
+                        stderr: "Provider did not return <output> tags."
+                    }
+                };
+            }
+            outputRetryUsed = true;
+            prompt = OUTPUT_RETRY_PROMPT;
+            continue;
         }
 
-        const extractedOutput = aiOutputExtract(outputRaw);
-        if (extractedOutput) {
-            return { output: extractedOutput, sessionId };
-        }
-
-        if (attempt === prompts.length - 1) {
-            return {
-                output: null,
-                sessionId,
-                failure: {
-                    providerId: input.providerId,
-                    exitCode: 1,
-                    stderr: "Provider did not return <output> tags."
+        if (input.validateOutput) {
+            try {
+                await input.validateOutput(output.text);
+            } catch (error) {
+                if (outputValidationRetryCount >= outputValidationRetries) {
+                    return {
+                        output: null,
+                        sessionId,
+                        failure: {
+                            providerId: input.providerId,
+                            exitCode: 1,
+                            stderr: `Output verification failed: ${providerErrorTextResolve(error)}`
+                        }
+                    };
                 }
-            };
+                outputValidationRetryCount += 1;
+                prompt = providerOutputValidationRetryPromptResolve(error, requireOutputTags);
+                continue;
+            }
         }
-    }
 
-    return {
-        output: null,
-        sessionId,
-        failure: {
-            providerId: input.providerId,
-            exitCode: 1,
-            stderr: "Provider execution failed."
-        }
-    };
+        return { output: output.text, sessionId };
+    }
 }
 
 function providerSessionDirResolve(projectPath: string | undefined): string {
@@ -274,4 +286,47 @@ function providerEventTokenResolve(value: unknown): string | undefined {
     }
     const normalized = value.trim();
     return normalized.length > 0 ? normalized : undefined;
+}
+
+function providerOutputResolve(
+    outputRaw: string | null,
+    requireOutputTags: boolean
+): { mode: "ok"; text: string } | { mode: "missing_json_output" } | { mode: "missing_output_tags" } {
+    if (!outputRaw) {
+        if (!requireOutputTags) {
+            return { mode: "ok", text: "" };
+        }
+        return { mode: "missing_json_output" };
+    }
+
+    if (!requireOutputTags) {
+        return { mode: "ok", text: outputRaw };
+    }
+
+    const extractedOutput = aiOutputExtract(outputRaw);
+    if (extractedOutput) {
+        return { mode: "ok", text: extractedOutput };
+    }
+
+    return { mode: "missing_output_tags" };
+}
+
+function providerOutputValidationRetryPromptResolve(error: unknown, requireOutputTags: boolean): string {
+    const message = providerErrorTextResolve(error);
+    const outputInstruction = requireOutputTags
+        ? "Return only <output>...</output>."
+        : "If useful, return short plain-text confirmation.";
+    return [
+        "Error: your previous response failed output verification.",
+        `Verification error: ${message}`,
+        "Continue this session and fix the result.",
+        outputInstruction
+    ].join(" ");
+}
+
+function providerErrorTextResolve(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return String(error);
 }

@@ -1,10 +1,11 @@
 import { stat } from "node:fs/promises";
 import path from "node:path";
-import { type GeneratePermissions, generate } from "@/modules/ai/generate.js";
+import { type GenerateExpectedFileOutputVerify, type GeneratePermissions, generate } from "@/modules/ai/generate.js";
 import type { Context } from "@/types";
 
-export interface GenerateFilePermissions extends GeneratePermissions {
+export interface GenerateFilePermissions extends Omit<GeneratePermissions, "expectedOutput"> {
     retries?: number;
+    verify?: GenerateExpectedFileOutputVerify;
 }
 
 /**
@@ -17,19 +18,20 @@ export async function generateFile(
     outputFilePath: string,
     permissions: GenerateFilePermissions = {}
 ): Promise<{ provider?: string; sessionId?: string; text: string }> {
+    const { retries, verify, ...permissionsBase } = permissions;
     const resolvedOutputPath = pathResolveInProject(context.projectPath, outputFilePath);
-    const maxRetries = Math.max(0, permissions.retries ?? 1);
+    const maxRetries = Math.max(0, retries ?? 1);
     const basePrompt = [
         prompt,
         `Write the final result only to this file: ${resolvedOutputPath}.`,
         "Do not write to any other files."
     ].join("\n\n");
+    const expectedOutput = verify
+        ? { type: "file" as const, filePath: resolvedOutputPath, verify }
+        : { type: "file" as const, filePath: resolvedOutputPath };
     const permissionsResolved: GeneratePermissions = {
-        ...permissions,
-        expectedOutput: {
-            type: "file",
-            filePath: resolvedOutputPath
-        },
+        ...permissionsBase,
+        expectedOutput,
         writePolicy: {
             mode: "write-whitelist",
             writablePaths: [resolvedOutputPath]
