@@ -63,6 +63,7 @@ export const text = {
   prompt_release_mode: "Select release increment (patch/minor/major/custom). patch -> {patch}",
   prompt_release_custom: "Enter custom semantic version",
   prompt_ralph_loop_build: "🧠  What should I build?",
+  prompt_checkpoint_hint: "💬  Checkpoint commit message (optional)",
   prompt_workflow_select: "Select a workflow",
   inference_commit_generating: "Generating bootstrap commit message",
   inference_plan_generating: "Generating implementation plan",
@@ -96,6 +97,7 @@ export const text = {
   workflow_bootstrap_title: "Initialize .beer settings, source/publish repos, README, and first push",
   workflow_ralph_loop_title: "Ask what to build, generate a plan, execute, and run 3 review rounds",
   workflow_research_title: "Run repository research and unresolved-questions docs with opus/codex in parallel",
+  workflow_checkpoint_title: "Commit and push current changes to origin/main with an optional message",
   workflow_bootstrap_required: "Available after bootstrap completes",
 } as const;
 
@@ -232,6 +234,7 @@ export type TextValuesByKey = {
   };
   prompt_release_custom: Record<never, never>;
   prompt_ralph_loop_build: Record<never, never>;
+  prompt_checkpoint_hint: Record<never, never>;
   prompt_workflow_select: Record<never, never>;
   inference_commit_generating: Record<never, never>;
   inference_plan_generating: Record<never, never>;
@@ -282,6 +285,7 @@ export type TextValuesByKey = {
   workflow_bootstrap_title: Record<never, never>;
   workflow_ralph_loop_title: Record<never, never>;
   workflow_research_title: Record<never, never>;
+  workflow_checkpoint_title: Record<never, never>;
   workflow_bootstrap_required: Record<never, never>;
 };
 

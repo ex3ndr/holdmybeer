@@ -67,6 +67,7 @@ prompt_create_private = 🔐  Create as private repository?
 prompt_release_mode = Select release increment (patch/minor/major/custom). patch -> {patch}
 prompt_release_custom = Enter custom semantic version
 prompt_ralph_loop_build = 🧠  What should I build?
+prompt_checkpoint_hint = 💬  Checkpoint commit message (optional)
 prompt_workflow_select = Select a workflow
 
 # Inference
@@ -109,4 +110,5 @@ error_inference_progress_message_required = ❌  Inference progress message is r
 workflow_bootstrap_title = Initialize .beer settings, source/publish repos, README, and first push
 workflow_ralph_loop_title = Ask what to build, generate a plan, execute, and run 3 review rounds
 workflow_research_title = Run repository research and unresolved-questions docs with opus/codex in parallel
+workflow_checkpoint_title = Commit and push current changes to origin/main with an optional message
 workflow_bootstrap_required = Available after bootstrap completes

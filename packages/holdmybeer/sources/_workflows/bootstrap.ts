@@ -114,7 +114,7 @@ export async function bootstrap(ctx: Context): Promise<void> {
     // Ensure .gitignore includes .beer/local/
     //
 
-    await ctx.gitignore([".beer/local/"]);
+    await ctx.gitignore([".beer/local/", ".pi"]);
 
     //
     // Generate commit message
