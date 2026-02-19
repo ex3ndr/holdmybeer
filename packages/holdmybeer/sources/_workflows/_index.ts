@@ -4,7 +4,7 @@ import { ralphLoopWorkflow } from "@/_workflows/ralphLoopWorkflow.js";
 import type { Context } from "@/types";
 
 export interface Workflow {
-    id: "bootstrap" | "ralph-loop";
+    id: string;
     title: string;
     run: (ctx: Context) => Promise<void>;
 }
@@ -16,7 +16,7 @@ export const workflowBootstrap: Workflow = {
 };
 
 export const workflowRalphLoop: Workflow = {
-    id: "ralph-loop",
+    id: "execute",
     title: text.workflow_ralph_loop_title!,
     run: ralphLoopWorkflow
 };
