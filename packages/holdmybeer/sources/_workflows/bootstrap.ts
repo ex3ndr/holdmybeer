@@ -97,7 +97,7 @@ export async function bootstrap(ctx: Context): Promise<void> {
     //
 
     if (!(await ctx.existFile("README.md"))) {
-        const readme = await generateReadme(
+        await generateReadme(
             ctx,
             {
                 sourceFullName: source.fullName,
@@ -108,7 +108,6 @@ export async function bootstrap(ctx: Context): Promise<void> {
                 showProgress: true
             }
         );
-        await ctx.writeFile("README.md", readme);
     }
 
     //
