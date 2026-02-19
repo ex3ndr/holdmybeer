@@ -31,7 +31,9 @@
     "@anthropic-ai/sandbox-runtime": "0.0.37",
     "@inquirer/select": "^5.0.7",
     "commander": "^12.1.0",
-    "fast-glob": "^3.3.3"
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
