@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { beerLog, text } from "@text";
+import { beerLog, beerLogLine, text } from "@text";
 import { commandRun } from "@/modules/util/commandRun.js";
 import { releaseVersionPrompt } from "@/release/releaseVersionPrompt.js";
 
@@ -23,6 +23,7 @@ const npmRegistry = "https://registry.npmjs.org/";
  * Expects: clean git working tree and npm credentials already configured.
  */
 export async function releaseRun(): Promise<void> {
+  process.env.BEER_PROJECT_PATH = repositoryDirectory;
   beerLog("release_start");
   await releaseWorkingTreeAssertClean();
   beerLog("release_git_clean");
@@ -132,8 +133,8 @@ async function releaseCommandRun(
   await commandRun(command, args, {
     cwd,
     env,
-    onStdoutText: (line) => process.stdout.write(line),
-    onStderrText: (line) => process.stderr.write(line)
+    onStdoutText: (line) => beerLogLine(`[cmd][stdout] ${line.trimEnd()}`),
+    onStderrText: (line) => beerLogLine(`[cmd][stderr] ${line.trimEnd()}`)
   });
 }
 
@@ -144,7 +145,7 @@ async function releaseCommandOutput(
 ): Promise<string> {
   const result = await commandRun(command, args, {
     cwd,
-    onStderrText: (line) => process.stderr.write(line)
+    onStderrText: (line) => beerLogLine(`[cmd][stderr] ${line.trimEnd()}`)
   });
   return result.stdout.trim();
 }

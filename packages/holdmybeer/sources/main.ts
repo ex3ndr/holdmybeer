@@ -22,6 +22,7 @@ program
   .action(async function (this: Command) {
     const options = this.optsWithGlobals<{ project?: string }>();
     const projectPath = pathResolveFromInitCwd(options.project ?? ".");
+    process.env.BEER_PROJECT_PATH = projectPath;
     const ctx = await contextGetOrInitialize(projectPath);
     const bootstrapped = await mainWorkflowBootstrappedResolve();
     const selectedWorkflowId = await select({

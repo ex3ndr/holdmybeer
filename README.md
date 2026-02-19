@@ -26,6 +26,7 @@ The `bootstrap` workflow:
 - checks out source into `<projectPath>/.beer/original`
 - generates `README.md` and an initial commit message via inference
 - commits and pushes to `origin/main`
+- writes logs to `<projectPath>/.beer/logs/beer-YYYY-MM-DD.log`
 
 Inference is fail-fast: if provider execution fails, bootstrap fails.
 

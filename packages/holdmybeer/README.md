@@ -5,6 +5,7 @@ CLI package for **HoldMyBeer**.
 ## Command
 
 - `beer`: open interactive workflow selection and run the selected workflow.
+- logs are written to `<projectPath>/.beer/logs/beer-YYYY-MM-DD.log`.
 
 ## Runtime Requirements
 

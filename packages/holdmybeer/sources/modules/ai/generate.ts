@@ -8,6 +8,7 @@ import {
   type ProviderGenerateFailure
 } from "@/modules/ai/providerGenerate.js";
 import type { Context } from "@/types";
+import { beerLogLine } from "@text";
 
 export interface GenerateResult {
   provider?: string;
@@ -125,7 +126,7 @@ export async function generate(
   const writePolicy: InferenceWritePolicy = permissions.writePolicy ?? { mode: "read-only" };
   const expectedOutput: GenerateExpectedOutput = permissions.expectedOutput ?? { type: "text" };
   const onMessage = permissions.showProgress
-    ? (message: string) => { console.log(message); }
+    ? (message: string) => { beerLogLine(message); }
     : undefined;
   const options: GenerateOptions = { onMessage };
   const sandbox = await sandboxInferenceGet({
