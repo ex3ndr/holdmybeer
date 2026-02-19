@@ -2,7 +2,6 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { aiReadmeGenerate } from "@/modules/ai/aiReadmeGenerate.js";
 import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
-import { beerSettingsPathResolve } from "@/modules/beer/beerSettingsPathResolve.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
 import { gitRepoCheckout } from "@/modules/git/gitRepoCheckout.js";
@@ -28,7 +27,7 @@ import { text, textFormatKey } from "@text";
 export async function bootstrapWorkflow(ctx: Context): Promise<void> {
   const showInferenceProgress = true;
 
-  const settingsPath = beerSettingsPathResolve();
+  const settingsPath = path.join(ctx.projectPath, ".beer", "settings.json");
   const settings = await beerSettingsRead(settingsPath);
 
   const detectedProviders = ctx.providers;

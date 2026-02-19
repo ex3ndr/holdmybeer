@@ -21,7 +21,7 @@ $ beer
 The `bootstrap` workflow:
 
 - detects the local inference provider (`pi`) and available models
-- saves bootstrap settings under `~/Developer/HoldMyBeerDev/.beer/settings.json`
+- saves bootstrap settings under `<projectPath>/.beer/settings.json`
 - resolves source and publish GitHub repositories
 - checks out source into `<projectPath>/.beer/original`
 - generates `README.md` and an initial commit message via inference

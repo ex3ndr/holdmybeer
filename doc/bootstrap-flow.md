@@ -8,7 +8,7 @@ This document describes the bootstrap workflow selected from `beer`.
 flowchart TD
   A[Start bootstrap] --> B[Detect provider: pi]
   B --> C[Query live models via pi RPC]
-  C --> D[Write ~/Developer/HoldMyBeerDev/.beer/settings.json]
+  C --> D[Write <projectPath>/.beer/settings.json]
   D --> E[Prompt source repo input]
   E --> F[Parse owner/repo]
   F --> G[Validate source exists via gh]
