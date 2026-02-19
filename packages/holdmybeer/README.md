@@ -8,17 +8,18 @@ CLI package for **HoldMyBeer**.
 
 ## Runtime Requirements
 
-- Node.js 22+
+- Node.js 22+ (published CLI runtime)
+- Bun 1.3+ (development scripts)
 - `gh` authenticated
 - `pi` CLI installed/authenticated
 
 ## Development
 
 ```bash
-yarn install
-yarn dev
-yarn typecheck
-yarn test
-yarn build
-yarn release
+bun install
+bun run dev
+bun run typecheck
+bun run test
+bun run build
+bun run release
 ```

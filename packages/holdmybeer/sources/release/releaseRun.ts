@@ -43,7 +43,7 @@ export async function releaseRun(): Promise<void> {
 
   try {
     beerLog("release_install");
-    await releaseCommandRun("yarn", ["install", "--frozen-lockfile"], repositoryDirectory);
+    await releaseCommandRun("bun", ["install", "--frozen-lockfile"], repositoryDirectory);
 
     beerLog("release_version_bump", { version: nextVersion });
     await releaseCommandRun(
@@ -70,10 +70,10 @@ export async function releaseRun(): Promise<void> {
     );
 
     beerLog("release_test");
-    await releaseCommandRun("yarn", ["test"], repositoryDirectory);
+    await releaseCommandRun("bun", ["run", "test"], repositoryDirectory);
 
     beerLog("release_build");
-    await releaseCommandRun("yarn", ["build"], repositoryDirectory);
+    await releaseCommandRun("bun", ["run", "build"], repositoryDirectory);
 
     beerLog("release_tag_creating", { tag: tagName });
     await releaseCommandRun("git", ["tag", tagName], repositoryDirectory);

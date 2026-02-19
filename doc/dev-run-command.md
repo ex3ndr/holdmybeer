@@ -2,18 +2,17 @@
 
 The repository now includes a predefined dev command:
 
-- `yarn dev:run`
+- `bun run dev:run`
 
-It runs the `beer` CLI rewrite flow against a fixed fixture source folder.
+It runs the `beer` CLI from a fixed fixture project path.
 
 ```mermaid
 flowchart LR
-  A[yarn dev:run] --> B[beer rewrite ./fixtures/dev-source]
-  B --> C[apply baseline rewrite]
-  C --> D[write output to .context/dev-output]
+  A[bun run dev:run] --> B[beer --project ./fixtures/dev-source]
+  B --> C[interactive workflow selection]
+  C --> D[run selected workflow with fixture project]
 ```
 
 ## Paths
 
 - Source fixture: `fixtures/dev-source`
-- Output folder: `.context/dev-output`

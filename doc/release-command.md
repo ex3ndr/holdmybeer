@@ -1,18 +1,18 @@
 # Release Command
 
-Added a root `yarn release` flow that publishes the `holdmybeer` package.
+Added a root `bun run release` flow that publishes the `holdmybeer` package.
 
 ## Flow
 
 ```mermaid
 flowchart LR
-  A[yarn release at repo root] --> B[yarn workspace @slopus/beer run release]
+  A[bun run release at repo root] --> B[bun --workspaces run release]
   B --> C[assert git status --porcelain is empty]
   C --> D[choose next version patch/minor/major/custom]
   D --> E[npm version X.Y.Z --no-git-tag-version]
   E --> F[git commit release version]
-  F --> G[yarn test]
-  G --> H[yarn build]
+  F --> G[bun run test]
+  G --> H[bun run build]
   H --> I[git tag holdmybeer@X.Y.Z]
   I --> J[npm publish --access public]
   J --> K[git push origin HEAD]
@@ -30,5 +30,5 @@ flowchart LR
 
 ## CLI Usage
 
-- Interactive: `yarn release`
-- Non-interactive: `yarn release -- <patch|minor|major|custom> [version]`
+- Interactive: `bun run release`
+- Non-interactive: `bun run release -- <patch|minor|major|custom> [version]`

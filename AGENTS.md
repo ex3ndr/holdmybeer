@@ -13,13 +13,13 @@
 - tests must be minimal and live next to the file under test
 
 ## Build, Test, and Development Commands
-- Runtime baseline: Node **22+**.
-- Install deps: `yarn install`
-- Run `yarn install` before tests.
-- Run CLI in dev: `yarn dev`.
+- Runtime baseline: Bun **1.3+**.
+- Install deps: `bun install`
+- Run `bun install` before tests.
+- Run CLI in dev: `bun run dev`.
 - Node remains supported for running built output (`dist/*`) and production installs.
-- Type-check/build: `yarn typecheck` (tsc)
-- Tests: `yarn test` (vitest);
+- Type-check/build: `bun run typecheck` (tsc)
+- Tests: `bun run test` (vitest);
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (ESM). Prefer strict typing; avoid `any`.

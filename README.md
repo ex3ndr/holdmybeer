@@ -37,7 +37,8 @@ npm install -g @slopus/beer
 
 Requirements:
 
-- Node.js 22+
+- Node.js 22+ (for published CLI runtime)
+- Bun 1.3+ (for repository development scripts)
 - GitHub CLI authenticated (`gh auth login`)
 - `pi` CLI installed and authenticated
 
@@ -50,12 +51,12 @@ beer [--project <path>]
 ## Development
 
 ```bash
-yarn install
-yarn dev
-yarn typecheck
-yarn test
-yarn build
-yarn release
+bun install
+bun run dev
+bun run typecheck
+bun run test
+bun run build
+bun run release
 ```
 
 ## License

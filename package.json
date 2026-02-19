@@ -1,19 +1,18 @@
 {
   "name": "holdmybeer",
   "private": true,
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "bun@1.3.6",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspace @slopus/beer run build",
-    "dev": "yarn workspace @slopus/beer run dev",
-    "dev:run": "yarn workspace @slopus/beer run dev rewrite ./fixtures/dev-source --output ./.context/dev-output --force",
-    "bootstrap": "yarn workspace @slopus/beer run dev bootstrap",
-    "release": "yarn workspace @slopus/beer run release",
-    "rewrite": "yarn workspace @slopus/beer run dev rewrite",
-    "test": "yarn workspaces run test",
-    "test:watch": "yarn workspaces run test:watch",
-    "typecheck": "yarn workspaces run typecheck"
+    "build": "bun --workspaces run build",
+    "dev": "bun --workspaces run dev",
+    "dev:run": "bun --workspaces run dev -- --project ./fixtures/dev-source",
+    "bootstrap": "bun --workspaces run dev -- --project .",
+    "release": "bun --workspaces run release",
+    "test": "bun --workspaces run test",
+    "test:watch": "bun --workspaces run test:watch",
+    "typecheck": "bun --workspaces run typecheck"
   }
 }
