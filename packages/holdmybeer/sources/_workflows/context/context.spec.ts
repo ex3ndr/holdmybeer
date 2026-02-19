@@ -10,6 +10,7 @@ const gitPushMock = vi.hoisted(() => vi.fn());
 const contextAskGithubRepoMock = vi.hoisted(() => vi.fn());
 const contextApplyConfigMock = vi.hoisted(() => vi.fn());
 const contextGitignoreEnsureMock = vi.hoisted(() => vi.fn());
+const progressMultilineStartMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/modules/providers/providerDetect.js", () => ({
     providerDetect: providerDetectMock
@@ -35,6 +36,10 @@ vi.mock("@/_workflows/context/utils/contextGitignoreEnsure.js", () => ({
     contextGitignoreEnsure: contextGitignoreEnsureMock
 }));
 
+vi.mock("@/_workflows/context/utils/progressMultilineStart.js", () => ({
+    progressMultilineStart: progressMultilineStartMock
+}));
+
 import { Context } from "@/_workflows/context/context.js";
 
 describe("Context", () => {
@@ -45,6 +50,7 @@ describe("Context", () => {
         contextAskGithubRepoMock.mockReset();
         contextApplyConfigMock.mockReset();
         contextGitignoreEnsureMock.mockReset();
+        progressMultilineStartMock.mockReset();
     });
 
     it("creates context with folder and detected providers", async () => {
@@ -119,5 +125,86 @@ describe("Context", () => {
         } finally {
             await rm(tempDir, { recursive: true, force: true });
         }
+    });
+
+    it("runs dynamic multiline progress lines and stops spinner state", async () => {
+        providerDetectMock.mockResolvedValue([]);
+        const lineA = {
+            update: vi.fn(),
+            done: vi.fn(),
+            fail: vi.fn()
+        };
+        const lineB = {
+            update: vi.fn(),
+            done: vi.fn(),
+            fail: vi.fn()
+        };
+        const addMock = vi.fn().mockReturnValueOnce(lineA).mockReturnValueOnce(lineB);
+        const doneRunningMock = vi.fn();
+        const failRunningMock = vi.fn();
+        const stopMock = vi.fn();
+        progressMultilineStartMock.mockReturnValue({
+            add: addMock,
+            doneRunning: doneRunningMock,
+            failRunning: failRunningMock,
+            stop: stopMock
+        });
+
+        const context = await Context.create("/tmp/test-project");
+        const result = await context.progresses(async (progresses) => {
+            const first = progresses.run("task A", async (report) => {
+                report("task A update");
+                return "A";
+            });
+            const second = progresses.run("task B", async () => "B");
+            return Promise.all([first, second]);
+        });
+
+        expect(result).toEqual(["A", "B"]);
+        expect(addMock).toHaveBeenCalledWith("task A");
+        expect(addMock).toHaveBeenCalledWith("task B");
+        expect(lineA.update).toHaveBeenCalledWith("task A update");
+        expect(lineA.done).toHaveBeenCalledTimes(1);
+        expect(lineB.done).toHaveBeenCalledTimes(1);
+        expect(lineA.fail).not.toHaveBeenCalled();
+        expect(lineB.fail).not.toHaveBeenCalled();
+        expect(doneRunningMock).toHaveBeenCalledTimes(1);
+        expect(failRunningMock).not.toHaveBeenCalled();
+        expect(stopMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("fails running multiline progress lines when operation throws", async () => {
+        providerDetectMock.mockResolvedValue([]);
+        const line = {
+            update: vi.fn(),
+            done: vi.fn(),
+            fail: vi.fn()
+        };
+        const addMock = vi.fn().mockReturnValue(line);
+        const doneRunningMock = vi.fn();
+        const failRunningMock = vi.fn();
+        const stopMock = vi.fn();
+        progressMultilineStartMock.mockReturnValue({
+            add: addMock,
+            doneRunning: doneRunningMock,
+            failRunning: failRunningMock,
+            stop: stopMock
+        });
+
+        const context = await Context.create("/tmp/test-project");
+        await expect(
+            context.progresses(async (progresses) => {
+                await progresses.run("task A", async () => {
+                    throw new Error("boom");
+                });
+            })
+        ).rejects.toThrow("boom");
+
+        expect(addMock).toHaveBeenCalledWith("task A");
+        expect(line.done).not.toHaveBeenCalled();
+        expect(line.fail).toHaveBeenCalledTimes(1);
+        expect(doneRunningMock).not.toHaveBeenCalled();
+        expect(failRunningMock).toHaveBeenCalledTimes(1);
+        expect(stopMock).toHaveBeenCalledTimes(1);
     });
 });

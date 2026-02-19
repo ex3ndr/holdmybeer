@@ -3,6 +3,7 @@ import path from "node:path";
 import { contextApplyConfig } from "@/_workflows/context/utils/contextApplyConfig.js";
 import { contextAskGithubRepo } from "@/_workflows/context/utils/contextAskGithubRepo.js";
 import { contextGitignoreEnsure } from "@/_workflows/context/utils/contextGitignoreEnsure.js";
+import { type ProgressLine, progressMultilineStart } from "@/_workflows/context/utils/progressMultilineStart.js";
 import { progressStart } from "@/_workflows/context/utils/progressStart.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { gitPush } from "@/modules/git/gitPush.js";
@@ -13,6 +14,11 @@ import type { BeerSettings, GitHubRepoRef, ProviderDetection } from "@/types";
 export interface ContextCheckpointOptions {
     remote?: string;
     branch?: string;
+}
+
+export interface ContextProgresses {
+    add(initialMessage: string): ProgressLine;
+    run<T>(initialMessage: string, operation: (report: (message: string) => void) => Promise<T>): Promise<T>;
 }
 
 /**
@@ -133,6 +139,53 @@ export class Context {
         } catch (error) {
             progress.fail();
             throw error;
+        }
+    }
+
+    /**
+     * Runs an async operation with dynamic multiline progress where lines can be added on demand.
+     * Expects: callers add lines via add()/run() and may execute run() calls in parallel.
+     */
+    async progresses<T>(operation: (progresses: ContextProgresses) => Promise<T>): Promise<T> {
+        const progress = progressMultilineStart();
+
+        const lineRun = async <R>(
+            initialMessage: string,
+            lineOperation: (report: (message: string) => void) => Promise<R>
+        ): Promise<R> => {
+            const line = progress.add(initialMessage);
+            try {
+                const result = await lineOperation((message) => {
+                    line.update(message);
+                });
+                line.done();
+                return result;
+            } catch (error) {
+                line.fail();
+                throw error;
+            }
+        };
+
+        try {
+            const result = await operation({
+                add(initialMessage: string): ProgressLine {
+                    return progress.add(initialMessage);
+                },
+                run<R>(
+                    initialMessage: string,
+                    lineOperation: (report: (message: string) => void) => Promise<R>
+                ): Promise<R> {
+                    return lineRun(initialMessage, lineOperation);
+                }
+            });
+            progress.doneRunning();
+            return result;
+        } catch (error) {
+            progress.failRunning();
+            throw error;
+        } finally {
+            // Required cleanup: clears spinner interval tied to process stderr rendering.
+            progress.stop();
         }
     }
 
