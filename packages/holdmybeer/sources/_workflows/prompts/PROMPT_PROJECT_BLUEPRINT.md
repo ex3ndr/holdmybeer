@@ -158,8 +158,8 @@ layers:
     description: "Workflows composing domain + integrations"
   - name: commands
     description: "CLI commands and entry points"
-totalFiles: {count of all .ts files in the tree}
-totalTestFiles: {count of all .spec.ts files in the tree}
+totalFiles: {count of all source files in the tree}
+totalTestFiles: {count of all test files in the tree}
 domains: [{list of domain folder names}]
 ---
 
@@ -188,43 +188,26 @@ Layer 0: Types ─────────────────┘
 
 ## Project Structure
 
-{The complete file tree. Every single file. Use tree notation with comments:}
+{The complete file tree. Every single file. Use tree notation with comments. The root directory name, folder structure, and organization must be derived from the technology stack document — not assumed. Show every file with its purpose, purity annotation, and layer:}
 
 ```
-sources/
-├── main.ts                              # CLI entry point, registers commands
-├── types.ts                             # Central type re-exports (@/types)
+{src}/
+├── {entryPoint}.ts                      # Entry point [io] [L5]
+├── {types file}.ts                      # Shared type definitions [pure] [L0]
 │
 ├── {domain}/                            # {one-line domain description}
 │   ├── {domainVerb}.ts                  # {what the function does} [pure|io] [L{layer}]
 │   ├── {domainVerb}.spec.ts             # tests for {domainVerb}
-│   ├── {domainTypes}.ts                 # {what types it defines}
+│   ├── {domainTypes}.ts                 # {what types it defines} [pure] [L0]
 │   ...
 │
 ├── util/                                # Domain-agnostic pure helpers
 │   ├── {utilName}.ts                    # {what it does} [pure] [L1]
 │   ├── {utilName}.spec.ts              # tests
 │   ...
-│
-├── text/                                # User-facing string catalog
-│   ├── all.txt                          # Key-value text entries
-│   ├── text.ts                          # Text access functions
-│   ...
-│
-├── _workflows/                          # Orchestration (not unit tested)
-│   ├── {workflowName}.ts               # {what workflow does} [L4]
-│   ├── steps/                           # Reusable workflow steps
-│   │   ├── {stepName}.ts               # {what step does} [L4]
-│   │   ...
-│   ├── prompts/                         # AI prompt templates
-│   │   ├── PROMPT_{NAME}.md            # {what prompt generates}
-│   │   ...
-│   └── context/                         # Runtime context
-│       ├── context.ts                   # Context facade class
-│       ...
 ```
 
-{IMPORTANT: List EVERY file. Not "..." for repetition. Every `.ts` file, every `.spec.ts` file, every `.md` prompt, every config file. Mark each with [pure] or [io] and its layer [L0]-[L5].}
+{IMPORTANT: List EVERY file. Not "..." for repetition. Every source file, every test file, every config file. Mark each with [pure] or [io] and its layer [L0]-[L5]. The folder structure above is illustrative — derive the actual structure from the technology stack document and product requirements.}
 
 ## Implementation Order
 
@@ -233,9 +216,9 @@ sources/
 ### Phase 1: Foundation (no dependencies)
 {List files in order. These import nothing from the project — only external packages.}
 
-1. `sources/types.ts` — Central type definitions
-2. `sources/util/{first-util}.ts` — {what it does}
-3. `sources/util/{first-util}.spec.ts` — Test it
+1. `{src}/{types file}.ts` — Central type definitions
+2. `{src}/util/{first-util}.ts` — {what it does}
+3. `{src}/util/{first-util}.spec.ts` — Test it
 ...
 
 ### Phase 2: Domain Logic (depends on Phase 1)
@@ -268,15 +251,15 @@ sources/
 
 ### 2. Prefix Notation for Names
 
-**Rule:** Function and file names use `domainVerb` format — noun first, verb second. `githubRepoCreate`, not `createGithubRepo`. File names match function names exactly.
+**Rule:** Function and file names use `domainVerb` format — noun first, verb second. File names match function names exactly.
 
 **Why:** Autocomplete groups related functions together. File explorer clusters domain files alphabetically. Import statements are self-documenting.
 
 **Examples from this blueprint:**
-{List 5+ real examples from the file tree}
+{List 5+ real examples from the file tree above, e.g., `userCreate` not `createUser`}
 
 **Anti-pattern:**
-{List the wrong versions of those same examples}
+{List the wrong (verb-first) versions of those same examples}
 
 ### 3. Pure Functions First
 
@@ -308,7 +291,7 @@ sources/
 
 **Rule:** Functions do what their name says, nothing more. No side effects in getters. No lazy initialization hidden inside accessors. No "helpful" caching that changes behavior on second call. No auto-retry. No silent fallbacks.
 
-**Why:** An agent trusts function names. If `configRead()` also writes a default config file when one doesn't exist, the agent won't know — and will be confused when a file appears that it didn't create.
+**Why:** An agent trusts function names. If a function named `settingsRead()` also writes a default file when one doesn't exist, the agent won't know — and will be confused when a file appears that it didn't create.
 
 **Violation looks like:** A function named `get` or `read` that also writes, creates, initializes, or mutates.
 
@@ -332,44 +315,43 @@ sources/
 
 ### File Template
 
-{Show the exact structure of a typical file — imports, JSDoc, function, export:}
+{Show the exact structure of a typical source file — imports, documentation, function, export. Use the language and import conventions defined in the technology stack document:}
 
-```typescript
-import type { SomeType } from "@/types";
-import { someUtil } from "@/util/someUtil.js";
+```
+{import type declarations}
+{import utility/dependency declarations}
 
 /**
  * {One sentence: what this function does.}
  * {One sentence: preconditions or expectations.}
  */
-export function domainVerb(input: SomeType): OutputType {
+export function domainVerb(input: InputType): OutputType {
     // implementation
 }
 ```
 
+{Replace the above with a concrete example using the project's actual language, import style, and conventions.}
+
 ### Naming Conventions
+
+{Define a naming convention table with concrete examples from this blueprint. Cover at minimum: source files, functions, types, type files, test files, constants, and boolean variables. Use actual filenames from the project structure above — not generic placeholders. Format:}
 
 | What | Convention | Example | Anti-pattern |
 |------|-----------|---------|-------------|
-| Files | `domainVerb.ts` | `githubRepoCreate.ts` | `createGithubRepo.ts` |
-| Functions | `domainVerb` | `githubRepoCreate()` | `createGithubRepo()` |
-| Types | `PascalCase` | `GitHubRepoRef` | `githubRepoRef` |
-| Type files | `domainTypes.ts` | `githubTypes.ts` | `types.ts` (too generic) |
-| Test files | `domainVerb.spec.ts` | `githubRepoCreate.spec.ts` | `github.test.ts` |
-| Constants | `UPPER_SNAKE` | `MAX_RETRY_COUNT` | `maxRetryCount` |
-| Booleans | `is/has/can` prefix | `isExpired`, `hasPermission` | `expired`, `permission` |
-| Aggregation files | `_name.ts` | `_providers.ts` | `index.ts`, `all.ts` |
+| Files | {pattern} | {real example from this blueprint} | {what NOT to do} |
+| Functions | {pattern} | {real example} | {anti-pattern} |
+| ... | ... | ... | ... |
 
 ### Import Ordering
 
-{Exact ordering rules:}
-1. Node built-in modules (`node:fs`, `node:path`)
-2. External packages (`zod`, `commander`)
-3. Type imports from `@/types`
-4. Internal imports by layer (lowest first)
+{Define exact import ordering rules appropriate for the project's language and module system. General structure:}
+1. Standard library / built-in modules
+2. External packages / third-party dependencies
+3. Shared type imports
+4. Internal imports by layer (lowest layer first)
 5. Relative imports (same directory)
 
-{Show a concrete example with all 5 groups.}
+{Show a concrete example using the project's actual language and import conventions.}
 
 ### Comment Rules
 
@@ -380,28 +362,23 @@ export function domainVerb(input: SomeType): OutputType {
 
 ### Error Handling
 
-```typescript
-// GOOD: Throw with context
-throw new Error(`GitHub repo "${name}" not found — verify the repo exists and you have access`);
+{Define the error handling strategy with concrete examples in the project's language. Cover at minimum:}
+- How to throw errors with context (good)
+- Why returning null for unexpected failures is bad
+- Why swallowing errors silently is bad
+- When explicit fallibility in function names is acceptable
 
-// BAD: Return null for unexpected failures
-return null; // caller has no idea why
-
-// BAD: Swallow and continue
-try { await riskyOperation(); } catch {} // silent failure
-
-// OK: Explicit fallibility in the name
-export function configTryRead(path: string): Config | null {
-    // returning null is expected — the name says "try"
-}
-```
+{Show code examples using actual function names from this blueprint.}
 
 ### Async Patterns
 
-- Prefer `async/await` over raw promises.
-- Never fire-and-forget (`someAsyncFn()` without `await`). If intentional, assign to a variable and comment why.
-- Use `Promise.all()` for independent parallel operations.
-- Use `AsyncLock` for mutual exclusion, not flags or manual promise chains.
+{If the project's language supports async operations, define patterns for:}
+- Preferred async syntax (e.g., async/await vs raw promises/futures)
+- How to handle concurrent operations
+- How to handle mutual exclusion
+- Rules against fire-and-forget async calls
+
+{Skip this section if the project's language does not have async operations.}
 
 ## Domain Reference
 
@@ -461,8 +438,8 @@ export function configTryRead(path: string): Config | null {
 
 ## Writing Rules
 
-- **Literal, not abstract.** "File `githubRepoCreate.ts` exports function `githubRepoCreate`" — good. "Domain modules export their public API" — useless for an agent.
-- **Every file listed.** The project structure section must contain every `.ts`, `.spec.ts`, `.md`, and config file. No `...` for repetition. An agent will use this as a checklist.
+- **Literal, not abstract.** "File `userProfileCreate.ts` exports function `userProfileCreate`" — good. "Domain modules export their public API" — useless for an agent.
+- **Every file listed.** The project structure section must contain every source file, test file, and config file. No `...` for repetition. An agent will use this as a checklist.
 - **Implementation order must be buildable.** If file B imports from file A, file A must appear earlier in the implementation order. Verify this.
 - **Principles must be falsifiable.** "Write clean code" — banned. "No file exceeds 200 lines" — enforceable.
 - **Examples use real names.** Every code example uses actual filenames and function names from this blueprint, not generic placeholders.
@@ -472,15 +449,15 @@ export function configTryRead(path: string): Config | null {
 ## Quality Gates
 
 Before finalizing, verify:
-1. Every `.ts` file in the project structure has a layer annotation `[L0]`-`[L5]` and a purity annotation `[pure]` or `[io]`
+1. Every source file in the project structure has a layer annotation `[L0]`-`[L5]` and a purity annotation `[pure]` or `[io]`
 2. The implementation order is a valid topological sort — no file depends on a file that comes later
-3. Every pure function has a corresponding `.spec.ts` file in the tree
+3. Every pure function has a corresponding test file in the tree
 4. No file in the tree exceeds the stated line limit guideline
 5. The dependency rule is never violated — no lower layer imports from a higher layer
 6. Every domain's "public surface" is explicitly listed — no secret exports
 7. The 3 feature traces each touch fewer than 10 files total
 8. All naming examples use actual names from this blueprint, not placeholders
-9. The frontmatter `totalFiles` and `totalTestFiles` counts match the actual tree
+9. The frontmatter `totalFiles` and `totalTestFiles` counts match the actual file tree
 10. Every principle has evidence from the original project's research documents
 11. No file exists in the tree without being referenced in the implementation order
 12. A reader finishes knowing: what every file does, what order to build them, what principles to follow, and how features map to files
