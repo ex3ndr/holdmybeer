@@ -21,12 +21,12 @@ flowchart TD
   K --> M[Checkout source to .beer/local/original]
   L --> M
   M --> N[Generate README via pi]
-  N --> O[generateCommit step]
-  O --> P[runInference step]
-  P --> Q[Update settings]
-  Q --> R[Ensure git origin remote]
-  R --> S[pushMain step]
-  S --> T[LLM updates .gitignore]
+  N --> O[Ensure root .gitignore includes .beer/local/]
+  O --> P[generateCommit step]
+  P --> Q[runInference step]
+  Q --> R[Update settings]
+  R --> S[Ensure git origin remote]
+  S --> T[pushMain step]
   T --> U[Commit]
   U --> V[Push HEAD to main]
 ```
@@ -36,6 +36,6 @@ flowchart TD
 - Source input accepts URL, SSH remote, or `owner/repo` shorthand.
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes on non-empty collisions.
 - Source is checked out to `<projectPath>/.beer/local/original` before inference.
+- Bootstrap creates/updates root `.gitignore` before the first push.
 - README and commit generation resolve workflow model priorities against live `pi` model availability.
-- Push step updates `.gitignore` via inference before staging and commit.
 - Inference failures fail the operation.

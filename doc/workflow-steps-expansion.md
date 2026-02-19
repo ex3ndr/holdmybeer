@@ -11,11 +11,10 @@ flowchart TD
   C --> D[global context read]
   C --> E[handlebars prompt resolve]
   C --> F[generate]
-  A --> G[pushMain]
-  G --> H[generateFile .gitignore]
-  H --> I[LLM decides garbage ignore rules]
-  G --> J[stageAndCommit]
-  G --> K[gitPush origin/main]
+  A --> G[gitignoreEnsure]
+  A --> H[pushMain]
+  H --> I[stageAndCommit]
+  H --> J[gitPush origin/main]
 ```
 
 ## Notes

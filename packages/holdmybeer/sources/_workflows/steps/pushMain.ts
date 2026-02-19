@@ -1,6 +1,5 @@
 import { contextGet } from "@/modules/context/contextGet.js";
 import { gitPush } from "@/modules/git/gitPush.js";
-import { gitignoreEnsure } from "@/modules/git/gitignoreEnsure.js";
 
 export interface PushMainOptions {
   showProgress?: boolean;
@@ -9,7 +8,7 @@ export interface PushMainOptions {
 }
 
 /**
- * Ensures required .gitignore entries, creates commit from all tracked changes, and pushes to main.
+ * Creates commit from all tracked changes and pushes to main.
  * Expects: global context is initialized and remote/branch already exist.
  */
 export async function pushMain(
@@ -22,7 +21,6 @@ export async function pushMain(
   }
 
   const context = contextGet();
-  await gitignoreEnsure(context.projectPath);
   const committed = await context.stageAndCommit(messageResolved);
   const remote = options.remote ?? "origin";
   const branch = options.branch ?? "main";
