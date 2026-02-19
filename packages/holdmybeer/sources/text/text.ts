@@ -1,39 +1,40 @@
-import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { appendFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
+import {
+  text,
+  type TextKey,
+  type TextKeysWithValues,
+  type TextKeysWithoutValues,
+  type TextValuesForKey
+} from "@/text/text.gen.js";
 
-/** Parses key = value lines from a text catalog, skipping comments and blanks. */
-function textParse(raw: string): Record<string, string> {
-  const entries: Record<string, string> = {};
-  for (const line of raw.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    entries[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
-  }
-  return entries;
-}
+type TextFormatValues = Record<string, string | number>;
 
-const txtPath = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "all.txt"
-);
-
-/** All user-facing text strings, keyed by identifier. */
-export const text: Record<string, string> = textParse(
-  readFileSync(txtPath, "utf-8")
-);
+export { text };
+export type {
+  TextKey,
+  TextKeysWithValues,
+  TextKeysWithoutValues,
+  TextValuesForKey
+} from "@/text/text.gen.js";
 
 /** Replaces {key} placeholders in a template with provided values. */
 export function textFormat(
   template: string,
-  values: Record<string, string | number>
+  values: TextFormatValues
 ): string {
   return template.replace(
     /\{(\w+)\}/g,
     (_, k: string) => String(values[k] ?? `{${k}}`)
   );
+}
+
+/** Formats a catalog entry by key with strongly typed placeholder values. */
+export function textFormatKey<K extends TextKey>(
+  key: K,
+  values: TextValuesForKey<K>
+): string {
+  return textFormat(text[key], values as TextFormatValues);
 }
 
 /** Writes a plain log line to the daily .beer/logs file. */
@@ -47,13 +48,18 @@ export function beerLogLine(message: string): void {
   }
 }
 
+export function beerLog<K extends TextKeysWithoutValues>(key: K): void;
+export function beerLog<K extends TextKeysWithValues>(
+  key: K,
+  values: TextValuesForKey<K>
+): void;
+
 /** Logs a catalog message with optional template substitution to log file only. */
 export function beerLog(
-  key: string,
-  values?: Record<string, string | number>
+  key: TextKey,
+  values?: TextFormatValues
 ): void {
-  const template = text[key];
-  beerLogLine(template ? (values ? textFormat(template, values) : template) : key);
+  beerLogLine(values ? textFormat(text[key], values) : text[key]);
 }
 
 function beerLogFilePathResolve(): string {

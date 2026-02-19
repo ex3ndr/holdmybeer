@@ -21,7 +21,7 @@ import { promptInput } from "@/modules/prompt/promptInput.js";
 import { generateCommit } from "@/_workflows/steps/generateCommit.js";
 import { pushMain } from "@/_workflows/steps/pushMain.js";
 import type { Context } from "@/types";
-import { text, textFormat } from "@text";
+import { text, textFormatKey } from "@text";
 
 /**
  * Runs the interactive bootstrap workflow for holdmybeer.
@@ -83,7 +83,7 @@ export async function bootstrapWorkflow(ctx: Context): Promise<void> {
 
     if (resolvedPublish.status === "missing") {
       const createRepo = await promptConfirm(
-        textFormat(text["prompt_create_repo"]!, { repo: resolvedPublish.fullName }),
+        textFormatKey("prompt_create_repo", { repo: resolvedPublish.fullName }),
         true
       );
       if (!createRepo) {

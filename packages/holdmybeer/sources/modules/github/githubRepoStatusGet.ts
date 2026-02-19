@@ -1,6 +1,6 @@
 import type { GitHubRepoStatus } from "@/modules/github/githubTypes.js";
 import { commandRun } from "@/modules/util/commandRun.js";
-import { text, textFormat } from "@text";
+import { text, textFormatKey } from "@text";
 
 /**
  * Checks repository status for publish targeting.
@@ -17,7 +17,7 @@ export async function githubRepoStatusGet(fullName: string): Promise<GitHubRepoS
     if (result.stderr.includes("404") || result.stdout.includes("404")) {
       return "missing";
     }
-    throw new Error(textFormat(text["error_repo_status_check"]!, { repo: fullName, detail: result.stderr || result.stdout }));
+    throw new Error(textFormatKey("error_repo_status_check", { repo: fullName, detail: result.stderr || result.stdout }));
   }
 
   const size = Number(result.stdout.trim());

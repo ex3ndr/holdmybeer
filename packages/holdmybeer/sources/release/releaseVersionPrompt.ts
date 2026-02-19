@@ -1,4 +1,4 @@
-import { text, textFormat } from "@text";
+import { text, textFormatKey } from "@text";
 import { promptInput } from "@/modules/prompt/promptInput.js";
 import {
   releaseVersionIncrement,
@@ -38,7 +38,7 @@ export async function releaseVersionPrompt(
 
   if (!SEMVER_PATTERN.test(normalizedVersion)) {
     throw new Error(
-      textFormat(text["error_release_version_invalid"]!, {
+      textFormatKey("error_release_version_invalid", {
         version: normalizedVersion
       })
     );
@@ -62,14 +62,14 @@ async function releaseVersionModeResolve(
   const modeInput =
     modeArg?.trim().toLowerCase() ||
     (await promptInput(
-      textFormat(text["prompt_release_mode"]!, { patch: patchVersion }),
+      textFormatKey("prompt_release_mode", { patch: patchVersion }),
       "patch"
     ))
       .trim()
       .toLowerCase();
 
   if (!releaseVersionModeIsValid(modeInput)) {
-    throw new Error(textFormat(text["error_release_mode_invalid"]!, { mode: modeInput }));
+    throw new Error(textFormatKey("error_release_mode_invalid", { mode: modeInput }));
   }
 
   return modeInput;

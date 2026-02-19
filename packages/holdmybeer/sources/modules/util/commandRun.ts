@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { text as catalog, textFormat } from "@text";
+import { textFormatKey } from "@text";
 import type { CommandSandbox } from "@/modules/sandbox/sandboxTypes.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 
@@ -57,7 +57,7 @@ export async function commandRun(
       child.kill("SIGTERM");
       reject(
         new Error(
-          textFormat(catalog["error_command_timeout"]!, {
+          textFormatKey("error_command_timeout", {
             ms: timeoutMs,
             command: displayCommand
           })
@@ -107,7 +107,7 @@ export async function commandRun(
 
   if (!options.allowFailure && result.exitCode !== 0) {
     throw new Error(
-      textFormat(catalog["error_command_failed"]!, {
+      textFormatKey("error_command_failed", {
         code: result.exitCode,
         command: displayCommand
       }) + `\n${result.stderr || result.stdout}`
