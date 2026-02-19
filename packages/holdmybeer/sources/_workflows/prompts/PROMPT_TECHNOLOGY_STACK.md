@@ -191,9 +191,23 @@ Follow this process systematically. Every recommendation must be backed by data 
 
 ## Output Format
 
-Produce the document as a single markdown file with the following structure. Every section is required. Be specific — version numbers, exact CLI commands, real download counts. Vague recommendations are worse than no recommendations.
+Produce a single markdown file **with YAML frontmatter**. The frontmatter contains a deep research query that will be used to validate and enrich this technology stack recommendation. The body contains the stack document itself. Every section is required. Be specific — version numbers, exact CLI commands, real download counts. Vague recommendations are worse than no recommendations.
 
 ```
+---
+deepResearchQuery: |
+  {A detailed, multi-part research query (3-8 sentences) that someone should run against
+  web search, benchmarks, or developer community discussions to validate and enrich the
+  stack choices in this document. The query should cover: (1) runtime and build tool
+  benchmarks — current performance comparisons for the recommended tools vs alternatives,
+  (2) ecosystem health — recent adoption trends, maintainer activity, and any migration
+  waves for or against the chosen tools, (3) agent compatibility evidence — documented use
+  of these tools with AI coding agents, automated CI/CD, or headless development workflows,
+  (4) known issues — recent breaking changes, regressions, or community complaints about
+  the recommended tools. Be specific to the actual tools recommended — reference them by
+  name, not generically.}
+---
+
 # Technology Stack: {Project Name}
 
 {One sentence: what this stack is optimized for. Example: "A TypeScript-first, CLI-native stack optimized for autonomous AI agent development with sub-second feedback loops."}
@@ -422,22 +436,24 @@ Produce the document as a single markdown file with the following structure. Eve
 ## Quality Gates
 
 Before finalizing, verify:
-1. Every recommended tool has real, current ecosystem data (downloads, stars, contributors) — not approximations or memories
-2. Every recommended tool has a documented CLI workflow with exact commands
-3. Every recommended tool's error output has been assessed for agent parseability
-4. The complete stack has been checked for compatibility conflicts
-5. The environment setup script is copy-pasteable and requires zero interactive prompts
-6. The `package.json` is valid and all versions are pinned
-7. Every recommendation includes at least two alternatives that were evaluated and rejected with specific reasons
-8. The feedback loop for each tool is measured in seconds, not minutes — document expected latency
-9. No tool requires a human to manually interact with a GUI for its primary workflow. Headless browser automation and screenshot-based verification are valid — manual GUI interaction is not
-10. The "What We're Deliberately Not Using" section is populated — every significant tool you rejected should be documented with reasoning
-11. The dependency manifest accounts for every direct dependency — no surprises when someone runs `install`
-12. The risk assessment covers bus factor and migration path for every critical tool — the agent must not depend on a tool that could vanish
-13. Cross-reference with the original project's unresolved problems — if a tool choice caused problems in the original, you must either avoid that tool or explain why the problem won't recur
+1. The file starts with valid YAML frontmatter containing `deepResearchQuery` (a non-empty string, 3-8 sentences, specific to the actual tools recommended)
+2. Every recommended tool has real, current ecosystem data (downloads, stars, contributors) — not approximations or memories
+3. Every recommended tool has a documented CLI workflow with exact commands
+4. Every recommended tool's error output has been assessed for agent parseability
+5. The complete stack has been checked for compatibility conflicts
+6. The environment setup script is copy-pasteable and requires zero interactive prompts
+7. The `package.json` is valid and all versions are pinned
+8. Every recommendation includes at least two alternatives that were evaluated and rejected with specific reasons
+9. The feedback loop for each tool is measured in seconds, not minutes — document expected latency
+10. No tool requires a human to manually interact with a GUI for its primary workflow. Headless browser automation and screenshot-based verification are valid — manual GUI interaction is not
+11. The "What We're Deliberately Not Using" section is populated — every significant tool you rejected should be documented with reasoning
+12. The dependency manifest accounts for every direct dependency — no surprises when someone runs `install`
+13. The risk assessment covers bus factor and migration path for every critical tool — the agent must not depend on a tool that could vanish
+14. Cross-reference with the original project's unresolved problems — if a tool choice caused problems in the original, you must either avoid that tool or explain why the problem won't recur
+15. The deep research query is actionable — someone could paste it into a search engine or research tool and get useful results back
 
 If any check fails, revise before returning.
 
 ## Output
 
-Output only raw markdown. No preamble, no explanation, no commentary outside the document structure.
+Output only raw markdown with YAML frontmatter. No preamble, no explanation, no commentary outside the document structure.

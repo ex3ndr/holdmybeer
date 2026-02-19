@@ -7,7 +7,7 @@ import { type GenerateDocumentResult, generateDocument } from "@/_workflows/step
 import { promptConfirm } from "@/modules/prompt/promptConfirm.js";
 import type { Context } from "@/types";
 
-const pitchFrontmatterSchema = z.object({
+const deepResearchQuerySchema = z.object({
     deepResearchQuery: z.string().min(1)
 });
 
@@ -106,7 +106,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
                         throw new Error("Product pitch must include YAML frontmatter with deepResearchQuery");
                     }
                     const parsed = matter(fileContent);
-                    const result = pitchFrontmatterSchema.safeParse(parsed.data);
+                    const result = deepResearchQuerySchema.safeParse(parsed.data);
                     if (!result.success) {
                         throw new Error(
                             `Invalid pitch frontmatter: ${result.error.issues.map((i) => i.message).join("; ")}`
@@ -118,7 +118,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
         pitchGenerated = true;
 
         // Extract and display deep research query from verified frontmatter
-        const { deepResearchQuery } = matter(pitchResult.text).data as z.infer<typeof pitchFrontmatterSchema>;
+        const { deepResearchQuery } = matter(pitchResult.text).data as z.infer<typeof deepResearchQuerySchema>;
         beerLogLine("");
         beerLogLine("🔍  Deep research query (use to validate and enrich this pitch):");
         beerLogLine("─".repeat(60));
@@ -224,12 +224,12 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
     }
 
     //
-    // Generate technology stack (depends on research + problems + decisions + final pitch)
+    // Generate draft technology stack (depends on research + problems + decisions + final pitch)
     //
 
     let stackGenerated = false;
     if (!(await ctx.existFile("doc/technology-stack.md"))) {
-        await generateDocument(
+        const stackResult = await generateDocument(
             ctx,
             {
                 promptId: "PROMPT_TECHNOLOGY_STACK",
@@ -243,10 +243,87 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
                 }
             },
             {
-                progressMessage: text.inference_research_stack_generating!
+                progressMessage: text.inference_research_stack_generating!,
+                verify: ({ fileContent }) => {
+                    if (!matter.test(fileContent)) {
+                        throw new Error("Technology stack must include YAML frontmatter with deepResearchQuery");
+                    }
+                    const parsed = matter(fileContent);
+                    const result = deepResearchQuerySchema.safeParse(parsed.data);
+                    if (!result.success) {
+                        throw new Error(
+                            `Invalid stack frontmatter: ${result.error.issues.map((i) => i.message).join("; ")}`
+                        );
+                    }
+                }
             }
         );
         stackGenerated = true;
+
+        // Extract and display deep research query from verified frontmatter
+        const { deepResearchQuery } = matter(stackResult.text).data as z.infer<typeof deepResearchQuerySchema>;
+        beerLogLine("");
+        beerLogLine("🔍  Deep research query (use to validate and enrich this stack):");
+        beerLogLine("─".repeat(60));
+        for (const line of deepResearchQuery.split("\n")) {
+            beerLogLine(`  ${line}`);
+        }
+        beerLogLine("─".repeat(60));
+        beerLogLine("");
+    }
+
+    //
+    // Final technology stack: refine with deep research or copy draft
+    //
+
+    let stackFinalGenerated = false;
+    if (!(await ctx.existFile("doc/technology-stack-final.md"))) {
+        const hasDeepResearch = await ctx.existFile("doc/technology-stack-deep-research-report.md");
+
+        if (hasDeepResearch) {
+            // Deep research report exists — refine the draft stack
+            await generateDocument(
+                ctx,
+                {
+                    promptId: "PROMPT_TECHNOLOGY_STACK_FINAL",
+                    outputPath: "doc/technology-stack-final.md",
+                    modelSelectionMode: "opus",
+                    extraTemplateValues: {
+                        researchPath: path.resolve(ctx.projectPath, "doc/research.md"),
+                        unresolvedProblemsPath: path.resolve(ctx.projectPath, "doc/research-problems.md"),
+                        decisionsPath: path.resolve(ctx.projectPath, "doc/decisions.md"),
+                        productPitchPath: path.resolve(ctx.projectPath, "doc/product-pitch-final.md"),
+                        technologyStackPath: path.resolve(ctx.projectPath, "doc/technology-stack.md"),
+                        deepResearchReportPath: path.resolve(
+                            ctx.projectPath,
+                            "doc/technology-stack-deep-research-report.md"
+                        )
+                    }
+                },
+                {
+                    progressMessage: text.inference_research_stack_final_generating!
+                }
+            );
+            stackFinalGenerated = true;
+        } else {
+            // No deep research — ask user whether to wait or skip
+            const skipDeepResearch = await promptConfirm(text.prompt_deep_research_stack_skip!, true);
+            if (skipDeepResearch) {
+                // Copy draft stack as final, stripping frontmatter
+                const draftContent = await readFile(
+                    path.resolve(ctx.projectPath, "doc/technology-stack.md"),
+                    "utf-8"
+                );
+                const { content } = matter(draftContent);
+                await ctx.writeFile("doc/technology-stack-final.md", content.trimStart());
+                stackFinalGenerated = true;
+            } else {
+                beerLogLine(
+                    "⏸️  Stopping — place deep research report at doc/technology-stack-deep-research-report.md and re-run"
+                );
+                return;
+            }
+        }
     }
 
     //
@@ -259,7 +336,8 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
         pitchGenerated ||
         pitchFinalGenerated ||
         nameGenerated ||
-        stackGenerated
+        stackGenerated ||
+        stackFinalGenerated
     ) {
         await ctx.checkpoint(`chore: research`);
     }

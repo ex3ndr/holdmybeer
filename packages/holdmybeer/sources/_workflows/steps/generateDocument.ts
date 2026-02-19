@@ -13,7 +13,8 @@ export type GenerateDocumentPromptId =
     | "PROMPT_PRODUCT_PITCH"
     | "PROMPT_PRODUCT_PITCH_FINAL"
     | "PROMPT_PRODUCT_NAME"
-    | "PROMPT_TECHNOLOGY_STACK";
+    | "PROMPT_TECHNOLOGY_STACK"
+    | "PROMPT_TECHNOLOGY_STACK_FINAL";
 
 export interface GenerateDocumentInput {
     promptId: GenerateDocumentPromptId;
@@ -43,7 +44,8 @@ const promptById: Record<GenerateDocumentPromptId, string> = {
     PROMPT_PRODUCT_PITCH: readFileSync(path.join(promptsPath, "PROMPT_PRODUCT_PITCH.md"), "utf-8"),
     PROMPT_PRODUCT_PITCH_FINAL: readFileSync(path.join(promptsPath, "PROMPT_PRODUCT_PITCH_FINAL.md"), "utf-8"),
     PROMPT_PRODUCT_NAME: readFileSync(path.join(promptsPath, "PROMPT_PRODUCT_NAME.md"), "utf-8"),
-    PROMPT_TECHNOLOGY_STACK: readFileSync(path.join(promptsPath, "PROMPT_TECHNOLOGY_STACK.md"), "utf-8")
+    PROMPT_TECHNOLOGY_STACK: readFileSync(path.join(promptsPath, "PROMPT_TECHNOLOGY_STACK.md"), "utf-8"),
+    PROMPT_TECHNOLOGY_STACK_FINAL: readFileSync(path.join(promptsPath, "PROMPT_TECHNOLOGY_STACK_FINAL.md"), "utf-8")
 };
 
 /**

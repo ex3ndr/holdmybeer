@@ -70,6 +70,7 @@ prompt_ralph_loop_build = 🧠  What should I build?
 prompt_checkpoint_hint = 💬  Checkpoint commit message (optional)
 prompt_workflow_select = Select a workflow
 prompt_deep_research_skip = 🔍  Deep research report not found (doc/product-pitch-deep-research-report.md). Run deep research first, or skip and use draft pitch as final?
+prompt_deep_research_stack_skip = 🔍  Deep research report not found (doc/technology-stack-deep-research-report.md). Run deep research first, or skip and use draft stack as final?
 
 # Inference
 
@@ -86,6 +87,7 @@ inference_research_pitch_generating = Generating product pitch document
 inference_research_pitch_final_generating = Refining product pitch with deep research
 inference_research_name_generating = Generating product name
 inference_research_stack_generating = Generating technology stack document
+inference_research_stack_final_generating = Refining technology stack with deep research
 
 # Errors
 
