@@ -20,6 +20,7 @@ Before you pick a name, you MUST research the competitive landscape. Use the `gh
 2. **Catalog their names.** What naming patterns do they use? What's overused? (hint: everything with "ai", "co", "pilot", "gen", "auto" in the name is exhausted)
 3. **Check npm for collisions.** Before finalizing, verify the name isn't already taken on npm. Use `npm search {name}` or check `https://www.npmjs.com/package/{name}`.
 4. **Check GitHub for collisions.** Search for repos with the candidate name.
+5. **Check domain availability.** For your top candidates, check if `{name}.dev`, `{name}.io`, or `{name}.com` are available and affordable (under $5k). Use WHOIS lookups or domain search tools. A name with an available domain under $5k is strongly preferred over one without.
 
 Include a "## Competitive landscape" section in your output showing what you found.
 
@@ -79,6 +80,7 @@ productName: "{the chosen name}"
 - **CLI-friendly:** {works as a terminal command — short, no special chars, fun to type}
 - **Searchable:** {not a common English word that pollutes search results}
 - **npm available:** {yes/no — did you check?}
+- **Domain available:** {which domains checked, which are available, estimated price}
 ```
 
 ## Naming rules
@@ -91,6 +93,7 @@ productName: "{the chosen name}"
 - **No "AI" in the name.** Every tool has AI now. It's not a differentiator, it's a commodity. Putting "ai" in your name is like putting "electric" in a car name in 2026.
 - **Evocative over descriptive.** The name should hint at what the tool feels like to use, not literally describe its function.
 - **Actually check for collisions.** Search npm and GitHub. A name that's already taken is not an option no matter how good it is.
+- **Domain matters.** Strongly prefer names where `{name}.dev`, `{name}.io`, or `{name}.com` is available for under $5k. A great name without a domain is worse than a good name with one.
 - **Consider the terminal experience.** `$ {name} bootstrap` — does it feel good to type? Does it make the developer smile every time?
 
 ## Output
