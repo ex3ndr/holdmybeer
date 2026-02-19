@@ -28,6 +28,7 @@ export async function generateFile(
         originalCheckoutPath: beerOriginalPathResolve(context.projectPath),
         outputPath: resolvedOutputPath,
         sourceFullName: context.settings.sourceRepo?.fullName,
+        productName: context.settings.productName,
         ...extraTemplateValues
     };
     const maxRetries = Math.max(0, retries ?? 1);

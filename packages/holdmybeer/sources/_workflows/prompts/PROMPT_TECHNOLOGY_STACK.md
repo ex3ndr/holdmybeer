@@ -9,6 +9,7 @@ Your task is to produce a comprehensive technology stack recommendation for a **
 - **Output File Path**: {outputPath}
 - **Original source repository:** {sourceFullName} (Use a `gh` tool to look into issues)
 - **Local checkout path:** {originalCheckoutPath}
+- **Product name:** {productName}
 
 You have read-only access to the local checkout of the **original project** — the one we studied. We are not patching or forking this project. We are building a new product informed by everything we learned from dissecting this one.
 
@@ -208,7 +209,7 @@ deepResearchQuery: |
   name, not generically.}
 ---
 
-# Technology Stack: {Project Name}
+# Technology Stack: {productName}
 
 {One sentence: what this stack is optimized for. Example: "A TypeScript-first, CLI-native stack optimized for autonomous AI agent development with sub-second feedback loops."}
 

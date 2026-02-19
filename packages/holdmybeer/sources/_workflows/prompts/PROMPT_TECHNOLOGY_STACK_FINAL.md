@@ -5,6 +5,7 @@ You are refining a technology stack recommendation using a deep research report 
 - **Output File Path**: {outputPath}
 - **Original source repository:** {sourceFullName} (Use a `gh` tool to look into issues)
 - **Local checkout path:** {originalCheckoutPath}
+- **Product name:** {productName}
 
 **Input documents — read all before starting:**
 
@@ -38,7 +39,7 @@ You are refining a technology stack recommendation using a deep research report 
 - **Same rigor.** Same level of detail per evaluation. If the draft scored tools on 6 criteria, the final scores on 6 criteria.
 - **Evidence over assertion.** Where the research provides benchmarks or data, cite it. Where it contradicts the draft, fix the draft.
 - **Still honest about the original.** The deep research may reveal that the original's stack problems are even worse (or less bad) than we thought. Update accordingly.
-- **No product name.** Continue using "{Project Name}" as placeholder.
+- **Use the product name.** Use "{productName}" wherever the product is referenced by name.
 - **Version-pin everything.** Update version recommendations if the research reveals newer stable versions or version-specific issues.
 - **Banned words:** revolutionary, powerful, seamless, robust, cutting-edge, next-generation, best-in-class, blazing-fast, game-changing, disruptive, leverage.
 
