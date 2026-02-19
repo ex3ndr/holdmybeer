@@ -10,7 +10,14 @@ import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { gitPush } from "@/modules/git/gitPush.js";
 import { gitStageAndCommit } from "@/modules/git/gitStageAndCommit.js";
 import { providerDetect } from "@/modules/providers/providerDetect.js";
-import type { BeerSettings, GitHubRepoRef, ProviderDetection, ProviderModelSelectionMode } from "@/types";
+import { PathLock } from "@/modules/util/pathLock.js";
+import type {
+    BeerSettings,
+    GitHubRepoRef,
+    PathLockResult,
+    ProviderDetection,
+    ProviderModelSelectionMode
+} from "@/types";
 
 export interface ContextCheckpointOptions {
     remote?: string;
@@ -28,6 +35,7 @@ export class Context {
     private settingsCurrent: Readonly<BeerSettings>;
     private progressMultiline?: ReturnType<typeof progressMultilineStart>;
     private progressUsers = 0;
+    private readonly ioLock = PathLock.create();
 
     private constructor(projectPath: string, providers: ProviderDetection[], settings: Readonly<BeerSettings>) {
         this.projectPath = projectPath;
@@ -193,6 +201,22 @@ export class Context {
      */
     async gitignore(patterns: readonly string[]): Promise<void> {
         return contextGitignoreEnsure(this.projectPath, patterns);
+    }
+
+    /**
+     * Locks project paths in shared in-memory lock for internal workflow I/O.
+     * Expects: paths are project-relative or absolute paths.
+     */
+    async lockIO(paths: string[]): Promise<PathLockResult> {
+        return this.ioLock.lock(paths.map((pathValue) => contextPathResolve(this.projectPath, pathValue)));
+    }
+
+    /**
+     * Opens a disk-backed path lock file scoped to the current project.
+     * Expects: filePath is project-relative or absolute path to lock JSON file.
+     */
+    async createPathLock(filePath: string): Promise<PathLock> {
+        return PathLock.open(contextPathResolve(this.projectPath, filePath));
     }
 
     private progressAcquire(): ReturnType<typeof progressMultilineStart> {

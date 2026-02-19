@@ -9,3 +9,4 @@ export type {
     ProviderModelSelectionMode
 } from "@/modules/providers/providerTypes.js";
 export type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
+export type { PathLockResult } from "@/modules/util/pathLock.js";

@@ -141,6 +141,44 @@ describe("Context", () => {
         }
     });
 
+    it("locks internal I/O paths with project-aware normalization", async () => {
+        providerDetectMock.mockResolvedValue([]);
+
+        const context = await Context.create("/tmp/test-project");
+        const first = await context.lockIO(["tmp/out.txt"]);
+        expect(first.locked).toBe(true);
+        expect(first.release).not.toBeNull();
+
+        const second = await context.lockIO(["/tmp/test-project/tmp/out.txt"]);
+        expect(second).toEqual({
+            locked: false,
+            conflicts: ["/tmp/test-project/tmp/out.txt"],
+            release: null
+        });
+
+        await first.release?.();
+        const third = await context.lockIO(["tmp/out.txt"]);
+        expect(third.locked).toBe(true);
+    });
+
+    it("creates disk-backed path locks relative to the project", async () => {
+        providerDetectMock.mockResolvedValue([]);
+        const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-context-"));
+        try {
+            const context = await Context.create(tempDir);
+            const lock = await context.createPathLock(".beer/local/path-lock.json");
+            const result = await lock.lock(["src/main.ts"]);
+
+            expect(result.locked).toBe(true);
+            const diskState = JSON.parse(await readFile(path.join(tempDir, ".beer/local/path-lock.json"), "utf-8")) as {
+                locked: string[];
+            };
+            expect(diskState.locked).toEqual(["src/main.ts"]);
+        } finally {
+            await rm(tempDir, { recursive: true, force: true });
+        }
+    });
+
     it("creates and refreshes symlinks", async () => {
         providerDetectMock.mockResolvedValue([]);
         const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-context-"));
