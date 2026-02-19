@@ -88,6 +88,8 @@ inference_research_pitch_final_generating = Refining product pitch with deep res
 inference_research_name_generating = Generating product name
 inference_research_stack_generating = Generating technology stack document
 inference_research_stack_final_generating = Refining technology stack with deep research
+inference_research_agents_md_generating = Generating AGENTS.md
+inference_research_blueprint_generating = Generating project blueprint
 
 # Errors
 

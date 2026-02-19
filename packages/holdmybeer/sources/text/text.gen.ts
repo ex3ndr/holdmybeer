@@ -81,6 +81,8 @@ export const text = {
   inference_research_name_generating: "Generating product name",
   inference_research_stack_generating: "Generating technology stack document",
   inference_research_stack_final_generating: "Refining technology stack with deep research",
+  inference_research_agents_md_generating: "Generating AGENTS.md",
+  inference_research_blueprint_generating: "Generating project blueprint",
   error_gh_required: "❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`",
   error_gh_user_resolve: "❌  Unable to resolve authenticated GitHub user from gh",
   error_repo_status_check: "❌  Unable to check repository status for {repo}: {detail}",
@@ -263,6 +265,8 @@ export type TextValuesByKey = {
   inference_research_name_generating: Record<never, never>;
   inference_research_stack_generating: Record<never, never>;
   inference_research_stack_final_generating: Record<never, never>;
+  inference_research_agents_md_generating: Record<never, never>;
+  inference_research_blueprint_generating: Record<never, never>;
   error_gh_required: Record<never, never>;
   error_gh_user_resolve: Record<never, never>;
   error_repo_status_check: {

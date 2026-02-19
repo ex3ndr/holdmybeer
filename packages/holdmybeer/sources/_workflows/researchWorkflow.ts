@@ -87,7 +87,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
 
     let pitchGenerated = false;
     if (!(await ctx.existFile("doc/product-pitch.md"))) {
-        const pitchResult = await generateDocument(
+        await generateDocument(
             ctx,
             {
                 promptId: "PROMPT_PRODUCT_PITCH",
@@ -117,12 +117,15 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
         );
         pitchGenerated = true;
 
-        // Extract and display deep research query from verified frontmatter
-        const { deepResearchQuery } = matter(pitchResult.text).data as z.infer<typeof deepResearchQuerySchema>;
+        // Extract and display deep research query from the file on disk (result.text is model output, not file content)
+        const pitchFileContent = await readFile(path.resolve(ctx.projectPath, "doc/product-pitch.md"), "utf-8");
+        const { deepResearchQuery: pitchQuery } = matter(pitchFileContent).data as z.infer<
+            typeof deepResearchQuerySchema
+        >;
         beerLogLine("");
         beerLogLine("🔍  Deep research query (use to validate and enrich this pitch):");
         beerLogLine("─".repeat(60));
-        for (const line of deepResearchQuery.split("\n")) {
+        for (const line of pitchQuery.split("\n")) {
             beerLogLine(`  ${line}`);
         }
         beerLogLine("─".repeat(60));
@@ -185,7 +188,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
 
     let nameGenerated = false;
     if (!ctx.settings.productName) {
-        const nameResult = await generateDocument(
+        await generateDocument(
             ctx,
             {
                 promptId: "PROMPT_PRODUCT_NAME",
@@ -215,8 +218,9 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
         );
         nameGenerated = true;
 
-        // Extract name from verified frontmatter and save to settings
-        const { productName } = matter(nameResult.text).data as z.infer<typeof nameFrontmatterSchema>;
+        // Extract name from the file on disk (result.text is model output, not file content)
+        const nameFileContent = await readFile(path.resolve(ctx.projectPath, "doc/product-name.md"), "utf-8");
+        const { productName } = matter(nameFileContent).data as z.infer<typeof nameFrontmatterSchema>;
         await ctx.applyConfig((settings) => {
             settings.productName = productName;
         });
@@ -229,7 +233,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
 
     let stackGenerated = false;
     if (!(await ctx.existFile("doc/technology-stack.md"))) {
-        const stackResult = await generateDocument(
+        await generateDocument(
             ctx,
             {
                 promptId: "PROMPT_TECHNOLOGY_STACK",
@@ -260,12 +264,15 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
         );
         stackGenerated = true;
 
-        // Extract and display deep research query from verified frontmatter
-        const { deepResearchQuery } = matter(stackResult.text).data as z.infer<typeof deepResearchQuerySchema>;
+        // Extract and display deep research query from the file on disk (result.text is model output, not file content)
+        const stackFileContent = await readFile(path.resolve(ctx.projectPath, "doc/technology-stack.md"), "utf-8");
+        const { deepResearchQuery: stackQuery } = matter(stackFileContent).data as z.infer<
+            typeof deepResearchQuerySchema
+        >;
         beerLogLine("");
         beerLogLine("🔍  Deep research query (use to validate and enrich this stack):");
         beerLogLine("─".repeat(60));
-        for (const line of deepResearchQuery.split("\n")) {
+        for (const line of stackQuery.split("\n")) {
             beerLogLine(`  ${line}`);
         }
         beerLogLine("─".repeat(60));
@@ -310,10 +317,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
             const skipDeepResearch = await promptConfirm(text.prompt_deep_research_stack_skip!, true);
             if (skipDeepResearch) {
                 // Copy draft stack as final, stripping frontmatter
-                const draftContent = await readFile(
-                    path.resolve(ctx.projectPath, "doc/technology-stack.md"),
-                    "utf-8"
-                );
+                const draftContent = await readFile(path.resolve(ctx.projectPath, "doc/technology-stack.md"), "utf-8");
                 const { content } = matter(draftContent);
                 await ctx.writeFile("doc/technology-stack-final.md", content.trimStart());
                 stackFinalGenerated = true;
@@ -327,6 +331,63 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
     }
 
     //
+    // Generate AGENTS.md and project blueprint in parallel
+    // (both depend on all research + final pitch + final stack, but not on each other)
+    //
+
+    const finalDocTemplateValues = {
+        researchPath: path.resolve(ctx.projectPath, "doc/research.md"),
+        unresolvedProblemsPath: path.resolve(ctx.projectPath, "doc/research-problems.md"),
+        decisionsPath: path.resolve(ctx.projectPath, "doc/decisions.md"),
+        productPitchPath: path.resolve(ctx.projectPath, "doc/product-pitch-final.md"),
+        technologyStackPath: path.resolve(ctx.projectPath, "doc/technology-stack-final.md")
+    };
+
+    let agentsMdGenerated = false;
+    let blueprintGenerated = false;
+    const finalDocPromises: Promise<void>[] = [];
+
+    if (!(await ctx.existFile("AGENTS.md"))) {
+        finalDocPromises.push(
+            generateDocument(
+                ctx,
+                {
+                    promptId: "PROMPT_AGENTS_MD",
+                    outputPath: "AGENTS.md",
+                    modelSelectionMode: "opus",
+                    extraTemplateValues: finalDocTemplateValues
+                },
+                {
+                    progressMessage: text.inference_research_agents_md_generating!
+                }
+            ).then(() => {
+                agentsMdGenerated = true;
+            })
+        );
+    }
+
+    if (!(await ctx.existFile("doc/project-blueprint.md"))) {
+        finalDocPromises.push(
+            generateDocument(
+                ctx,
+                {
+                    promptId: "PROMPT_PROJECT_BLUEPRINT",
+                    outputPath: "doc/project-blueprint.md",
+                    modelSelectionMode: "opus",
+                    extraTemplateValues: finalDocTemplateValues
+                },
+                {
+                    progressMessage: text.inference_research_blueprint_generating!
+                }
+            ).then(() => {
+                blueprintGenerated = true;
+            })
+        );
+    }
+
+    await Promise.all(finalDocPromises);
+
+    //
     // Checkpoint
     //
 
@@ -337,12 +398,10 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
         pitchFinalGenerated ||
         nameGenerated ||
         stackGenerated ||
-        stackFinalGenerated
+        stackFinalGenerated ||
+        agentsMdGenerated ||
+        blueprintGenerated
     ) {
         await ctx.checkpoint(`chore: research`);
     }
-
-    //
-    // Write AGENTS.md
-    //
 }
