@@ -9,4 +9,12 @@ export type {
     ProviderModelSelectionMode
 } from "@/modules/providers/providerTypes.js";
 export type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
+export type {
+    TreeChildEntry,
+    TreeNode,
+    TreeNodeDisk,
+    TreeNodeStatus,
+    TreeSearchConfig,
+    TreeSearchResult
+} from "@/modules/tree/treeSearchTypes.js";
 export type { PathLockResult } from "@/modules/util/pathLock.js";

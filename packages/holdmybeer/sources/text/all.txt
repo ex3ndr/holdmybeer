@@ -91,6 +91,19 @@ inference_research_stack_final_generating = Refining technology stack with deep 
 inference_research_agents_md_generating = Generating AGENTS.md
 inference_research_blueprint_generating = Generating project blueprint
 
+# Tree Search
+
+tree_search_root_expanding = Generating root children...
+tree_search_root_walk = Walking root level: {title} ({current}/{total})
+tree_search_picking_leaf = Picking next leaf to research...
+tree_search_expanding_node = Researching: {title} (depth {depth})
+tree_search_document_generating = Generating node document: {title}
+tree_search_children_generating = Generating node children: {title}
+tree_search_node_skipped = Skipped (cached): {title}
+tree_search_depth_limit = Depth limit reached: {title}
+tree_search_picker_unresolved = Picker could not select a valid leaf; stopping.
+tree_search_complete = Tree search complete: {expanded} expanded, {leaves} leaves, {skipped} skipped
+
 # Errors
 
 error_gh_required = ❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`
@@ -115,11 +128,13 @@ error_release_version_missing = ❌  Could not read current version from package
 error_release_tag_exists = ❌  Release tag already exists. Delete the existing tag or choose a different version.
 error_ralph_loop_goal_required = ❌  Build goal is required for ralph-loop.
 error_inference_progress_message_required = ❌  Inference progress message is required.
+error_plan_sources_required = ❌  Plan workflow requires source docs (expected one of: doc/project-blueprint.md, doc/product-pitch-final.md, doc/product-pitch.md, README.md).
 
 # Workflows
 
 workflow_bootstrap_title = Initialize .beer settings, source/publish repos, README, and first push
 workflow_ralph_loop_title = Ask what to build, generate a plan, execute, and run 3 review rounds
 workflow_research_title = Run repository research and unresolved-questions docs with opus/codex in parallel
+workflow_plan_title = Build a persisted implementation task tree from blueprint and product docs
 workflow_checkpoint_title = Commit and push current changes to origin/main with an optional message
 workflow_bootstrap_required = Available after bootstrap completes

@@ -83,6 +83,16 @@ export const text = {
   inference_research_stack_final_generating: "Refining technology stack with deep research",
   inference_research_agents_md_generating: "Generating AGENTS.md",
   inference_research_blueprint_generating: "Generating project blueprint",
+  tree_search_root_expanding: "Generating root children...",
+  tree_search_root_walk: "Walking root level: {title} ({current}/{total})",
+  tree_search_picking_leaf: "Picking next leaf to research...",
+  tree_search_expanding_node: "Researching: {title} (depth {depth})",
+  tree_search_document_generating: "Generating node document: {title}",
+  tree_search_children_generating: "Generating node children: {title}",
+  tree_search_node_skipped: "Skipped (cached): {title}",
+  tree_search_depth_limit: "Depth limit reached: {title}",
+  tree_search_picker_unresolved: "Picker could not select a valid leaf; stopping.",
+  tree_search_complete: "Tree search complete: {expanded} expanded, {leaves} leaves, {skipped} skipped",
   error_gh_required: "❌  GitHub CLI (gh) is required — install it and authenticate with `gh auth login`",
   error_gh_user_resolve: "❌  Unable to resolve authenticated GitHub user from gh",
   error_repo_status_check: "❌  Unable to check repository status for {repo}: {detail}",
@@ -105,9 +115,11 @@ export const text = {
   error_release_tag_exists: "❌  Release tag already exists. Delete the existing tag or choose a different version.",
   error_ralph_loop_goal_required: "❌  Build goal is required for ralph-loop.",
   error_inference_progress_message_required: "❌  Inference progress message is required.",
+  error_plan_sources_required: "❌  Plan workflow requires source docs (expected one of: doc/project-blueprint.md, doc/product-pitch-final.md, doc/product-pitch.md, README.md).",
   workflow_bootstrap_title: "Initialize .beer settings, source/publish repos, README, and first push",
   workflow_ralph_loop_title: "Ask what to build, generate a plan, execute, and run 3 review rounds",
   workflow_research_title: "Run repository research and unresolved-questions docs with opus/codex in parallel",
+  workflow_plan_title: "Build a persisted implementation task tree from blueprint and product docs",
   workflow_checkpoint_title: "Commit and push current changes to origin/main with an optional message",
   workflow_bootstrap_required: "Available after bootstrap completes",
 } as const;
@@ -267,6 +279,35 @@ export type TextValuesByKey = {
   inference_research_stack_final_generating: Record<never, never>;
   inference_research_agents_md_generating: Record<never, never>;
   inference_research_blueprint_generating: Record<never, never>;
+  tree_search_root_expanding: Record<never, never>;
+  tree_search_root_walk: {
+    title: string | number;
+    current: string | number;
+    total: string | number;
+  };
+  tree_search_picking_leaf: Record<never, never>;
+  tree_search_expanding_node: {
+    title: string | number;
+    depth: string | number;
+  };
+  tree_search_document_generating: {
+    title: string | number;
+  };
+  tree_search_children_generating: {
+    title: string | number;
+  };
+  tree_search_node_skipped: {
+    title: string | number;
+  };
+  tree_search_depth_limit: {
+    title: string | number;
+  };
+  tree_search_picker_unresolved: Record<never, never>;
+  tree_search_complete: {
+    expanded: string | number;
+    leaves: string | number;
+    skipped: string | number;
+  };
   error_gh_required: Record<never, never>;
   error_gh_user_resolve: Record<never, never>;
   error_repo_status_check: {
@@ -304,9 +345,11 @@ export type TextValuesByKey = {
   error_release_tag_exists: Record<never, never>;
   error_ralph_loop_goal_required: Record<never, never>;
   error_inference_progress_message_required: Record<never, never>;
+  error_plan_sources_required: Record<never, never>;
   workflow_bootstrap_title: Record<never, never>;
   workflow_ralph_loop_title: Record<never, never>;
   workflow_research_title: Record<never, never>;
+  workflow_plan_title: Record<never, never>;
   workflow_checkpoint_title: Record<never, never>;
   workflow_bootstrap_required: Record<never, never>;
 };
