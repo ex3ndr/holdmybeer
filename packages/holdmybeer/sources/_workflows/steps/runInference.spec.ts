@@ -33,7 +33,7 @@ describe("runInference", () => {
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
-      permissions.onEvent?.("provider=pi event=content_block_delta delta=text_delta");
+      permissions.onEvent?.("provider=pi event=text_delta");
       return { provider: "pi", text: "done" };
     });
 
@@ -71,8 +71,8 @@ describe("runInference", () => {
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
-      permissions.onEvent?.("provider=pi event=turn_start");
-      permissions.onEvent?.("provider=pi event=message_start role=assistant");
+      permissions.onEvent?.("provider=pi event=start");
+      permissions.onEvent?.("provider=pi event=done");
       return { provider: "pi", text: "done" };
     });
 
@@ -84,13 +84,13 @@ describe("runInference", () => {
     expect(progress.update).not.toHaveBeenCalled();
   });
 
-  it("shows 'thinking' for thinking delta events", async () => {
+  it("shows 'thinking' for PI thinking events", async () => {
     const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
     const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
-      permissions.onEvent?.("provider=pi event=content_block_delta delta=thinking_delta");
+      permissions.onEvent?.("provider=pi event=thinking_delta");
       return { provider: "pi", text: "done" };
     });
 
@@ -104,13 +104,13 @@ describe("runInference", () => {
     );
   });
 
-  it("shows 'writing' for text delta events", async () => {
+  it("shows 'writing' for PI text events", async () => {
     const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
     const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
-      permissions.onEvent?.("provider=pi event=content_block_delta delta=text_delta");
+      permissions.onEvent?.("provider=pi event=text_delta");
       return { provider: "pi", text: "done" };
     });
 
@@ -124,13 +124,13 @@ describe("runInference", () => {
     );
   });
 
-  it("shows 'using tools' for tool use events", async () => {
+  it("shows 'using tools' for PI toolcall events", async () => {
     const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
     const progress = { update: vi.fn(), done: vi.fn(), fail: vi.fn() };
     contextGetMock.mockReturnValue(context);
     stepProgressStartMock.mockReturnValue(progress);
     generateMock.mockImplementation(async (_ctx, _prompt, permissions) => {
-      permissions.onEvent?.("provider=pi event=content_block_start content=tool_use");
+      permissions.onEvent?.("provider=pi event=toolcall_start");
       return { provider: "pi", text: "done" };
     });
 

@@ -89,24 +89,47 @@ function runInferenceEventHumanize(event: string): string {
     return runInferenceStreamEventHumanize(eventName, normalized);
   }
 
+  // Status events without event= token (e.g. "provider=pi started")
+  if (normalized.endsWith(" started")) {
+    return "starting";
+  }
+
   return "";
 }
 
-/** Maps SSE stream event types to short user-facing labels. */
+/** Maps stream event types to short user-facing labels. Handles PI native format
+ * (text_delta, thinking_delta, toolcall_start) and raw Anthropic format as fallback. */
 function runInferenceStreamEventHumanize(eventName: string, rawEvent: string): string {
-  const contentType = runInferenceEventTokenResolve(rawEvent, "content");
-  const deltaType = runInferenceEventTokenResolve(rawEvent, "delta");
-
   switch (eventName) {
-    case "content_block_start":
+    // PI native events (@mariozechner/pi-ai AssistantMessageEvent)
+    case "text_start":
+    case "text_delta":
+    case "text_end":
+      return "writing";
+    case "thinking_start":
+    case "thinking_delta":
+    case "thinking_end":
+      return "thinking";
+    case "toolcall_start":
+    case "toolcall_delta":
+    case "toolcall_end":
+      return "using tools";
+
+    // Anthropic raw SSE fallback
+    case "content_block_start": {
+      const contentType = runInferenceEventTokenResolve(rawEvent, "content");
       if (contentType === "tool_use") return "using tools";
       if (contentType === "text") return "writing";
       return "";
-    case "content_block_delta":
+    }
+    case "content_block_delta": {
+      const deltaType = runInferenceEventTokenResolve(rawEvent, "delta");
       if (deltaType === "thinking_delta") return "thinking";
       if (deltaType === "text_delta") return "writing";
       if (deltaType === "input_json_delta") return "using tools";
       return "";
+    }
+
     default:
       return "";
   }
