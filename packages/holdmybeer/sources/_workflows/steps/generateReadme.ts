@@ -45,8 +45,7 @@ export async function generateReadme(
     const runGenerate = () =>
         generateFile(ctx, prompt, readmePath, {
             showProgress: false,
-            modelSelectionMode: "sonnet",
-            verify: ({ filePath, fileContent }) => generateReadmeVerify(readmePath, filePath, fileContent)
+            modelSelectionMode: "sonnet"
         });
     const result = options.showProgress
         ? await ctx.progress(text.bootstrap_readme_generating!, async () => runGenerate())
@@ -58,14 +57,4 @@ export async function generateReadme(
         text: result.text,
         readmePath
     };
-}
-
-function generateReadmeVerify(expectedReadmePath: string, filePath: string, fileContent: string): void {
-    if (path.resolve(filePath) !== expectedReadmePath) {
-        throw new Error(`README must be generated in project root: ${expectedReadmePath}`);
-    }
-
-    if (!fileContent.trim()) {
-        throw new Error("README generation produced an empty file.");
-    }
 }

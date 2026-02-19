@@ -22,7 +22,7 @@ describe("generateReadme", () => {
         generateFileMock.mockReset();
     });
 
-    it("generates README.md in project root with verify callback", async () => {
+    it("generates README.md in project root with file expected output mode", async () => {
         const context = { projectPath: "/tmp/project" } as Context;
         generateFileMock.mockResolvedValue({ provider: "pi", sessionId: "session-1", text: "ok" });
 
@@ -37,25 +37,10 @@ describe("generateReadme", () => {
         expect(permissions).toEqual(
             expect.objectContaining({
                 showProgress: false,
-                modelSelectionMode: "sonnet",
-                verify: expect.any(Function)
+                modelSelectionMode: "sonnet"
             })
         );
-
-        const verify = permissions.verify as (output: {
-            text: string;
-            filePath: string;
-            fileContent: string;
-        }) => void | Promise<void>;
-        await expect(
-            Promise.resolve(
-                verify({
-                    text: "ok",
-                    filePath: path.resolve("/tmp/project", "README.md"),
-                    fileContent: "# Title\n"
-                })
-            )
-        ).resolves.toBeUndefined();
+        expect(permissions).not.toHaveProperty("verify");
 
         expect(result).toEqual({
             provider: "pi",
