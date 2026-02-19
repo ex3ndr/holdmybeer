@@ -3,6 +3,7 @@ import path from "node:path";
 import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
+import { gitRepoEnsure } from "@/modules/git/gitRepoEnsure.js";
 import { gitRepoCheckout } from "@/modules/git/gitRepoCheckout.js";
 import { gitRemoteEnsure } from "@/modules/git/gitRemoteEnsure.js";
 import { githubOwnerChoicesGet } from "@/modules/github/githubOwnerChoicesGet.js";
@@ -142,6 +143,11 @@ export async function bootstrap(ctx: Context): Promise<void> {
 
   settings.updatedAt = Date.now();
   await beerSettingsWrite(settingsPath, settings);
+
+  await bootstrapProgressRun(
+    text["bootstrap_git_repo_ensuring"]!,
+    () => gitRepoEnsure(ctx.projectPath)
+  );
 
   const publishRemoteUrl = githubRepoUrlBuild(publishRepo.fullName);
   await bootstrapProgressRun(

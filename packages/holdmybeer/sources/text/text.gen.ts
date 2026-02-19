@@ -22,6 +22,7 @@ export const text = {
   bootstrap_readme_generated: "📝  Generated README.md with {provider}",
   bootstrap_commit_generating: "🧠  Generating initial commit message",
   bootstrap_commit_ready: "💬  Generated commit message: {message}",
+  bootstrap_git_repo_ensuring: "🧱  Ensuring git repository is initialized",
   bootstrap_remote_ensuring: "🔗  Ensuring git remote origin: {url}",
   bootstrap_commit_creating: "🧾  Creating initial commit",
   bootstrap_no_changes: "✅  No changes to commit",
@@ -145,6 +146,7 @@ export type TextValuesByKey = {
   bootstrap_commit_ready: {
     message: string | number;
   };
+  bootstrap_git_repo_ensuring: Record<never, never>;
   bootstrap_remote_ensuring: {
     url: string | number;
   };
