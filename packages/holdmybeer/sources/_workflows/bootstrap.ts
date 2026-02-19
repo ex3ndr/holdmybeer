@@ -135,8 +135,7 @@ export async function bootstrap(ctx: Context): Promise<void> {
   }, {
     showProgress: showInferenceProgress
   });
-  await writeFile(path.join(ctx.projectPath, "README.md"), `${readme.text.trim()}\n`, "utf-8");
-  await gitignoreEnsure(ctx.projectPath);
+  await bootstrapReadmeMaterialize(ctx.projectPath, readme.text);
 
   const commitMessageGenerated = await generateCommit(
     source.fullName,
@@ -178,4 +177,10 @@ async function bootstrapProgressRun<T>(
     progress.fail();
     throw error;
   }
+}
+
+async function bootstrapReadmeMaterialize(projectPath: string, readmeText: string): Promise<void> {
+  await writeFile(path.join(projectPath, "README.md"), `${readmeText.trim()}\n`, "utf-8");
+  // Keep README and .gitignore in the same bootstrap phase before the first commit.
+  await gitignoreEnsure(projectPath);
 }

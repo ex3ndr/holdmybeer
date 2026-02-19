@@ -36,6 +36,6 @@ flowchart TD
 - Source input accepts URL, SSH remote, or `owner/repo` shorthand.
 - Publish repo defaults to `<source>-holdmybeer` and auto-suffixes on non-empty collisions.
 - Source is checked out to `<projectPath>/.beer/local/original` before inference.
-- Bootstrap creates/updates root `.gitignore` before the first push.
+- Bootstrap creates/updates root `.gitignore` in the README phase before the first commit.
 - README and commit generation resolve workflow model priorities against live `pi` model availability.
 - Inference failures fail the operation.

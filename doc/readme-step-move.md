@@ -12,6 +12,8 @@ flowchart TD
   D --> E[runInference sonnet read-only]
   E --> F[event-driven loader state updates]
   F --> G[write README.md]
+  G --> H[ensure .gitignore includes .beer/local/]
+  H --> I[first commit stage can include both files]
 ```
 
 ## Notes
@@ -19,3 +21,4 @@ flowchart TD
 - Added `sources/_workflows/steps/generateReadme.ts`.
 - Removed `sources/modules/ai/aiReadmeGenerate.ts`.
 - Bootstrap now calls `generateReadme` directly.
+- README materialization ensures `.gitignore` before the first commit.
