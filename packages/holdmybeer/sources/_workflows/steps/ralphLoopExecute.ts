@@ -28,7 +28,7 @@ export async function ralphLoopExecute(
     buildGoal: string,
     planPath: string,
     options: RalphLoopExecuteOptions = {}
-): Promise<{ provider?: string; text: string }> {
+): Promise<{ provider?: string; sessionId?: string; text: string }> {
     const projectPath = ctx.projectPath;
     const planContent = await readFile(path.resolve(projectPath, planPath), "utf-8");
     const result = await generate(
@@ -50,6 +50,7 @@ export async function ralphLoopExecute(
     );
     return {
         provider: result.provider,
+        sessionId: result.sessionId,
         text: result.text.trim()
     };
 }

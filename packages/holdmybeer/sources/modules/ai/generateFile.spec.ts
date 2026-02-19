@@ -23,14 +23,16 @@ describe("generateFile", () => {
             const outputPath = path.join(tempDir, "README.md");
             const context = { projectPath: tempDir } as Context;
 
-            generateMock.mockResolvedValueOnce({ provider: "pi", text: "first" }).mockImplementationOnce(async () => {
-                await writeFile(outputPath, "# ok\n", "utf-8");
-                return { provider: "pi", text: "second" };
-            });
+            generateMock
+                .mockResolvedValueOnce({ provider: "pi", sessionId: "session-a", text: "first" })
+                .mockImplementationOnce(async () => {
+                    await writeFile(outputPath, "# ok\n", "utf-8");
+                    return { provider: "pi", sessionId: "session-b", text: "second" };
+                });
 
             const result = await generateFile(context, "Create readme", outputPath);
 
-            expect(result).toEqual({ provider: "pi", text: "second" });
+            expect(result).toEqual({ provider: "pi", sessionId: "session-b", text: "second" });
             expect(generateMock).toHaveBeenCalledTimes(2);
             expect(generateMock.mock.calls[0]?.[2]).toEqual({
                 expectedOutput: {
@@ -60,7 +62,7 @@ describe("generateFile", () => {
             const outputPath = path.join(tempDir, "README.md");
             const context = { projectPath: tempDir } as Context;
 
-            generateMock.mockResolvedValue({ provider: "pi", text: "done" });
+            generateMock.mockResolvedValue({ provider: "pi", sessionId: "session-c", text: "done" });
 
             await expect(generateFile(context, "Create readme", outputPath, { retries: 1 })).rejects.toThrow(
                 `Inference did not create expected file: ${outputPath}`

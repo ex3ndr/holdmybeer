@@ -30,7 +30,7 @@ export async function ralphLoopPlanGenerate(
     ctx: Context,
     buildGoal: string,
     options: RalphLoopPlanGenerateOptions = {}
-): Promise<{ planPath: string; provider?: string; text: string }> {
+): Promise<{ planPath: string; provider?: string; sessionId?: string; text: string }> {
     const goal = buildGoal.trim();
     if (!goal) {
         throw new Error("Build goal is required.");
@@ -60,6 +60,7 @@ export async function ralphLoopPlanGenerate(
     return {
         planPath,
         provider: result.provider,
+        sessionId: result.sessionId,
         text: planText
     };
 }

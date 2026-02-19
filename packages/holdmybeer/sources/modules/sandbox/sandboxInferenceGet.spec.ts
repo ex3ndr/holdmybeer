@@ -81,4 +81,19 @@ describe("sandboxInferenceGet", () => {
             undefined
         );
     });
+
+    it("forwards project path to filesystem policy", async () => {
+        wrapWithSandboxMock.mockResolvedValue("wrapped-command");
+        const { sandboxInferenceGet } = await import("./sandboxInferenceGet.js");
+
+        const sandbox = await sandboxInferenceGet({
+            projectPath: "/workspace/project-a"
+        });
+        await sandbox.wrapCommand("echo hi");
+
+        expect(sandboxInferenceFilesystemPolicyMock).toHaveBeenCalledWith({
+            writePolicy: undefined,
+            projectPath: "/workspace/project-a"
+        });
+    });
 });

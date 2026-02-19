@@ -5,6 +5,7 @@ import type { CommandSandbox } from "@/modules/sandbox/sandboxTypes.js";
 
 export interface SandboxInferenceGetInput {
     writePolicy?: InferenceWritePolicy;
+    projectPath?: string;
     enableWeakerNetworkIsolation?: boolean;
 }
 
@@ -13,9 +14,16 @@ export interface SandboxInferenceGetInput {
  * Network is unrestricted (no network config), writes follow writePolicy.
  */
 export async function sandboxInferenceGet(input: SandboxInferenceGetInput = {}): Promise<CommandSandbox> {
-    const filesystem = sandboxInferenceFilesystemPolicy({
-        writePolicy: input.writePolicy
-    });
+    const filesystem = sandboxInferenceFilesystemPolicy(
+        input.projectPath
+            ? {
+                  writePolicy: input.writePolicy,
+                  projectPath: input.projectPath
+              }
+            : {
+                  writePolicy: input.writePolicy
+              }
+    );
     const options =
         typeof input.enableWeakerNetworkIsolation === "boolean"
             ? { filesystem, enableWeakerNetworkIsolation: input.enableWeakerNetworkIsolation }

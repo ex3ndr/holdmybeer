@@ -19,7 +19,11 @@ describe("sandboxInferenceFilesystemPolicy", () => {
             homeDir: "/home/alice"
         });
 
-        expect(result.allowWrite).toEqual([path.resolve("/home/alice/.pi")]);
+        expect(result.allowWrite).toEqual([
+            path.resolve("/home/alice/.pi"),
+            path.resolve("/workspace/project/.pi"),
+            path.resolve("/workspace/project/.beer/local/sessions")
+        ]);
     });
 
     it("dedupes and resolves whitelisted write paths with auth dirs", () => {
@@ -35,7 +39,28 @@ describe("sandboxInferenceFilesystemPolicy", () => {
         expect(result.allowWrite).toEqual([
             path.resolve("/workspace/project/README.md"),
             path.resolve("/workspace/project/doc/inference-sandbox.md"),
-            path.resolve("/home/alice/.pi")
+            path.resolve("/home/alice/.pi"),
+            path.resolve("/workspace/project/.pi"),
+            path.resolve("/workspace/project/.beer/local/sessions")
+        ]);
+    });
+
+    it("resolves writable paths relative to explicit project path when provided", () => {
+        const result = sandboxInferenceFilesystemPolicy({
+            writePolicy: {
+                mode: "write-whitelist",
+                writablePaths: ["README.md"]
+            },
+            projectPath: "/workspace/packages/holdmybeer",
+            platform: "linux",
+            homeDir: "/home/alice"
+        });
+
+        expect(result.allowWrite).toEqual([
+            path.resolve("/workspace/packages/holdmybeer/README.md"),
+            path.resolve("/home/alice/.pi"),
+            path.resolve("/workspace/packages/holdmybeer/.pi"),
+            path.resolve("/workspace/packages/holdmybeer/.beer/local/sessions")
         ]);
     });
 

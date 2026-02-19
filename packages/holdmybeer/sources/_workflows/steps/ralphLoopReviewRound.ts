@@ -28,7 +28,7 @@ export async function ralphLoopReviewRound(
     round: number,
     planPath: string,
     options: RalphLoopReviewRoundOptions = {}
-): Promise<{ provider?: string; text: string }> {
+): Promise<{ provider?: string; sessionId?: string; text: string }> {
     if (round < 1 || round > 3) {
         throw new Error(`Invalid review round: ${round}`);
     }
@@ -55,6 +55,7 @@ export async function ralphLoopReviewRound(
 
     return {
         provider: result.provider,
+        sessionId: result.sessionId,
         text: result.text.trim()
     };
 }

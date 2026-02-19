@@ -19,7 +19,6 @@ import type { Context } from "@/types";
  * Runs the interactive bootstrap workflow for holdmybeer.
  */
 export async function bootstrap(ctx: Context): Promise<void> {
-
     //
     // Ask for source repository
     //
@@ -97,7 +96,7 @@ export async function bootstrap(ctx: Context): Promise<void> {
     // Generate README
     //
 
-    if (!await ctx.existFile("README.md")) {
+    if (!(await ctx.existFile("README.md"))) {
         const readme = await generateReadme(
             ctx,
             {
@@ -116,15 +115,16 @@ export async function bootstrap(ctx: Context): Promise<void> {
     // Ensure .gitignore includes .beer/local/
     //
 
-    await ctx.gitignore([
-        ".beer/local/"
-    ]);
+    await ctx.gitignore([".beer/local/"]);
 
     //
     // Generate commit message
     //
 
-    const commitMessageGenerated = await generateCommit(ctx, { hint: `bootstrap project for source repository ${source.fullName}`, showProgress: true });
+    const commitMessageGenerated = await generateCommit(ctx, {
+        hint: `bootstrap project for source repository ${source.fullName}`,
+        showProgress: true
+    });
 
     //
     // Init git repository

@@ -36,13 +36,9 @@ describe("generate event parsing", () => {
         sandboxInferenceGetMock.mockResolvedValue({ wrapCommand: async (command: string) => command });
     });
 
-    it("unwraps message_update envelope for text_delta", async () => {
-        const event = JSON.stringify({
-            type: "message_update",
-            assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: "Hello" }
-        });
+    it("forwards provider session_started event", async () => {
         providerGenerateMock.mockImplementation(async (input) => {
-            input.onStdoutText?.(`${event}\n`);
+            input.onEvent?.({ type: "session_started", sessionId: "session-1" });
             return { output: "ok" };
         });
 
@@ -51,65 +47,71 @@ describe("generate event parsing", () => {
 
         await generate(context, "hello", { onEvent });
 
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=session_started session=session-1");
+    });
+
+    it("forwards provider thinking start/delta/stop events", async () => {
+        providerGenerateMock.mockImplementation(async (input) => {
+            input.onEvent?.({ type: "thinking_start" });
+            input.onEvent?.({ type: "thinking_delta", delta: "analysis" });
+            input.onEvent?.({ type: "thinking_stop" });
+            return { output: "ok" };
+        });
+
+        const onEvent = vi.fn();
+        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+        await generate(context, "hello", { onEvent });
+
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=thinking_start");
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=thinking_delta");
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=thinking_stop");
+    });
+
+    it("forwards provider tool call start/stop events", async () => {
+        providerGenerateMock.mockImplementation(async (input) => {
+            input.onEvent?.({ type: "tool_call_start", toolName: "read" });
+            input.onEvent?.({ type: "tool_call_stop", toolName: "read" });
+            return { output: "ok" };
+        });
+
+        const onEvent = vi.fn();
+        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+        await generate(context, "hello", { onEvent });
+
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=tool_call_start tool=read");
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=tool_call_stop tool=read");
+    });
+
+    it("forwards provider text start/delta/stop events", async () => {
+        providerGenerateMock.mockImplementation(async (input) => {
+            input.onEvent?.({ type: "text_start" });
+            input.onEvent?.({ type: "text_delta", delta: "hello" });
+            input.onEvent?.({ type: "text_stop" });
+            return { output: "ok" };
+        });
+
+        const onEvent = vi.fn();
+        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+
+        await generate(context, "hello", { onEvent });
+
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_start");
         expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_delta");
+        expect(onEvent).toHaveBeenCalledWith("provider=pi event=text_stop");
     });
 
-    it("unwraps message_update envelope for toolcall_start with tool name", async () => {
-        const event = JSON.stringify({
-            type: "message_update",
-            assistantMessageEvent: {
-                type: "toolcall_start",
-                contentIndex: 0,
-                partial: {
-                    role: "assistant",
-                    content: [{ type: "toolCall", name: "Read", id: "t1", arguments: {} }]
-                }
-            }
-        });
-        providerGenerateMock.mockImplementation(async (input) => {
-            input.onStdoutText?.(`${event}\n`);
-            return { output: "ok" };
-        });
+    it("returns sessionId from providerGenerate result", async () => {
+        providerGenerateMock.mockResolvedValue({ output: "ok", sessionId: "session-1" });
 
-        const onEvent = vi.fn();
         const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+        const result = await generate(context, "hello");
 
-        await generate(context, "hello", { onEvent });
-
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=toolcall_start tool=Read");
-    });
-
-    it("parses tool_execution_start with tool name", async () => {
-        const event = JSON.stringify({
-            type: "tool_execution_start",
-            toolCallId: "toolu_123",
-            toolName: "read"
+        expect(result).toEqual({
+            provider: "pi",
+            sessionId: "session-1",
+            text: "ok"
         });
-        providerGenerateMock.mockImplementation(async (input) => {
-            input.onStdoutText?.(`${event}\n`);
-            return { output: "ok" };
-        });
-
-        const onEvent = vi.fn();
-        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
-
-        await generate(context, "hello", { onEvent });
-
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=tool_execution_start tool=read");
-    });
-
-    it("parses direct turn_start event", async () => {
-        const event = JSON.stringify({ type: "turn_start" });
-        providerGenerateMock.mockImplementation(async (input) => {
-            input.onStdoutText?.(`${event}\n`);
-            return { output: "ok" };
-        });
-
-        const onEvent = vi.fn();
-        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
-
-        await generate(context, "hello", { onEvent });
-
-        expect(onEvent).toHaveBeenCalledWith("provider=pi event=turn_start");
     });
 });

@@ -45,6 +45,7 @@ const LINUX_SYSTEM_DENY_PATHS = ["/root/.ssh"];
 
 export interface SandboxInferenceFilesystemPolicyInput {
     writePolicy?: InferenceWritePolicy;
+    projectPath?: string;
     homeDir?: string;
     platform?: NodeJS.Platform;
 }
@@ -79,24 +80,43 @@ export function sandboxInferenceFilesystemPolicy(
 
     return {
         denyRead,
-        allowWrite: allowWriteResolve(input.writePolicy, homeDir),
+        allowWrite: allowWriteResolve(input.writePolicy, homeDir, projectPathResolve(input.projectPath)),
         // Keep read/write denials aligned to prevent both access and tampering.
         denyWrite: [...denyRead]
     };
 }
 
-function allowWriteResolve(writePolicy: InferenceWritePolicy | undefined, homeDir: string): string[] {
+function allowWriteResolve(
+    writePolicy: InferenceWritePolicy | undefined,
+    homeDir: string,
+    projectPath: string
+): string[] {
     const authPaths = [path.resolve(homeDir, ".pi")];
+    const localPiPaths = [path.resolve(projectPath, ".pi")];
+    const localSessionPaths = [path.resolve(projectPath, ".beer/local/sessions")];
 
     if (!writePolicy || writePolicy.mode === "read-only") {
-        // Provider CLIs need writable auth/session state in home directory.
-        return dedupeResolvedPaths(authPaths);
+        // Provider CLIs need writable auth state, project-local settings lock, and session runtime directory.
+        return dedupeResolvedPaths([...authPaths, ...localPiPaths, ...localSessionPaths]);
     }
 
     return dedupeResolvedPaths([
-        ...writePolicy.writablePaths.map((entry) => pathResolveFromInitCwd(entry)),
-        ...authPaths
+        ...writePolicy.writablePaths.map((entry) => path.resolve(projectPath, entry)),
+        ...authPaths,
+        ...localPiPaths,
+        ...localSessionPaths
     ]);
+}
+
+function projectPathResolve(projectPath: string | undefined): string {
+    const envProjectPath = process.env.BEER_PROJECT_PATH;
+    if (projectPath && projectPath.trim().length > 0) {
+        return path.resolve(projectPath);
+    }
+    if (envProjectPath && envProjectPath.trim().length > 0) {
+        return path.resolve(envProjectPath);
+    }
+    return pathResolveFromInitCwd(".");
 }
 
 function dedupeResolvedPaths(values: string[]): string[] {

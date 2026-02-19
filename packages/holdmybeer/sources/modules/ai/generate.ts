@@ -4,10 +4,11 @@ import { providerModelSelect } from "@/modules/providers/providerModelSelect.js"
 import { providerPriorityList } from "@/modules/providers/providerPriorityList.js";
 import { sandboxInferenceGet } from "@/modules/sandbox/sandboxInferenceGet.js";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
-import type { Context, ProviderId, ProviderModelSelectionMode } from "@/types";
+import type { Context, ProviderEvent, ProviderId, ProviderModelSelectionMode } from "@/types";
 
 export interface GenerateResult {
     provider?: string;
+    sessionId?: string;
     text: string;
 }
 
@@ -51,90 +52,25 @@ function inferOutputMessage(
 
     for (const line of lines) {
         options.onMessage?.(`[beer][infer] ${providerId}:${stream} ${line}`);
-        options.onEvent?.(
-            stream === "stderr"
-                ? `provider=${providerId} stderr`
-                : `provider=${providerId} ${inferOutputEventResolve(line)}`
-        );
+        if (stream === "stderr") {
+            options.onEvent?.(`provider=${providerId} stderr`);
+        }
     }
 }
 
-/**
- * Parses a PI CLI JSON event line into a compact key=value event string.
- * PI CLI wraps streaming events in a `message_update` envelope with the real
- * AssistantMessageEvent inside `assistantMessageEvent`. Direct events like
- * `tool_execution_start` and `turn_start` appear at the top level.
- */
-function inferOutputEventResolve(line: string): string {
-    try {
-        const parsed = JSON.parse(line) as Record<string, unknown>;
-        const type = inferOutputEventTokenResolve(parsed.type);
-        if (!type) {
-            return "stdout";
-        }
-
-        // Unwrap message_update → assistantMessageEvent
-        if (type === "message_update") {
-            const inner = parsed.assistantMessageEvent;
-            if (!inner || typeof inner !== "object") {
-                return "event=message_update";
-            }
-            const typed = inner as Record<string, unknown>;
-            const innerType = inferOutputEventTokenResolve(typed.type);
-            if (!innerType) {
-                return "event=message_update";
-            }
-            const parts = [`event=${innerType}`];
-            const toolName = inferOutputInnerToolName(typed, innerType);
-            if (toolName) {
-                parts.push(`tool=${toolName}`);
-            }
-            return parts.join(" ");
-        }
-
-        // Direct tool execution events carry toolName at the top level
-        if (type === "tool_execution_start" || type === "tool_execution_end") {
-            const parts = [`event=${type}`];
-            const toolName = inferOutputEventTokenResolve(parsed.toolName);
-            if (toolName) {
-                parts.push(`tool=${toolName}`);
-            }
-            return parts.join(" ");
-        }
-
-        // Other direct events (turn_start, turn_end, message_start, message_end)
-        return `event=${type}`;
-    } catch {
-        // Ignore parse errors and keep compact generic event for loader updates.
+function inferProviderEvent(providerId: ProviderId, event: ProviderEvent, options?: GenerateOptions): void {
+    if (!options?.onEvent) {
+        return;
     }
-    return "stdout";
-}
 
-/** Extracts tool name from an unwrapped AssistantMessageEvent. */
-function inferOutputInnerToolName(inner: Record<string, unknown>, innerType: string): string | undefined {
-    if (innerType === "toolcall_end") {
-        const toolCall = inner.toolCall as { name?: unknown } | undefined;
-        return inferOutputEventTokenResolve(toolCall?.name);
+    const parts = [`provider=${providerId}`, `event=${event.type}`];
+    if (event.type === "session_started") {
+        parts.push(`session=${event.sessionId}`);
     }
-    if (innerType === "toolcall_start" || innerType === "toolcall_delta") {
-        const partial = inner.partial as { content?: unknown[] } | undefined;
-        const content = partial?.content;
-        if (!Array.isArray(content)) {
-            return undefined;
-        }
-        const idx = typeof inner.contentIndex === "number" ? inner.contentIndex : content.length - 1;
-        const entry = content[idx] as { name?: unknown } | undefined;
-        return inferOutputEventTokenResolve(entry?.name);
+    if ((event.type === "tool_call_start" || event.type === "tool_call_stop") && event.toolName) {
+        parts.push(`tool=${event.toolName}`);
     }
-    return undefined;
-}
-
-function inferOutputEventTokenResolve(value: unknown): string | undefined {
-    if (typeof value !== "string") {
-        return undefined;
-    }
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : undefined;
+    options.onEvent(parts.join(" "));
 }
 
 function inferPromptResolve(
@@ -209,6 +145,7 @@ export async function generate(
     };
     const sandbox = await sandboxInferenceGet({
         writePolicy,
+        projectPath: context.projectPath,
         enableWeakerNetworkIsolation: permissions.enableWeakerNetworkIsolation
     });
 
@@ -237,19 +174,25 @@ export async function generate(
             command: provider.command,
             model,
             prompt: promptResolved,
+            projectPath: context.projectPath,
             sandbox,
             writePolicy,
             requireOutputTags: expectedOutput.type === "text",
+            onEvent: (event) => inferProviderEvent(provider.id, event, options),
             onStdoutText: (chunk) => inferOutputMessage(provider.id, "stdout", chunk, options),
             onStderrText: (chunk) => inferOutputMessage(provider.id, "stderr", chunk, options)
         });
 
         if (result.output !== null) {
             inferMessage(`provider=${provider.id} completed`, options);
-            return {
+            const output: GenerateResult = {
                 provider: provider.id,
                 text: result.output
             };
+            if (result.sessionId) {
+                output.sessionId = result.sessionId;
+            }
+            return output;
         }
 
         if (result.failure) {

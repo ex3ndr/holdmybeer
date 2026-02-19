@@ -16,7 +16,7 @@ describe("generateText", () => {
 
     it("forwards to generate with text expected output", async () => {
         const context = { projectPath: "/tmp/test-project", providers: [] } as unknown as Context;
-        generateMock.mockResolvedValue({ provider: "pi", text: "ok" });
+        generateMock.mockResolvedValue({ provider: "pi", sessionId: "session-1", text: "ok" });
 
         const result = await generateText(context, "hello", {
             providerPriority: ["pi"],
@@ -24,7 +24,7 @@ describe("generateText", () => {
             writePolicy: { mode: "read-only" }
         });
 
-        expect(result).toEqual({ provider: "pi", text: "ok" });
+        expect(result).toEqual({ provider: "pi", sessionId: "session-1", text: "ok" });
         expect(generateMock).toHaveBeenCalledWith(context, "hello", {
             providerPriority: ["pi"],
             showProgress: true,

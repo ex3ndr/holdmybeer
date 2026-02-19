@@ -16,7 +16,7 @@ export async function generateFile(
     prompt: string,
     outputFilePath: string,
     permissions: GenerateFilePermissions = {}
-): Promise<{ provider?: string; text: string }> {
+): Promise<{ provider?: string; sessionId?: string; text: string }> {
     const resolvedOutputPath = pathResolveInProject(context.projectPath, outputFilePath);
     const maxRetries = Math.max(0, permissions.retries ?? 1);
     const basePrompt = [

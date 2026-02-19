@@ -20,7 +20,7 @@ const promptTemplate = [
 export async function generateCommit(
     ctx: Context,
     options: GenerateCommitOptions = {}
-): Promise<{ provider?: string; text: string }> {
+): Promise<{ provider?: string; sessionId?: string; text: string }> {
     const hint = options.hint ? `Context: ${options.hint}` : "";
     const result = await generate(
         ctx,
@@ -40,6 +40,7 @@ export async function generateCommit(
 
     return {
         provider: result.provider,
+        sessionId: result.sessionId,
         text: firstLine
     };
 }

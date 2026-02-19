@@ -35,16 +35,18 @@ export async function generateReadme(
         originalCheckoutPath: input.originalCheckoutPath
     });
 
-    return (await generate(
-        ctx,
-        prompt,
-        {},
-        {
-            progressMessage: text.bootstrap_readme_generating!,
-            showProgress: options.showProgress,
-            modelSelectionMode: "sonnet",
-            writePolicy: { mode: "read-only" },
-            expectedOutput: { type: "text" }
-        }
-    )).text.trim() + '\n';
+    return `${(
+        await generate(
+            ctx,
+            prompt,
+            {},
+            {
+                progressMessage: text.bootstrap_readme_generating!,
+                showProgress: options.showProgress,
+                modelSelectionMode: "sonnet",
+                writePolicy: { mode: "read-only" },
+                expectedOutput: { type: "text" }
+            }
+        )
+    ).text.trim()}\n`;
 }
