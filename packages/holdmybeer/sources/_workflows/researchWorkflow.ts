@@ -373,7 +373,7 @@ export async function researchWorkflow(ctx: Context): Promise<void> {
                 {
                     promptId: "PROMPT_PROJECT_BLUEPRINT",
                     outputPath: "doc/project-blueprint.md",
-                    modelSelectionMode: "opus",
+                    modelSelectionMode: "codex-xhigh",
                     extraTemplateValues: finalDocTemplateValues
                 },
                 {
