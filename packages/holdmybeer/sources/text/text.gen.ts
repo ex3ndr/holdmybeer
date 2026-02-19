@@ -12,6 +12,7 @@ export const text = {
   bootstrap_repo_not_found: "❌  Repository not found or inaccessible: {repo}",
   bootstrap_source_selected: "📦  Selected source repo: {repo}",
   bootstrap_publish_owners: "🌐  Publish owner options: {owners}",
+  bootstrap_publish_owners_loading: "🌐  Loading publish owner options",
   bootstrap_repo_collision: "⚠️  {requested} already contains code — using {resolved}",
   bootstrap_publish_selected: "🚀  Selected publish repo: {repo}",
   bootstrap_repo_creating: "🆕  Creating repository: {repo} ({visibility})",
@@ -75,6 +76,8 @@ export const text = {
   error_repo_name_invalid: "❌  Publish repository name is invalid",
   error_repo_name_exhausted: "❌  Unable to resolve an available publish repository name after 100 attempts",
   error_bootstrap_cancelled: "🚫  Bootstrap cancelled — publish repository is required",
+  error_bootstrap_source_required: "❌  Bootstrap requires a source repository.",
+  error_bootstrap_publish_required: "❌  Bootstrap requires a publish repository.",
   error_source_dir_invalid: "❌  Source directory does not exist or is not a directory: {dir}",
   error_release_git_dirty: "❌  Release requires a clean git working tree. Commit pending changes first.",
   error_release_mode_invalid: "❌  Invalid release mode: {mode}. Use patch, minor, major, or custom.",
@@ -118,6 +121,7 @@ export type TextValuesByKey = {
   bootstrap_publish_owners: {
     owners: string | number;
   };
+  bootstrap_publish_owners_loading: Record<never, never>;
   bootstrap_repo_collision: {
     requested: string | number;
     resolved: string | number;
@@ -247,6 +251,8 @@ export type TextValuesByKey = {
   error_repo_name_invalid: Record<never, never>;
   error_repo_name_exhausted: Record<never, never>;
   error_bootstrap_cancelled: Record<never, never>;
+  error_bootstrap_source_required: Record<never, never>;
+  error_bootstrap_publish_required: Record<never, never>;
   error_source_dir_invalid: {
     dir: string | number;
   };
