@@ -6,7 +6,7 @@ Added a root `bun run release` flow that publishes the `holdmybeer` package.
 
 ```mermaid
 flowchart LR
-  A[bun run release at repo root] --> B[bun --workspaces run release]
+  A[bun run release at repo root] --> B[cd packages/holdmybeer && bun run release]
   B --> C[assert git status --porcelain is empty]
   C --> D[choose next version patch/minor/major/custom]
   D --> E[npm version X.Y.Z --no-git-tag-version]

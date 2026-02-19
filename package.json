@@ -6,13 +6,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "bun --workspaces run build",
-    "dev": "bun --workspaces run dev",
-    "dev:run": "bun --workspaces run dev -- --project ./fixtures/dev-source",
-    "bootstrap": "bun --workspaces run dev -- --project .",
-    "release": "bun --workspaces run release",
-    "test": "bun --workspaces run test",
-    "test:watch": "bun --workspaces run test:watch",
-    "typecheck": "bun --workspaces run typecheck"
+    "build": "cd packages/holdmybeer && bun run build",
+    "dev": "cd packages/holdmybeer && bun run dev",
+    "dev:run": "cd packages/holdmybeer && bun run dev -- --project ../../fixtures/dev-source",
+    "bootstrap": "cd packages/holdmybeer && bun run dev -- --project ../..",
+    "release": "cd packages/holdmybeer && bun run release",
+    "test": "cd packages/holdmybeer && bun run test",
+    "test:watch": "cd packages/holdmybeer && bun run test:watch",
+    "typecheck": "cd packages/holdmybeer && bun run typecheck"
   }
 }
