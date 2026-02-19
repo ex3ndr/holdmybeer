@@ -21,4 +21,5 @@ flowchart TD
 - `expectedOutput.type = text` supports `verify({ text })`.
 - `expectedOutput.type = file` supports `verify({ text, filePath, fileContent })`.
 - `verify` may be synchronous or asynchronous.
+- Verification retry count defaults to `10`.
 - Verification failures are returned to the model as an error prompt and retried in the same provider session.

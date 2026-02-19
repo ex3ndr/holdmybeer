@@ -51,7 +51,7 @@ const OUTPUT_RETRY_PROMPT =
  */
 export async function providerGenerate(input: ProviderGenerateInput): Promise<ProviderGenerateResult> {
     const requireOutputTags = input.requireOutputTags ?? true;
-    const outputValidationRetries = Math.max(0, input.outputValidationRetries ?? 1);
+    const outputValidationRetries = Math.max(0, input.outputValidationRetries ?? 10);
     const sessionDir = providerSessionDirResolve(input.projectPath);
     let sessionId: string | undefined;
     let prompt = input.prompt;

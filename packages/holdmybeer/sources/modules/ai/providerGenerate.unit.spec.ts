@@ -236,4 +236,34 @@ describe("providerGenerate", () => {
             }
         });
     });
+
+    it("uses 10 retries by default for output verification failures", async () => {
+        piProviderGenerateMock.mockResolvedValue({
+            exitCode: 0,
+            stderr: "",
+            output: "still-wrong"
+        });
+
+        const result = await providerGenerate({
+            providerId: "pi",
+            command: "pi",
+            prompt: "hello",
+            sandbox: { wrapCommand: async (command) => command },
+            requireOutputTags: false,
+            validateOutput: () => {
+                throw new Error("default retry test");
+            }
+        });
+
+        expect(piProviderGenerateMock).toHaveBeenCalledTimes(11);
+        expect(result).toEqual({
+            output: null,
+            sessionId: undefined,
+            failure: {
+                providerId: "pi",
+                exitCode: 1,
+                stderr: "Output verification failed: default retry test"
+            }
+        });
+    });
 });
