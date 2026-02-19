@@ -18,6 +18,8 @@ interface ProgressMultilineState {
 
 const progressFrames = ["|", "/", "-", "\\"];
 const progressTickMs = 120;
+const progressDoneSymbol = "✔";
+const progressFailSymbol = "❌";
 
 /**
  * Starts a multiline progress renderer where lines are added dynamically.
@@ -70,7 +72,7 @@ export function progressMultilineStart(): ProgressMultiline {
             render();
             return;
         }
-        stream.write(`${status === "done" ? "*" : "x"} ${state.message}\n`);
+        stream.write(`${status === "done" ? progressDoneSymbol : progressFailSymbol} ${state.message}\n`);
     };
 
     const applyToRunning = (status: "done" | "failed", nextMessage?: string) => {
@@ -145,10 +147,10 @@ export function progressMultilineStart(): ProgressMultiline {
 
 function progressSymbolResolve(state: ProgressMultilineState, index: number, frame: number): string {
     if (state.status === "done") {
-        return "*";
+        return progressDoneSymbol;
     }
     if (state.status === "failed") {
-        return "x";
+        return progressFailSymbol;
     }
     return progressFrames[(frame + index) % progressFrames.length]!;
 }

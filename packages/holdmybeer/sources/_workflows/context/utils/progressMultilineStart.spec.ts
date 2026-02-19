@@ -25,7 +25,7 @@ describe("progressMultilineStart", () => {
             one.fail("first task failed");
             progress.stop();
 
-            expect(writes).toEqual(["| first task\n", "| second task\n", "* second task\n", "x first task failed\n"]);
+            expect(writes).toEqual(["| first task\n", "| second task\n", "✔ second task\n", "❌ first task failed\n"]);
         } finally {
             writeSpy.mockRestore();
         }
@@ -48,7 +48,7 @@ describe("progressMultilineStart", () => {
             progress.failRunning("default failed");
             progress.stop();
 
-            expect(writes).toEqual(["| one\n", "| two\n", "* one done\n", "* default done\n"]);
+            expect(writes).toEqual(["| one\n", "| two\n", "✔ one done\n", "✔ default done\n"]);
         } finally {
             writeSpy.mockRestore();
         }

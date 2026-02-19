@@ -4,7 +4,6 @@ import { contextApplyConfig } from "@/_workflows/context/utils/contextApplyConfi
 import { contextAskGithubRepo } from "@/_workflows/context/utils/contextAskGithubRepo.js";
 import { contextGitignoreEnsure } from "@/_workflows/context/utils/contextGitignoreEnsure.js";
 import { type ProgressLine, progressMultilineStart } from "@/_workflows/context/utils/progressMultilineStart.js";
-import { progressStart } from "@/_workflows/context/utils/progressStart.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { gitPush } from "@/modules/git/gitPush.js";
 import { gitStageAndCommit } from "@/modules/git/gitStageAndCommit.js";
@@ -29,6 +28,8 @@ export class Context {
     readonly projectPath: string;
     readonly providers: ProviderDetection[];
     private settingsCurrent: Readonly<BeerSettings>;
+    private progressMultiline?: ReturnType<typeof progressMultilineStart>;
+    private progressUsers = 0;
 
     private constructor(projectPath: string, providers: ProviderDetection[], settings: Readonly<BeerSettings>) {
         this.projectPath = projectPath;
@@ -129,16 +130,19 @@ export class Context {
         initialMessage: string,
         operation: (report: (message: string) => void) => Promise<T>
     ): Promise<T> {
-        const progress = progressStart(initialMessage);
+        const progress = this.progressAcquire();
+        const line = progress.add(initialMessage);
         try {
             const result = await operation((message) => {
-                progress.update(message);
+                line.update(message);
             });
-            progress.done();
+            line.done(contextProgressSuccessMessageResolve(result));
             return result;
         } catch (error) {
-            progress.fail();
+            line.fail(contextProgressErrorMessageResolve(error));
             throw error;
+        } finally {
+            this.progressRelease();
         }
     }
 
@@ -147,21 +151,50 @@ export class Context {
      * Expects: callers add lines via add()/run() and may execute run() calls in parallel.
      */
     async progresses<T>(operation: (progresses: ContextProgresses) => Promise<T>): Promise<T> {
-        const progress = progressMultilineStart();
+        const progress = this.progressAcquire();
+        const activeLines = new Set<ProgressLine>();
+
+        const addLine = (initialMessage: string): ProgressLine => {
+            const line = progress.add(initialMessage);
+            let active = true;
+            const trackedLine: ProgressLine = {
+                update(message: string) {
+                    line.update(message);
+                },
+                done(message?: string) {
+                    if (!active) {
+                        return;
+                    }
+                    active = false;
+                    activeLines.delete(trackedLine);
+                    line.done(message);
+                },
+                fail(message?: string) {
+                    if (!active) {
+                        return;
+                    }
+                    active = false;
+                    activeLines.delete(trackedLine);
+                    line.fail(message);
+                }
+            };
+            activeLines.add(trackedLine);
+            return trackedLine;
+        };
 
         const lineRun = async <R>(
             initialMessage: string,
             lineOperation: (report: (message: string) => void) => Promise<R>
         ): Promise<R> => {
-            const line = progress.add(initialMessage);
+            const line = addLine(initialMessage);
             try {
                 const result = await lineOperation((message) => {
                     line.update(message);
                 });
-                line.done();
+                line.done(contextProgressSuccessMessageResolve(result));
                 return result;
             } catch (error) {
-                line.fail();
+                line.fail(contextProgressErrorMessageResolve(error));
                 throw error;
             }
         };
@@ -169,7 +202,7 @@ export class Context {
         try {
             const result = await operation({
                 add(initialMessage: string): ProgressLine {
-                    return progress.add(initialMessage);
+                    return addLine(initialMessage);
                 },
                 run<R>(
                     initialMessage: string,
@@ -178,14 +211,18 @@ export class Context {
                     return lineRun(initialMessage, lineOperation);
                 }
             });
-            progress.doneRunning();
+            for (const line of activeLines) {
+                line.done();
+            }
             return result;
         } catch (error) {
-            progress.failRunning();
+            const message = contextProgressErrorMessageResolve(error);
+            for (const line of activeLines) {
+                line.fail(message);
+            }
             throw error;
         } finally {
-            // Required cleanup: clears spinner interval tied to process stderr rendering.
-            progress.stop();
+            this.progressRelease();
         }
     }
 
@@ -213,6 +250,27 @@ export class Context {
     async gitignore(patterns: readonly string[]): Promise<void> {
         return contextGitignoreEnsure(this.projectPath, patterns);
     }
+
+    private progressAcquire(): ReturnType<typeof progressMultilineStart> {
+        if (!this.progressMultiline) {
+            this.progressMultiline = progressMultilineStart();
+        }
+        this.progressUsers += 1;
+        return this.progressMultiline;
+    }
+
+    private progressRelease(): void {
+        if (this.progressUsers === 0) {
+            return;
+        }
+        this.progressUsers -= 1;
+        if (this.progressUsers > 0) {
+            return;
+        }
+        // Required cleanup: clears spinner interval tied to process stderr rendering.
+        this.progressMultiline?.stop();
+        this.progressMultiline = undefined;
+    }
 }
 
 function contextPathResolve(projectPath: string, filePath: string): string {
@@ -228,4 +286,24 @@ function contextSettingsReadonly(settings: Readonly<BeerSettings>): Readonly<Bee
         sourceRepo: settings.sourceRepo ? Object.freeze({ ...settings.sourceRepo }) : undefined,
         publishRepo: settings.publishRepo ? Object.freeze({ ...settings.publishRepo }) : undefined
     });
+}
+
+function contextProgressSuccessMessageResolve(value: unknown): string | undefined {
+    if (typeof value !== "string") {
+        return undefined;
+    }
+    const message = value.trim();
+    return message.length > 0 ? message : undefined;
+}
+
+function contextProgressErrorMessageResolve(error: unknown): string | undefined {
+    if (error instanceof Error) {
+        const message = error.message.trim();
+        return message.length > 0 ? message : undefined;
+    }
+    if (typeof error !== "string") {
+        return undefined;
+    }
+    const message = error.trim();
+    return message.length > 0 ? message : undefined;
 }

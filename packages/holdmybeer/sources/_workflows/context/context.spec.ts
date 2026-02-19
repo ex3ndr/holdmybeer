@@ -164,11 +164,11 @@ describe("Context", () => {
         expect(addMock).toHaveBeenCalledWith("task A");
         expect(addMock).toHaveBeenCalledWith("task B");
         expect(lineA.update).toHaveBeenCalledWith("task A update");
-        expect(lineA.done).toHaveBeenCalledTimes(1);
-        expect(lineB.done).toHaveBeenCalledTimes(1);
+        expect(lineA.done).toHaveBeenCalledWith("A");
+        expect(lineB.done).toHaveBeenCalledWith("B");
         expect(lineA.fail).not.toHaveBeenCalled();
         expect(lineB.fail).not.toHaveBeenCalled();
-        expect(doneRunningMock).toHaveBeenCalledTimes(1);
+        expect(doneRunningMock).not.toHaveBeenCalled();
         expect(failRunningMock).not.toHaveBeenCalled();
         expect(stopMock).toHaveBeenCalledTimes(1);
     });
@@ -202,9 +202,77 @@ describe("Context", () => {
 
         expect(addMock).toHaveBeenCalledWith("task A");
         expect(line.done).not.toHaveBeenCalled();
-        expect(line.fail).toHaveBeenCalledTimes(1);
+        expect(line.fail).toHaveBeenCalledWith("boom");
         expect(doneRunningMock).not.toHaveBeenCalled();
-        expect(failRunningMock).toHaveBeenCalledTimes(1);
+        expect(failRunningMock).not.toHaveBeenCalled();
+        expect(stopMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("stacks progress lines across concurrent progress calls", async () => {
+        providerDetectMock.mockResolvedValue([]);
+        const lineA = {
+            update: vi.fn(),
+            done: vi.fn(),
+            fail: vi.fn()
+        };
+        const lineB = {
+            update: vi.fn(),
+            done: vi.fn(),
+            fail: vi.fn()
+        };
+        const addMock = vi.fn().mockReturnValueOnce(lineA).mockReturnValueOnce(lineB);
+        const stopMock = vi.fn();
+        progressMultilineStartMock.mockReturnValue({
+            add: addMock,
+            doneRunning: vi.fn(),
+            failRunning: vi.fn(),
+            stop: stopMock
+        });
+
+        const context = await Context.create("/tmp/test-project");
+        const [first, second] = await Promise.all([
+            context.progress("task A", async () => "task A done"),
+            context.progress("task B", async () => "task B done")
+        ]);
+
+        expect(first).toBe("task A done");
+        expect(second).toBe("task B done");
+        expect(progressMultilineStartMock).toHaveBeenCalledTimes(1);
+        expect(addMock).toHaveBeenCalledWith("task A");
+        expect(addMock).toHaveBeenCalledWith("task B");
+        expect(lineA.done).toHaveBeenCalledWith("task A done");
+        expect(lineB.done).toHaveBeenCalledWith("task B done");
+        expect(lineA.fail).not.toHaveBeenCalled();
+        expect(lineB.fail).not.toHaveBeenCalled();
+        expect(stopMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses thrown error message for failed progress lines", async () => {
+        providerDetectMock.mockResolvedValue([]);
+        const line = {
+            update: vi.fn(),
+            done: vi.fn(),
+            fail: vi.fn()
+        };
+        const addMock = vi.fn().mockReturnValue(line);
+        const stopMock = vi.fn();
+        progressMultilineStartMock.mockReturnValue({
+            add: addMock,
+            doneRunning: vi.fn(),
+            failRunning: vi.fn(),
+            stop: stopMock
+        });
+
+        const context = await Context.create("/tmp/test-project");
+        await expect(
+            context.progress("task A", async () => {
+                throw new Error("task failed");
+            })
+        ).rejects.toThrow("task failed");
+
+        expect(addMock).toHaveBeenCalledWith("task A");
+        expect(line.done).not.toHaveBeenCalled();
+        expect(line.fail).toHaveBeenCalledWith("task failed");
         expect(stopMock).toHaveBeenCalledTimes(1);
     });
 });

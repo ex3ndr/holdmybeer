@@ -6,6 +6,8 @@ export interface Progress {
 
 const progressFrames = ["|", "/", "-", "\\"];
 const progressTickMs = 120;
+const progressDoneSymbol = "✔";
+const progressFailSymbol = "❌";
 
 /**
  * Starts a single-character ASCII spinner with an initial message.
@@ -71,10 +73,10 @@ export function progressStart(initialMessage: string): Progress {
             }
         },
         done(nextMessage?: string) {
-            finish("*", nextMessage);
+            finish(progressDoneSymbol, nextMessage);
         },
         fail(nextMessage?: string) {
-            finish("x", nextMessage);
+            finish(progressFailSymbol, nextMessage);
         }
     };
 }
