@@ -19,7 +19,9 @@
 - Run CLI in dev: `bun run dev`.
 - Node remains supported for running built output (`dist/*`) and production installs.
 - Type-check/build: `bun run typecheck` (tsc)
+- Lint: `bun run lint` (Biome — formatting + linting); auto-fix with `bun run lint:fix`
 - Tests: `bun run test` (vitest);
+- Build runs lint automatically before compilation.
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (ESM). Prefer strict typing; avoid `any`.

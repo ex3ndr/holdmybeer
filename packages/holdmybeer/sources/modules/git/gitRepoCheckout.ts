@@ -7,10 +7,10 @@ import { commandRun } from "@/modules/util/commandRun.js";
  * Returns the HEAD commit hash of the checkout for reproducibility.
  */
 export async function gitRepoCheckout(remoteUrl: string, targetDir: string): Promise<string> {
-  await rm(targetDir, { recursive: true, force: true });
-  await mkdir(path.dirname(targetDir), { recursive: true });
-  await commandRun("git", ["clone", "--depth", "1", remoteUrl, targetDir]);
+    await rm(targetDir, { recursive: true, force: true });
+    await mkdir(path.dirname(targetDir), { recursive: true });
+    await commandRun("git", ["clone", "--depth", "1", remoteUrl, targetDir]);
 
-  const result = await commandRun("git", ["rev-parse", "HEAD"], { cwd: targetDir });
-  return result.stdout.trim();
+    const result = await commandRun("git", ["rev-parse", "HEAD"], { cwd: targetDir });
+    return result.stdout.trim();
 }

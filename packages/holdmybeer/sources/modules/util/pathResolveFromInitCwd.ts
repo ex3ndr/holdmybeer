@@ -5,6 +5,6 @@ import path from "node:path";
  * Falls back to process.cwd() for direct execution.
  */
 export function pathResolveFromInitCwd(inputPath: string): string {
-  const baseDir = process.env.INIT_CWD ?? process.cwd();
-  return path.resolve(baseDir, inputPath);
+    const baseDir = process.env.INIT_CWD ?? process.cwd();
+    return path.resolve(baseDir, inputPath);
 }

@@ -8,9 +8,9 @@ const outputPath = "./sources/text/text.gen.ts";
  * Expects: catalog and output paths are writable and inside sources/text.
  */
 export async function textGenBuild(): Promise<void> {
-  const source = textGenGenerate("./sources/text/all.txt");
-  await mkdir("./sources/text", { recursive: true });
-  await writeFile(outputPath, source, "utf-8");
+    const source = textGenGenerate("./sources/text/all.txt");
+    await mkdir("./sources/text", { recursive: true });
+    await writeFile(outputPath, source, "utf-8");
 }
 
 await textGenBuild();

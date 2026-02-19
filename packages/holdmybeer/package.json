@@ -18,8 +18,10 @@
   },
   "scripts": {
     "text:gen": "bun sources/text/textGenBuild.ts",
-    "build": "bun run text:gen && tsc -p tsconfig.json && cp sources/text/all.txt dist/text/",
-    "dev": "bun sources/main.ts",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "build": "bun run lint && bun run text:gen && tsc -p tsconfig.json && cp sources/text/all.txt dist/text/",
+    "dev": "bun sources/main.ts --project ~/Developer/HoldMyBeerDev",
     "release": "bun sources/release/releaseRun.ts",
     "test": "vitest run",
     "test:watch": "vitest",
