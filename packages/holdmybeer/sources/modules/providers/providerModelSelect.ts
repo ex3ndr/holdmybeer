@@ -1,8 +1,4 @@
-import type {
-  ProviderDetection,
-  ProviderModel,
-  ProviderModelSelectionMode
-} from "@/types";
+import type { ProviderDetection, ProviderModelSelectionMode } from "@/types";
 
 export interface ProviderModelSelectInput {
   provider: ProviderDetection;
@@ -25,10 +21,10 @@ export function providerModelSelect(
   }
 
   if (!modelPriority || modelPriority.length === 0) {
-    return providerModelScoreBest(
-      models,
+    return providerModelSelectFromStaticPriority(
+      models.map((model) => model.id),
       input.mode ?? "codex-high"
-    )?.id;
+    );
   }
 
   for (const candidate of modelPriority) {
@@ -38,10 +34,10 @@ export function providerModelSelect(
     }
   }
 
-  return providerModelScoreBest(
-    models,
+  return providerModelSelectFromStaticPriority(
+    models.map((model) => model.id),
     input.mode ?? "codex-high"
-  )?.id;
+  );
 }
 
 function providerModelMatches(modelId: string, candidate: string): boolean {
@@ -77,80 +73,114 @@ function providerModelMatchGlob(modelId: string, candidate: string): boolean {
   return new RegExp(`^${pattern}$`, "i").test(modelId);
 }
 
-function providerModelScoreBest(
-  models: readonly ProviderModel[],
+function providerModelSelectFromStaticPriority(
+  availableModelIds: readonly string[],
   mode: ProviderModelSelectionMode
-) {
-  const ranked = [...models].sort((left, right) => {
-    const scoreDiff = providerModelScore(right, mode) - providerModelScore(left, mode);
-    if (scoreDiff !== 0) {
-      return scoreDiff;
-    }
-    return left.id.localeCompare(right.id);
-  });
-  return ranked[0];
-}
-
-function providerModelScore(
-  model: ProviderModel,
-  mode: ProviderModelSelectionMode
-): number {
-  const searchText = [
-    model.provider,
-    model.modelId,
-    model.name ?? ""
-  ].join(" ").toLowerCase();
-
-  let score = 0;
-  const contextWindow = model.contextWindow ?? 0;
-  const maxTokens = model.maxTokens ?? 0;
-  score += Math.min(320, Math.floor(contextWindow / 1_000));
-  score += Math.min(240, Math.floor(maxTokens / 1_000));
-  score += model.reasoning ? 25 : 0;
-
-  switch (mode) {
-    case "sonnet":
-      score += providerModelKeywordBonus(searchText, ["sonnet"], 220);
-      score += providerModelKeywordBonus(searchText, ["claude"], 30);
-      score += model.reasoning ? 10 : 0;
-      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku"], 20);
-      return score;
-    case "opus":
-      score += providerModelKeywordBonus(searchText, ["opus"], 260);
-      score += providerModelKeywordBonus(searchText, ["claude"], 35);
-      score += providerModelKeywordBonus(searchText, ["xhigh", "ultra", "max", "high", "thinking", "reasoning"], 18);
-      score += model.reasoning ? 20 : 0;
-      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku"], 24);
-      return score;
-    case "codex-xhigh":
-      score += providerModelKeywordBonus(searchText, ["codex"], 270);
-      score += providerModelKeywordBonus(searchText, ["xhigh", "x_high", "ultra", "max", "high", "pro"], 20);
-      score += providerModelKeywordBonus(searchText, ["gpt-5", "gpt5", "o3", "o1", "reasoning", "thinking"], 18);
-      score += model.reasoning ? 20 : 0;
-      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku", "low"], 28);
-      return score;
-    case "codex-high":
-      score += providerModelKeywordBonus(searchText, ["codex"], 240);
-      score += providerModelKeywordBonus(searchText, ["high", "pro", "reasoning", "thinking", "gpt-5", "gpt5"], 14);
-      score += model.reasoning ? 12 : 0;
-      score -= providerModelKeywordBonus(searchText, ["xhigh", "x_high"], 220);
-      score -= providerModelKeywordBonus(searchText, ["mini", "small", "lite", "nano", "flash", "haiku", "low"], 20);
-      return score;
-    default:
-      return score;
-  }
-}
-
-function providerModelKeywordBonus(
-  searchText: string,
-  keywords: readonly string[],
-  weight = 12
-): number {
-  let score = 0;
-  for (const keyword of keywords) {
-    if (searchText.includes(keyword)) {
-      score += weight;
+): string | undefined {
+  const modePriority = providerModelPriorityByMode[mode];
+  for (const candidate of modePriority) {
+    const resolved = availableModelIds.find((id) => providerModelMatches(id, candidate));
+    if (resolved) {
+      return resolved;
     }
   }
-  return score;
+
+  for (const candidate of providerModelCatalog) {
+    const resolved = availableModelIds.find((id) => providerModelMatches(id, candidate));
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return [...availableModelIds].sort((a, b) => a.localeCompare(b))[0];
 }
+
+const providerModelCatalog = [
+  "anthropic/claude-3-5-haiku-20241022",
+  "anthropic/claude-3-5-haiku-latest",
+  "anthropic/claude-3-5-sonnet-20240620",
+  "anthropic/claude-3-5-sonnet-20241022",
+  "anthropic/claude-3-7-sonnet-20250219",
+  "anthropic/claude-3-7-sonnet-latest",
+  "anthropic/claude-3-haiku-20240307",
+  "anthropic/claude-3-opus-20240229",
+  "anthropic/claude-3-sonnet-20240229",
+  "anthropic/claude-haiku-4-5",
+  "anthropic/claude-haiku-4-5-20251001",
+  "anthropic/claude-opus-4-0",
+  "anthropic/claude-opus-4-1",
+  "anthropic/claude-opus-4-1-20250805",
+  "anthropic/claude-opus-4-20250514",
+  "anthropic/claude-opus-4-5",
+  "anthropic/claude-opus-4-5-20251101",
+  "anthropic/claude-opus-4-6",
+  "anthropic/claude-sonnet-4-0",
+  "anthropic/claude-sonnet-4-20250514",
+  "anthropic/claude-sonnet-4-5",
+  "anthropic/claude-sonnet-4-5-20250929",
+  "anthropic/claude-sonnet-4-6",
+  "google-antigravity/claude-opus-4-5-thinking",
+  "google-antigravity/claude-sonnet-4-5",
+  "google-antigravity/claude-sonnet-4-5-thinking",
+  "google-antigravity/gemini-3-flash",
+  "google-antigravity/gemini-3-pro-high",
+  "google-antigravity/gemini-3-pro-low",
+  "google-antigravity/gpt-oss-120b-medium",
+  "openai-codex/gpt-5.1",
+  "openai-codex/gpt-5.1-codex-max",
+  "openai-codex/gpt-5.1-codex-mini",
+  "openai-codex/gpt-5.2",
+  "openai-codex/gpt-5.2-codex",
+  "openai-codex/gpt-5.3-codex",
+  "openai-codex/gpt-5.3-codex-spark"
+] as const;
+
+const providerModelPriorityByMode: Record<
+  ProviderModelSelectionMode,
+  readonly (typeof providerModelCatalog)[number][]
+> = {
+  sonnet: [
+    "anthropic/claude-sonnet-4-6",
+    "anthropic/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-5-20250929",
+    "google-antigravity/claude-sonnet-4-5-thinking",
+    "google-antigravity/claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-0",
+    "anthropic/claude-sonnet-4-20250514",
+    "anthropic/claude-3-7-sonnet-latest",
+    "anthropic/claude-3-7-sonnet-20250219",
+    "anthropic/claude-3-5-sonnet-20241022",
+    "anthropic/claude-3-5-sonnet-20240620",
+    "anthropic/claude-3-sonnet-20240229"
+  ],
+  opus: [
+    "anthropic/claude-opus-4-6",
+    "anthropic/claude-opus-4-5",
+    "anthropic/claude-opus-4-5-20251101",
+    "google-antigravity/claude-opus-4-5-thinking",
+    "anthropic/claude-opus-4-1",
+    "anthropic/claude-opus-4-1-20250805",
+    "anthropic/claude-opus-4-0",
+    "anthropic/claude-opus-4-20250514",
+    "anthropic/claude-3-opus-20240229"
+  ],
+  "codex-high": [
+    "openai-codex/gpt-5.3-codex",
+    "openai-codex/gpt-5.2-codex",
+    "openai-codex/gpt-5.2",
+    "openai-codex/gpt-5.1",
+    "openai-codex/gpt-5.1-codex-mini",
+    "openai-codex/gpt-5.3-codex-spark",
+    "google-antigravity/gpt-oss-120b-medium"
+  ],
+  "codex-xhigh": [
+    "openai-codex/gpt-5.1-codex-max",
+    "openai-codex/gpt-5.3-codex",
+    "openai-codex/gpt-5.2-codex",
+    "openai-codex/gpt-5.2",
+    "openai-codex/gpt-5.1",
+    "openai-codex/gpt-5.1-codex-mini",
+    "openai-codex/gpt-5.3-codex-spark",
+    "google-antigravity/gpt-oss-120b-medium"
+  ]
+};
