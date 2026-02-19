@@ -26,7 +26,7 @@ program
         const selectedWorkflowId = await select({
             message: text.prompt_workflow_select!,
             choices: workflows.map((workflow) => ({
-                name: workflow.title,
+                name: `${workflow.id}: ${workflow.title}`,
                 value: workflow.id,
                 disabled: mainWorkflowDisabledReasonResolve(workflow, bootstrapped)
             }))
