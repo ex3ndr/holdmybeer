@@ -93,20 +93,35 @@ describe("piProviderGenerate", () => {
         expect(onEvent).toHaveBeenCalledWith({ type: "session", sessionId: "session-1" });
     });
 
-    it("uses session dir and continue flag when requested", async () => {
+    it("uses session id when requested", async () => {
         commandJSONLMock.mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" });
 
         await piProviderGenerate({
             command: "pi",
             prompt: "retry",
-            sessionDir: "/tmp/pi-session",
-            continueSession: true,
+            sessionId: "session-123",
             sandbox: { wrapCommand: async (command) => command }
         });
 
         expect(commandJSONLMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                args: ["--mode", "json", "--print", "--session-dir", "/tmp/pi-session", "--continue", "retry"]
+                args: ["--mode", "json", "--print", "--session", "session-123", "retry"]
+            })
+        );
+    });
+
+    it("starts fresh when no session id is provided", async () => {
+        commandJSONLMock.mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" });
+
+        await piProviderGenerate({
+            command: "pi",
+            prompt: "retry",
+            sandbox: { wrapCommand: async (command) => command }
+        });
+
+        expect(commandJSONLMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                args: ["--mode", "json", "--print", "retry"]
             })
         );
     });

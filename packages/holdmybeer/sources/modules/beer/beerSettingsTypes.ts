@@ -5,6 +5,8 @@ export interface BeerSettings {
     sourceRepo?: GitHubRepoRef;
     sourceCommitHash?: string;
     publishRepo?: GitHubRepoRef;
+    /** AI-generated product name chosen during research workflow. */
+    productName?: string;
     updatedAt: number;
 }
 

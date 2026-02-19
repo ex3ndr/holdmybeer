@@ -205,4 +205,17 @@ describe("generate event parsing", () => {
             text: "ok"
         });
     });
+
+    it("passes requested sessionId into providerGenerate", async () => {
+        providerGenerateMock.mockResolvedValue({ output: "ok", sessionId: "session-2" });
+
+        const context = { projectPath: "/tmp/project", providers: [] } as unknown as Context;
+        await generate(context, "hello", { sessionId: "session-2" });
+
+        expect(providerGenerateMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                sessionId: "session-2"
+            })
+        );
+    });
 });

@@ -7,6 +7,8 @@ import type { Context } from "@/types";
 export interface GenerateFilePermissions extends Omit<GeneratePermissions, "expectedOutput"> {
     retries?: number;
     verify?: GenerateExpectedFileOutputVerify;
+    /** Extra template values to substitute in the prompt alongside the built-in ones. */
+    extraTemplateValues?: Record<string, string>;
 }
 
 /**
@@ -19,13 +21,14 @@ export async function generateFile(
     outputFilePath: string,
     permissions: GenerateFilePermissions = {}
 ): Promise<{ provider?: string; sessionId?: string; text: string }> {
-    const { retries, verify, ...permissionsBase } = permissions;
+    const { retries, verify, extraTemplateValues, ...permissionsBase } = permissions;
     const resolvedOutputPath = pathResolveInProject(context.projectPath, outputFilePath);
     await mkdir(path.dirname(resolvedOutputPath), { recursive: true });
-    const promptTemplateValues = {
+    const promptTemplateValues: Record<string, string | undefined> = {
         originalCheckoutPath: beerOriginalPathResolve(context.projectPath),
         outputPath: resolvedOutputPath,
-        sourceFullName: context.settings.sourceRepo?.fullName
+        sourceFullName: context.settings.sourceRepo?.fullName,
+        ...extraTemplateValues
     };
     const maxRetries = Math.max(0, retries ?? 1);
     const basePrompt = [
@@ -76,12 +79,9 @@ async function fileExists(filePath: string): Promise<boolean> {
     }
 }
 
-function promptFormat(
-    prompt: string,
-    values: { originalCheckoutPath: string; outputPath: string; sourceFullName?: string }
-): string {
+function promptFormat(prompt: string, values: Record<string, string | undefined>): string {
     return prompt.replace(/\{(\w+)\}/g, (match: string, key: string) => {
-        const value = values[key as keyof typeof values];
+        const value = values[key];
         return value === undefined ? match : value;
     });
 }

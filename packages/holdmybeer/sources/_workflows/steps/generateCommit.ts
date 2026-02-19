@@ -1,10 +1,11 @@
 import { text } from "@text";
 import { generate } from "@/_workflows/steps/generate.js";
-import type { Context } from "@/types";
+import type { Context, ProviderModelSelectionMode } from "@/types";
 
 export interface GenerateCommitOptions {
     hint?: string;
-    showProgress?: boolean;
+    modelSelectionMode?: ProviderModelSelectionMode;
+    progressMessage?: string;
 }
 
 const promptTemplate = [
@@ -27,9 +28,8 @@ export async function generateCommit(
         promptTemplate,
         { hint },
         {
-            progressMessage: text.inference_commit_generating!,
-            showProgress: options.showProgress,
-            modelSelectionMode: "codex-high",
+            progressMessage: options.progressMessage ?? text.inference_commit_generating!,
+            modelSelectionMode: options.modelSelectionMode ?? "codex-high",
             expectedOutput: { type: "text" }
         }
     );

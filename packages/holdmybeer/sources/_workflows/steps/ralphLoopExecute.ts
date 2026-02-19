@@ -4,10 +4,6 @@ import { text } from "@text";
 import { generate } from "@/_workflows/steps/generate.js";
 import type { Context } from "@/types";
 
-export interface RalphLoopExecuteOptions {
-    showProgress?: boolean;
-}
-
 const executePromptTemplate = [
     "Implement this request in the current repository: {{buildGoal}}",
     "Follow this plan exactly, then complete all pending implementation and test tasks:",
@@ -26,8 +22,7 @@ const executePromptTemplate = [
 export async function ralphLoopExecute(
     ctx: Context,
     buildGoal: string,
-    planPath: string,
-    options: RalphLoopExecuteOptions = {}
+    planPath: string
 ): Promise<{ provider?: string; sessionId?: string; text: string }> {
     const projectPath = ctx.projectPath;
     const planContent = await readFile(path.resolve(projectPath, planPath), "utf-8");
@@ -40,7 +35,6 @@ export async function ralphLoopExecute(
         },
         {
             progressMessage: text.inference_plan_executing!,
-            showProgress: options.showProgress,
             modelSelectionMode: "codex-xhigh",
             writePolicy: {
                 mode: "write-whitelist",

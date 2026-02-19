@@ -4,10 +4,6 @@ import { textFormatKey } from "@text";
 import { generate } from "@/_workflows/steps/generate.js";
 import type { Context } from "@/types";
 
-export interface RalphLoopReviewRoundOptions {
-    showProgress?: boolean;
-}
-
 const reviewPromptTemplate = [
     "Run review round {{round}} of 3 for this implementation plan:",
     "{{planContent}}",
@@ -26,8 +22,7 @@ const reviewPromptTemplate = [
 export async function ralphLoopReviewRound(
     ctx: Context,
     round: number,
-    planPath: string,
-    options: RalphLoopReviewRoundOptions = {}
+    planPath: string
 ): Promise<{ provider?: string; sessionId?: string; text: string }> {
     if (round < 1 || round > 3) {
         throw new Error(`Invalid review round: ${round}`);
@@ -44,7 +39,6 @@ export async function ralphLoopReviewRound(
         },
         {
             progressMessage: textFormatKey("inference_review_round", { round }),
-            showProgress: options.showProgress,
             modelSelectionMode: "codex-xhigh",
             writePolicy: {
                 mode: "write-whitelist",

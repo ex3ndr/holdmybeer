@@ -6,22 +6,24 @@
 
 ```mermaid
 flowchart TD
-  A[providerGenerate input] --> B[resolve session dir]
-  B --> C[piProviderGenerate attempt 1]
+  A[providerGenerate input] --> B[piProviderGenerate attempt 1]
+  B --> C[capture session id from PI session event]
   C --> D{output has tags?}
-  D -->|yes| E[return extracted output]
-  D -->|no| F[continue same session]
-  F --> G[send retry error message only]
-  G --> H[piProviderGenerate attempt 2 with --continue]
-  H --> I{output has tags?}
-  I -->|yes| E
-  I -->|no| J[return failure]
+  D -->|yes| E[return extracted output + session id]
+  D -->|no| F[retry prompt]
+  F --> G{have session id?}
+  G -->|yes| H[attempt 2 with --session <id>]
+  G -->|no| I[attempt 2 from scratch]
+  H --> J{output has tags?}
+  I --> J
+  J -->|yes| E
+  J -->|no| K[return failure]
 ```
 
 ## Notes
 
-- Invocation uses `pi --mode json --print [--session-dir ...] [--model ...]`.
-- Session dir is under `<projectPath>/.beer/local/sessions/<run-id>` where `projectPath` is the active context project path.
-- Retry uses the same session dir and `--continue`, with only an explicit error message prompt.
+- Invocation uses `pi --mode json --print [--session <id>] [--model ...]`.
+- Session id is extracted from PI JSON session events (`id`/`sessionId`).
+- Retry resumes using `--session <id>` when available; otherwise it starts a fresh call.
 - The selected model is passed from workflow model priority resolution.
 - Sandbox execution remains enforced via the outer wrapper.

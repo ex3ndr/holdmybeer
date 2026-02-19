@@ -1,5 +1,4 @@
 import { text, textFormatKey } from "@text";
-import { generateCommit } from "@/_workflows/steps/generateCommit.js";
 import { generateReadme } from "@/_workflows/steps/generateReadme.js";
 import { beerOriginalPathResolve } from "@/modules/beer/beerOriginalPathResolve.js";
 import { gitRemoteEnsure } from "@/modules/git/gitRemoteEnsure.js";
@@ -117,15 +116,6 @@ export async function bootstrap(ctx: Context): Promise<void> {
     await ctx.gitignore([".beer/local/", ".pi"]);
 
     //
-    // Generate commit message
-    //
-
-    const commitMessageGenerated = await generateCommit(ctx, {
-        hint: `bootstrap project for source repository ${source.fullName}`,
-        showProgress: true
-    });
-
-    //
     // Init git repository
     //
 
@@ -138,6 +128,10 @@ export async function bootstrap(ctx: Context): Promise<void> {
     //
 
     await ctx.progress(textFormatKey("bootstrap_push_start", { remote: "origin", branch: "main" }), async () => {
-        return ctx.checkpoint(commitMessageGenerated.text, { remote: "origin", branch: "main" });
+        return ctx.checkpoint(`bootstrap project for source repository ${source.fullName}`, {
+            remote: "origin",
+            branch: "main",
+            modelSelectionMode: "codex-high"
+        });
     });
 }

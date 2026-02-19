@@ -10,18 +10,16 @@ import type { Context } from "@/types";
  * Expects: ctx.projectPath is the repository root for execution and review writes.
  */
 export async function ralphLoopWorkflow(ctx: Context): Promise<void> {
-    const showInferenceProgress = true;
-
     const buildGoal = await promptInput(text.prompt_ralph_loop_build!);
     if (!buildGoal.trim()) {
         throw new Error(text.error_ralph_loop_goal_required!);
     }
 
-    const plan = await ralphLoopPlanGenerate(ctx, buildGoal, { showProgress: showInferenceProgress });
+    const plan = await ralphLoopPlanGenerate(ctx, buildGoal);
 
-    await ralphLoopExecute(ctx, buildGoal, plan.planPath, { showProgress: showInferenceProgress });
+    await ralphLoopExecute(ctx, buildGoal, plan.planPath);
 
     for (let round = 1; round <= 3; round += 1) {
-        await ralphLoopReviewRound(ctx, round, plan.planPath, { showProgress: showInferenceProgress });
+        await ralphLoopReviewRound(ctx, round, plan.planPath);
     }
 }

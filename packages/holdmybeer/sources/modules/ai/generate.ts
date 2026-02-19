@@ -32,6 +32,7 @@ export type GenerateExpectedOutput =
     | { type: "file"; filePath: string; verify?: GenerateExpectedFileOutputVerify };
 
 export interface GeneratePermissions {
+    sessionId?: string;
     providerPriority?: readonly ProviderId[];
     modelPriority?: readonly string[];
     modelSelectionMode?: ProviderModelSelectionMode;
@@ -243,6 +244,7 @@ export async function generate(
             command: provider.command,
             model,
             prompt: promptResolved,
+            sessionId: permissions.sessionId,
             projectPath: context.projectPath,
             sandbox,
             writePolicy,

@@ -1,28 +1,26 @@
 # Context Multiline Progress
 
-Context now supports dynamic multiline progress via `ctx.progresses(...)`, allowing lines to be added on demand and run concurrently.
+Context now supports dynamic multiline progress through concurrent `ctx.progress(...)` calls on a shared renderer.
 
 ## Flow
 
 ```mermaid
 flowchart TD
-  A[workflow calls ctx.progresses] --> B[start progressMultilineStart]
-  B --> C[add line dynamically with progresses.add or progresses.run]
-  C --> D[run async tasks in parallel Promise.all]
-  D --> E[line updates with report(message)]
-  E --> F{line success?}
-  F -->|yes| G[line done "*"]
-  F -->|no| H[line fail "x"]
-  G --> I{all done?}
-  H --> I
-  I -->|success| J[mark unresolved running lines done]
-  I -->|failure| K[mark unresolved running lines failed]
-  J --> L[stop renderer timer]
-  K --> L
+  A[workflow starts parallel ctx.progress calls] --> B[start shared progressMultilineStart]
+  B --> C[each progress adds one line]
+  C --> D[line updates with report(message)]
+  D --> E{line success?}
+  E -->|yes| F[line done "✔"]
+  E -->|no| G[line fail "❌"]
+  F --> H[release shared renderer reference]
+  G --> H
+  H --> I{active progress users left?}
+  I -->|yes| J[keep rendering]
+  I -->|no| K[stop renderer timer]
 ```
 
 ## Notes
 
-- Lines are not predefined; each line is created when needed.
-- `progresses.run(...)` is a convenience helper mirroring `ctx.progress(...)` per line.
+- Each `ctx.progress(...)` call creates one line in the shared multiline renderer.
+- Parallel progress calls stack naturally without a separate `progresses` API.
 - The renderer supports concurrent line execution and shared terminal redraw.

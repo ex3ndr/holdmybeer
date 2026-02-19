@@ -16,7 +16,8 @@ describe("generateDocument", () => {
     });
 
     it("runs PROMPT_RESEARCH with resolved output path and selected model mode", async () => {
-        const context = { projectPath: "/tmp/project" } as Context;
+        const progress = vi.fn(async (_message: string, operation: () => Promise<unknown>) => operation());
+        const context = { projectPath: "/tmp/project", progress } as unknown as Context;
         generateFileMock.mockResolvedValue({ provider: "pi", sessionId: "session-1", text: "ok" });
 
         const result = await generateDocument(context, {
@@ -25,6 +26,10 @@ describe("generateDocument", () => {
             modelSelectionMode: "opus"
         });
 
+        expect(progress).toHaveBeenCalledWith(
+            "Generating research document (starting, tokens 0)",
+            expect.any(Function)
+        );
         expect(generateFileMock).toHaveBeenCalledTimes(1);
         const [calledContext, prompt, outputPath, permissions] = generateFileMock.mock.calls[0]!;
         expect(calledContext).toBe(context);
@@ -44,7 +49,7 @@ describe("generateDocument", () => {
         });
     });
 
-    it("uses context progress wrapper when requested", async () => {
+    it("skips context progress wrapper when showProgress is false", async () => {
         const progress = vi.fn(async (_message: string, operation: () => Promise<unknown>) => operation());
         const context = {
             projectPath: "/tmp/project",
@@ -60,11 +65,11 @@ describe("generateDocument", () => {
                 modelSelectionMode: "codex-xhigh"
             },
             {
-                showProgress: true,
+                showProgress: false,
                 progressMessage: "Research progress"
             }
         );
 
-        expect(progress).toHaveBeenCalledWith("Research progress", expect.any(Function));
+        expect(progress).not.toHaveBeenCalled();
     });
 });

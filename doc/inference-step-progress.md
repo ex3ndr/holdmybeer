@@ -1,23 +1,23 @@
 # Inference Step Progress
 
-Inference workflow steps now require an explicit progress message and render a single-character ASCII spinner on screen while inference runs.
+Inference workflow steps now require an explicit progress message, and `generate(...)` renders progress by default.
 
 ## Flow
 
 ```mermaid
 flowchart TD
-  A[step calls runInference with progressMessage] --> B[validate non-empty message]
-  B --> C{showProgress}
-  C -->|true| D[start stepProgressStart spinner]
-  C -->|false| E[skip spinner]
-  D --> F[generate with same permissions]
-  E --> F
-  F -->|success| G[spinner done "*"]
-  F -->|error| H[spinner fail "x"]
+  A[step calls generate with progressMessage] --> B[validate non-empty message]
+  B --> C{showProgress === false}
+  C -->|yes| D[run inference without screen progress]
+  C -->|no (default)| E[start ctx.progress line]
+  E --> F[generate with same permissions]
+  D --> F
+  F -->|success| G[line done "✔"]
+  F -->|error| H[line fail "❌"]
 ```
 
 ## Notes
 
-- `runInference` now requires `progressMessage` in options.
+- `generate(...)` requires `progressMessage` in options.
+- Progress is enabled by default; callers only pass `showProgress: false` to disable it.
 - Caller steps provide user-facing messages from `sources/text/all.txt`.
-- Spinner output is screen-only and separate from `.beer/local/logs/*` file logging.

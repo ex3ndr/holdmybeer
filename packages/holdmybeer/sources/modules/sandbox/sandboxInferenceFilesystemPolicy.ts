@@ -93,18 +93,16 @@ function allowWriteResolve(
 ): string[] {
     const authPaths = [path.resolve(homeDir, ".pi")];
     const localPiPaths = [path.resolve(projectPath, ".pi")];
-    const localSessionPaths = [path.resolve(projectPath, ".beer/local/sessions")];
 
     if (!writePolicy || writePolicy.mode === "read-only") {
-        // Provider CLIs need writable auth state, project-local settings lock, and session runtime directory.
-        return dedupeResolvedPaths([...authPaths, ...localPiPaths, ...localSessionPaths]);
+        // Provider CLIs need writable auth state and project-local settings lock.
+        return dedupeResolvedPaths([...authPaths, ...localPiPaths]);
     }
 
     return dedupeResolvedPaths([
         ...writePolicy.writablePaths.map((entry) => path.resolve(projectPath, entry)),
         ...authPaths,
-        ...localPiPaths,
-        ...localSessionPaths
+        ...localPiPaths
     ]);
 }
 

@@ -1,6 +1,6 @@
 # Stackable Multiline Progress
 
-Progress rendering now stacks automatically across concurrent `ctx.progress(...)` calls and does not require wrapping work in `ctx.progresses(...)` just to get multiline output.
+Progress rendering now stacks automatically across concurrent `ctx.progress(...)` calls and does not require any separate multiline API.
 
 ## Flow
 
@@ -30,4 +30,3 @@ sequenceDiagram
 - Status symbols are now `✔` for success and `❌` for failure.
 - Success line message is auto-derived when the operation result is a non-empty string.
 - Failure line message is auto-derived from `Error.message` (or thrown string when used).
-- `ctx.progresses(...).run(...)` uses the same success/error auto-message behavior.

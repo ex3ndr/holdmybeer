@@ -30,27 +30,4 @@ describe("progressMultilineStart", () => {
             writeSpy.mockRestore();
         }
     });
-
-    it("applies doneRunning and failRunning only to active lines", () => {
-        process.stderr.isTTY = false;
-        const writes: string[] = [];
-        const writeSpy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: string | Uint8Array) => {
-            writes.push(String(chunk));
-            return true;
-        }) as typeof process.stderr.write);
-        try {
-            const progress = progressMultilineStart();
-            const one = progress.add("one");
-            progress.add("two");
-            one.done("one done");
-
-            progress.doneRunning("default done");
-            progress.failRunning("default failed");
-            progress.stop();
-
-            expect(writes).toEqual(["| one\n", "| two\n", "✔ one done\n", "✔ default done\n"]);
-        } finally {
-            writeSpy.mockRestore();
-        }
-    });
 });

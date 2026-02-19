@@ -12,7 +12,7 @@ flowchart TD
   D --> E{verify throws?}
   E -->|no| C
   E -->|yes| F[forward error to model as retry prompt]
-  F --> G[continue same session with --continue]
+  F --> G[retry with same session only when session id exists]
   G --> D
 ```
 
@@ -22,4 +22,4 @@ flowchart TD
 - `expectedOutput.type = file` supports `verify({ text, filePath, fileContent })`.
 - `verify` may be synchronous or asynchronous.
 - Verification retry count defaults to `10`.
-- Verification failures are returned to the model as an error prompt and retried in the same provider session.
+- Verification failures are returned to the model as an error prompt; retry uses the same provider session only when a session id is available.

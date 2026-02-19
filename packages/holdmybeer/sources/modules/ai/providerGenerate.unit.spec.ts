@@ -236,7 +236,7 @@ describe("providerGenerate", () => {
         });
     });
 
-    it("retries by continuing existing session with error message", async () => {
+    it("retries from scratch when no session id is available", async () => {
         piProviderGenerateMock
             .mockResolvedValueOnce({
                 exitCode: 0,
@@ -259,20 +259,50 @@ describe("providerGenerate", () => {
         expect(result).toEqual({ output: "ok", sessionId: undefined, tokenUsage: undefined });
 
         const firstCall = piProviderGenerateMock.mock.calls[0]?.[0] as
-            | { prompt?: string; continueSession?: boolean; sessionDir?: string }
+            | { prompt?: string; sessionId?: string }
             | undefined;
         const secondCall = piProviderGenerateMock.mock.calls[1]?.[0] as
-            | { prompt?: string; continueSession?: boolean; sessionDir?: string }
+            | { prompt?: string; sessionId?: string }
             | undefined;
 
         expect(firstCall?.prompt).toBe("hello");
-        expect(firstCall?.continueSession).toBe(false);
-        expect(firstCall?.sessionDir).toBeTruthy();
+        expect(firstCall?.sessionId).toBeUndefined();
 
         expect(secondCall?.prompt).toContain("Error:");
         expect(secondCall?.prompt).toContain("<output>");
-        expect(secondCall?.continueSession).toBe(true);
-        expect(secondCall?.sessionDir).toBe(firstCall?.sessionDir);
+        expect(secondCall?.sessionId).toBeUndefined();
+    });
+
+    it("retries by reusing emitted session id when available", async () => {
+        piProviderGenerateMock
+            .mockImplementationOnce(async (input) => {
+                input.onEvent?.({ type: "session", id: "session-emitted" });
+                return {
+                    exitCode: 0,
+                    stderr: "",
+                    output: "missing tags"
+                };
+            })
+            .mockResolvedValueOnce({
+                exitCode: 0,
+                stderr: "",
+                output: "<output>ok</output>"
+            });
+
+        const result = await providerGenerate({
+            providerId: "pi",
+            command: "pi",
+            prompt: "hello",
+            sandbox: { wrapCommand: async (command) => command }
+        });
+
+        expect(result).toEqual({ output: "ok", sessionId: "session-emitted", tokenUsage: undefined });
+
+        const secondCall = piProviderGenerateMock.mock.calls[1]?.[0] as
+            | { prompt?: string; sessionId?: string }
+            | undefined;
+        expect(secondCall?.prompt).toContain("Error:");
+        expect(secondCall?.sessionId).toBe("session-emitted");
     });
 
     it("retries in same session when output verification fails", async () => {
@@ -307,10 +337,10 @@ describe("providerGenerate", () => {
         expect(validateOutput).toHaveBeenNthCalledWith(1, "first");
         expect(validateOutput).toHaveBeenNthCalledWith(2, "second");
 
-        const secondCall = piProviderGenerateMock.mock.calls[1]?.[0] as { prompt?: string; continueSession?: boolean };
+        const secondCall = piProviderGenerateMock.mock.calls[1]?.[0] as { prompt?: string; sessionId?: string };
         expect(secondCall.prompt).toContain("failed output verification");
         expect(secondCall.prompt).toContain("missing required marker");
-        expect(secondCall.continueSession).toBe(true);
+        expect(secondCall.sessionId).toBeUndefined();
     });
 
     it("fails when output verification keeps failing after retries", async () => {

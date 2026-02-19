@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-import path from "node:path";
 import { aiOutputExtract } from "@/modules/ai/aiOutputExtract.js";
 import { piProviderGenerate } from "@/modules/ai/providers/piProviderGenerate.js";
 import type {
@@ -13,7 +11,6 @@ import type {
 } from "@/modules/ai/providers/piProviderTypes.js";
 import type { InferenceWritePolicy } from "@/modules/sandbox/sandboxInferenceTypes.js";
 import type { CommandSandbox } from "@/modules/sandbox/sandboxTypes.js";
-import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 import type { ProviderEvent, ProviderId, ProviderTokenUsage } from "@/types";
 
 export interface ProviderGenerateInput {
@@ -21,6 +18,7 @@ export interface ProviderGenerateInput {
     command: string;
     model?: string;
     prompt: string;
+    sessionId?: string;
     projectPath?: string;
     sandbox: CommandSandbox;
     abortSignal?: AbortSignal;
@@ -56,10 +54,8 @@ const OUTPUT_RETRY_PROMPT =
 export async function providerGenerate(input: ProviderGenerateInput): Promise<ProviderGenerateResult> {
     const requireOutputTags = input.requireOutputTags ?? true;
     const outputValidationRetries = Math.max(0, input.outputValidationRetries ?? 10);
-    const sessionDir = providerSessionDirResolve(input.projectPath);
-    let sessionId: string | undefined;
+    let sessionId = providerSessionIdResolve(input.sessionId);
     let prompt = input.prompt;
-    let continueSession = false;
     let outputRetryUsed = false;
     let outputValidationRetryCount = 0;
     let tokenUsage: ProviderTokenUsage | undefined;
@@ -70,8 +66,7 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             model: input.model,
             prompt,
             cwd: input.projectPath,
-            sessionDir,
-            continueSession,
+            sessionId,
             sandbox: input.sandbox,
             abortSignal: input.abortSignal,
             onEvent: (event) => {
@@ -89,7 +84,6 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
             onStdoutText: input.onStdoutText,
             onStderrText: input.onStderrText
         });
-        continueSession = true;
 
         if (result.exitCode !== 0) {
             return {
@@ -163,11 +157,12 @@ export async function providerGenerate(input: ProviderGenerateInput): Promise<Pr
     }
 }
 
-function providerSessionDirResolve(projectPath: string | undefined): string {
-    const sessionsRoot = projectPath
-        ? path.resolve(projectPath, ".beer/local/sessions")
-        : pathResolveFromInitCwd(".beer/local/sessions");
-    return path.join(sessionsRoot, `${Date.now()}-${randomUUID()}`);
+function providerSessionIdResolve(value: string | undefined): string | undefined {
+    if (!value) {
+        return undefined;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
 }
 
 function providerEventResolve(providerId: ProviderId, event: unknown): ProviderEvent | undefined {

@@ -7,8 +7,7 @@ export interface PiProviderGenerateInput {
     model?: string;
     prompt: string;
     cwd?: string;
-    sessionDir?: string;
-    continueSession?: boolean;
+    sessionId?: string;
     sandbox: CommandSandbox;
     abortSignal?: AbortSignal;
     onEvent?: (event: unknown) => void;
@@ -31,7 +30,7 @@ export async function piProviderGenerate(input: PiProviderGenerateInput): Promis
 
     const result = await commandJSONL({
         command: input.command,
-        args: piProviderArgsResolve(input.prompt, input.model, input.sessionDir, input.continueSession),
+        args: piProviderArgsResolve(input.prompt, input.model, input.sessionId),
         cwd: input.cwd,
         sandbox: input.sandbox,
         abortSignal: input.abortSignal,
@@ -55,18 +54,10 @@ export async function piProviderGenerate(input: PiProviderGenerateInput): Promis
     };
 }
 
-function piProviderArgsResolve(
-    prompt: string,
-    model: string | undefined,
-    sessionDir: string | undefined,
-    continueSession: boolean | undefined
-): string[] {
+function piProviderArgsResolve(prompt: string, model: string | undefined, sessionId: string | undefined): string[] {
     const args = ["--mode", "json", "--print"];
-    if (sessionDir && sessionDir.trim().length > 0) {
-        args.push("--session-dir", sessionDir.trim());
-    }
-    if (continueSession) {
-        args.push("--continue");
+    if (sessionId && sessionId.trim().length > 0) {
+        args.push("--session", sessionId.trim());
     }
     if (model && model.trim().length > 0) {
         args.push("--model", model.trim());

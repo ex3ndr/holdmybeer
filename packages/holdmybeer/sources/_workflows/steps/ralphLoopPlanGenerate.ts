@@ -6,7 +6,6 @@ import { ralphLoopPlanPathResolve } from "@/_workflows/steps/ralphLoopPlanPathRe
 import type { Context } from "@/types";
 
 export interface RalphLoopPlanGenerateOptions {
-    showProgress?: boolean;
     planPath?: string;
 }
 
@@ -43,7 +42,6 @@ export async function ralphLoopPlanGenerate(
         { buildGoal: goal },
         {
             progressMessage: text.inference_plan_generating!,
-            showProgress: options.showProgress,
             modelSelectionMode: "codex-xhigh",
             writePolicy: { mode: "read-only" }
         }

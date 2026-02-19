@@ -1,23 +1,21 @@
-import { mkdir, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, stat, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { text as catalog } from "@text";
 import { contextApplyConfig } from "@/_workflows/context/utils/contextApplyConfig.js";
 import { contextAskGithubRepo } from "@/_workflows/context/utils/contextAskGithubRepo.js";
 import { contextGitignoreEnsure } from "@/_workflows/context/utils/contextGitignoreEnsure.js";
-import { type ProgressLine, progressMultilineStart } from "@/_workflows/context/utils/progressMultilineStart.js";
+import { progressMultilineStart } from "@/_workflows/context/utils/progressMultilineStart.js";
+import { generateCommit } from "@/_workflows/steps/generateCommit.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { gitPush } from "@/modules/git/gitPush.js";
 import { gitStageAndCommit } from "@/modules/git/gitStageAndCommit.js";
 import { providerDetect } from "@/modules/providers/providerDetect.js";
-import type { BeerSettings, GitHubRepoRef, ProviderDetection } from "@/types";
+import type { BeerSettings, GitHubRepoRef, ProviderDetection, ProviderModelSelectionMode } from "@/types";
 
 export interface ContextCheckpointOptions {
     remote?: string;
     branch?: string;
-}
-
-export interface ContextProgresses {
-    add(initialMessage: string): ProgressLine;
-    run<T>(initialMessage: string, operation: (report: (message: string) => void) => Promise<T>): Promise<T>;
+    modelSelectionMode?: ProviderModelSelectionMode;
 }
 
 /**
@@ -100,6 +98,27 @@ export class Context {
     }
 
     /**
+     * Creates or refreshes a symlink at linkPath pointing to target.
+     * Expects: linkPath parent directories already exist.
+     */
+    async makeSymlink(target: string, linkPath: string): Promise<void> {
+        const resolvedLinkPath = contextPathResolve(this.projectPath, linkPath);
+        try {
+            const existing = await lstat(resolvedLinkPath);
+            if (existing.isSymbolicLink()) {
+                await unlink(resolvedLinkPath);
+            }
+        } catch (error) {
+            if (!contextErrorIsNotFound(error)) {
+                throw error;
+            }
+        }
+
+        const resolvedTarget = path.isAbsolute(target) ? path.resolve(target) : target;
+        await symlink(resolvedTarget, resolvedLinkPath);
+    }
+
+    /**
      * Stages and commits all current changes in the project repository.
      * Expects: message is a non-empty commit message.
      */
@@ -108,12 +127,17 @@ export class Context {
     }
 
     /**
-     * Stages, commits, and pushes to the configured remote/branch.
-     * Expects: repository remote/branch are configured.
+     * Generates a commit message via inference, stages, commits, and pushes.
+     * Expects: hint provides context for commit message generation; repository remote/branch are configured.
      */
-    async checkpoint(message?: string, options: ContextCheckpointOptions = {}): Promise<{ committed: boolean }> {
-        const messageResolved = message?.trim() || "chore: checkpoint";
-        const committed = await this.stageAndCommit(messageResolved);
+    async checkpoint(hint?: string, options: ContextCheckpointOptions = {}): Promise<{ committed: boolean }> {
+        const commitHint = hint?.trim() || "checkpoint of current changes";
+        const result = await generateCommit(this, {
+            hint: commitHint,
+            modelSelectionMode: options.modelSelectionMode ?? "sonnet",
+            progressMessage: catalog.inference_checkpoint_commit_generating
+        });
+        const committed = await this.stageAndCommit(result.text);
         const remote = options.remote ?? "origin";
         const branch = options.branch ?? "main";
         await gitPush(remote, branch, this.projectPath);
@@ -140,86 +164,6 @@ export class Context {
             return result;
         } catch (error) {
             line.fail(contextProgressErrorMessageResolve(error));
-            throw error;
-        } finally {
-            this.progressRelease();
-        }
-    }
-
-    /**
-     * Runs an async operation with dynamic multiline progress where lines can be added on demand.
-     * Expects: callers add lines via add()/run() and may execute run() calls in parallel.
-     */
-    async progresses<T>(operation: (progresses: ContextProgresses) => Promise<T>): Promise<T> {
-        const progress = this.progressAcquire();
-        const activeLines = new Set<ProgressLine>();
-
-        const addLine = (initialMessage: string): ProgressLine => {
-            const line = progress.add(initialMessage);
-            let active = true;
-            const trackedLine: ProgressLine = {
-                update(message: string) {
-                    line.update(message);
-                },
-                done(message?: string) {
-                    if (!active) {
-                        return;
-                    }
-                    active = false;
-                    activeLines.delete(trackedLine);
-                    line.done(message);
-                },
-                fail(message?: string) {
-                    if (!active) {
-                        return;
-                    }
-                    active = false;
-                    activeLines.delete(trackedLine);
-                    line.fail(message);
-                }
-            };
-            activeLines.add(trackedLine);
-            return trackedLine;
-        };
-
-        const lineRun = async <R>(
-            initialMessage: string,
-            lineOperation: (report: (message: string) => void) => Promise<R>
-        ): Promise<R> => {
-            const line = addLine(initialMessage);
-            try {
-                const result = await lineOperation((message) => {
-                    line.update(message);
-                });
-                line.done(contextProgressSuccessMessageResolve(result));
-                return result;
-            } catch (error) {
-                line.fail(contextProgressErrorMessageResolve(error));
-                throw error;
-            }
-        };
-
-        try {
-            const result = await operation({
-                add(initialMessage: string): ProgressLine {
-                    return addLine(initialMessage);
-                },
-                run<R>(
-                    initialMessage: string,
-                    lineOperation: (report: (message: string) => void) => Promise<R>
-                ): Promise<R> {
-                    return lineRun(initialMessage, lineOperation);
-                }
-            });
-            for (const line of activeLines) {
-                line.done();
-            }
-            return result;
-        } catch (error) {
-            const message = contextProgressErrorMessageResolve(error);
-            for (const line of activeLines) {
-                line.fail(message);
-            }
             throw error;
         } finally {
             this.progressRelease();
@@ -306,4 +250,8 @@ function contextProgressErrorMessageResolve(error: unknown): string | undefined 
     }
     const message = error.trim();
     return message.length > 0 ? message : undefined;
+}
+
+function contextErrorIsNotFound(error: unknown): boolean {
+    return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }

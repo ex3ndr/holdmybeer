@@ -151,12 +151,11 @@ async function runRetryInSameSession(): Promise<void> {
 
         expect(calls.length).toBe(2);
         expect(calls[0]).not.toContain("--continue");
-        expect(calls[1]).toContain("--continue");
+        expect(calls[1]).not.toContain("--continue");
 
-        const firstSessionDir = sessionDirFromArgs(calls[0]!);
-        const secondSessionDir = sessionDirFromArgs(calls[1]!);
-        expect(firstSessionDir).toBeTruthy();
-        expect(secondSessionDir).toBe(firstSessionDir);
+        const secondSession = sessionIdFromArgs(calls[1]!);
+        expect(secondSession).toBeTruthy();
+        expect(result.sessionId).toBe(secondSession);
         if (!result.output) {
             assertNoPiFlagParseError(result.failure?.stderr ?? "");
         }
@@ -175,8 +174,8 @@ async function runRetryInSameSession(): Promise<void> {
     }
 }
 
-function sessionDirFromArgs(args: string[]): string | undefined {
-    const index = args.indexOf("--session-dir");
+function sessionIdFromArgs(args: string[]): string | undefined {
+    const index = args.indexOf("--session");
     return index >= 0 ? args[index + 1] : undefined;
 }
 

@@ -69,16 +69,23 @@ prompt_release_custom = Enter custom semantic version
 prompt_ralph_loop_build = 🧠  What should I build?
 prompt_checkpoint_hint = 💬  Checkpoint commit message (optional)
 prompt_workflow_select = Select a workflow
+prompt_deep_research_skip = 🔍  Deep research report not found (doc/product-pitch-deep-research-report.md). Run deep research first, or skip and use draft pitch as final?
 
 # Inference
 
 inference_commit_generating = Generating bootstrap commit message
+inference_checkpoint_commit_generating = Generating checkpoint commit message
 inference_plan_generating = Generating implementation plan
 inference_plan_executing = Executing implementation plan
 inference_review_round = Running review round {round}/3
 inference_research_document_generating = Generating research document
 inference_research_summary_opus_generating = Generating research summary with opus
 inference_research_problems_codex_generating = Generating unresolved questions with codex
+inference_research_decisions_generating = Generating key decisions document
+inference_research_pitch_generating = Generating product pitch document
+inference_research_pitch_final_generating = Refining product pitch with deep research
+inference_research_name_generating = Generating product name
+inference_research_stack_generating = Generating technology stack document
 
 # Errors
 

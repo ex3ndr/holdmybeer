@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { lstat, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,6 +7,7 @@ import type { BeerSettings, GitHubRepoRef } from "@/types";
 const providerDetectMock = vi.hoisted(() => vi.fn());
 const gitStageAndCommitMock = vi.hoisted(() => vi.fn());
 const gitPushMock = vi.hoisted(() => vi.fn());
+const generateCommitMock = vi.hoisted(() => vi.fn());
 const contextAskGithubRepoMock = vi.hoisted(() => vi.fn());
 const contextApplyConfigMock = vi.hoisted(() => vi.fn());
 const contextGitignoreEnsureMock = vi.hoisted(() => vi.fn());
@@ -22,6 +23,10 @@ vi.mock("@/modules/git/gitStageAndCommit.js", () => ({
 
 vi.mock("@/modules/git/gitPush.js", () => ({
     gitPush: gitPushMock
+}));
+
+vi.mock("@/_workflows/steps/generateCommit.js", () => ({
+    generateCommit: generateCommitMock
 }));
 
 vi.mock("@/_workflows/context/utils/contextAskGithubRepo.js", () => ({
@@ -47,6 +52,7 @@ describe("Context", () => {
         providerDetectMock.mockReset();
         gitStageAndCommitMock.mockReset();
         gitPushMock.mockReset();
+        generateCommitMock.mockReset();
         contextAskGithubRepoMock.mockReset();
         contextApplyConfigMock.mockReset();
         contextGitignoreEnsureMock.mockReset();
@@ -62,15 +68,23 @@ describe("Context", () => {
         expect(context.providers).toEqual([{ id: "pi", available: true, command: "pi", priority: 1 }]);
     });
 
-    it("checkpoints by staging, committing, and pushing", async () => {
+    it("checkpoints by generating commit message, staging, committing, and pushing", async () => {
         providerDetectMock.mockResolvedValue([]);
+        generateCommitMock.mockResolvedValue({ text: "feat: generated message" });
         gitStageAndCommitMock.mockResolvedValue(true);
 
         const context = await Context.create("/tmp/test-project");
-        const result = await context.checkpoint("feat: checkpoint", { remote: "origin", branch: "main" });
+        const result = await context.checkpoint("my hint", { remote: "origin", branch: "main" });
 
         expect(result).toEqual({ committed: true });
-        expect(gitStageAndCommitMock).toHaveBeenCalledWith("feat: checkpoint", "/tmp/test-project");
+        expect(generateCommitMock).toHaveBeenCalledWith(
+            context,
+            expect.objectContaining({
+                hint: "my hint",
+                modelSelectionMode: "sonnet"
+            })
+        );
+        expect(gitStageAndCommitMock).toHaveBeenCalledWith("feat: generated message", "/tmp/test-project");
         expect(gitPushMock).toHaveBeenCalledWith("origin", "main", "/tmp/test-project");
     });
 
@@ -127,85 +141,36 @@ describe("Context", () => {
         }
     });
 
-    it("runs dynamic multiline progress lines and stops spinner state", async () => {
+    it("creates and refreshes symlinks", async () => {
         providerDetectMock.mockResolvedValue([]);
-        const lineA = {
-            update: vi.fn(),
-            done: vi.fn(),
-            fail: vi.fn()
-        };
-        const lineB = {
-            update: vi.fn(),
-            done: vi.fn(),
-            fail: vi.fn()
-        };
-        const addMock = vi.fn().mockReturnValueOnce(lineA).mockReturnValueOnce(lineB);
-        const doneRunningMock = vi.fn();
-        const failRunningMock = vi.fn();
-        const stopMock = vi.fn();
-        progressMultilineStartMock.mockReturnValue({
-            add: addMock,
-            doneRunning: doneRunningMock,
-            failRunning: failRunningMock,
-            stop: stopMock
-        });
+        const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-context-"));
+        try {
+            const context = await Context.create(tempDir);
+            await context.makeSymlink(".context", "ctx");
+            await context.makeSymlink(".context", "ctx");
 
-        const context = await Context.create("/tmp/test-project");
-        const result = await context.progresses(async (progresses) => {
-            const first = progresses.run("task A", async (report) => {
-                report("task A update");
-                return "A";
-            });
-            const second = progresses.run("task B", async () => "B");
-            return Promise.all([first, second]);
-        });
-
-        expect(result).toEqual(["A", "B"]);
-        expect(addMock).toHaveBeenCalledWith("task A");
-        expect(addMock).toHaveBeenCalledWith("task B");
-        expect(lineA.update).toHaveBeenCalledWith("task A update");
-        expect(lineA.done).toHaveBeenCalledWith("A");
-        expect(lineB.done).toHaveBeenCalledWith("B");
-        expect(lineA.fail).not.toHaveBeenCalled();
-        expect(lineB.fail).not.toHaveBeenCalled();
-        expect(doneRunningMock).not.toHaveBeenCalled();
-        expect(failRunningMock).not.toHaveBeenCalled();
-        expect(stopMock).toHaveBeenCalledTimes(1);
+            const symlinkPath = path.join(tempDir, "ctx");
+            const symlinkStat = await lstat(symlinkPath);
+            expect(symlinkStat.isSymbolicLink()).toBe(true);
+            expect(await readlink(symlinkPath)).toBe(".context");
+        } finally {
+            await rm(tempDir, { recursive: true, force: true });
+        }
     });
 
-    it("fails running multiline progress lines when operation throws", async () => {
+    it("fails makeSymlink when link path is not a symlink", async () => {
         providerDetectMock.mockResolvedValue([]);
-        const line = {
-            update: vi.fn(),
-            done: vi.fn(),
-            fail: vi.fn()
-        };
-        const addMock = vi.fn().mockReturnValue(line);
-        const doneRunningMock = vi.fn();
-        const failRunningMock = vi.fn();
-        const stopMock = vi.fn();
-        progressMultilineStartMock.mockReturnValue({
-            add: addMock,
-            doneRunning: doneRunningMock,
-            failRunning: failRunningMock,
-            stop: stopMock
-        });
+        const tempDir = await mkdtemp(path.join(os.tmpdir(), "holdmybeer-context-"));
+        try {
+            const context = await Context.create(tempDir);
+            await writeFile(path.join(tempDir, "ctx"), "occupied", "utf-8");
 
-        const context = await Context.create("/tmp/test-project");
-        await expect(
-            context.progresses(async (progresses) => {
-                await progresses.run("task A", async () => {
-                    throw new Error("boom");
-                });
-            })
-        ).rejects.toThrow("boom");
-
-        expect(addMock).toHaveBeenCalledWith("task A");
-        expect(line.done).not.toHaveBeenCalled();
-        expect(line.fail).toHaveBeenCalledWith("boom");
-        expect(doneRunningMock).not.toHaveBeenCalled();
-        expect(failRunningMock).not.toHaveBeenCalled();
-        expect(stopMock).toHaveBeenCalledTimes(1);
+            await expect(context.makeSymlink(".context", "ctx")).rejects.toMatchObject({
+                code: "EEXIST"
+            });
+        } finally {
+            await rm(tempDir, { recursive: true, force: true });
+        }
     });
 
     it("stacks progress lines across concurrent progress calls", async () => {
@@ -224,8 +189,6 @@ describe("Context", () => {
         const stopMock = vi.fn();
         progressMultilineStartMock.mockReturnValue({
             add: addMock,
-            doneRunning: vi.fn(),
-            failRunning: vi.fn(),
             stop: stopMock
         });
 
@@ -258,8 +221,6 @@ describe("Context", () => {
         const stopMock = vi.fn();
         progressMultilineStartMock.mockReturnValue({
             add: addMock,
-            doneRunning: vi.fn(),
-            failRunning: vi.fn(),
             stop: stopMock
         });
 

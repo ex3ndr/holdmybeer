@@ -32,4 +32,4 @@ flowchart TD
   - `tool_call_start` / `tool_call_stop`
   - `text_start` / `text_delta` / `text_stop`
 - `providerGenerate` and `generate` results now include `sessionId` when a provider session event is observed.
-- Retry stays in the same PI session by reusing one `.beer/local/sessions/<run-id>` directory and sending `--continue` with an explicit error message prompt.
+- Retry stays in the same PI session only when a provider-emitted session id is available via `--session <id>`; otherwise retry starts fresh.

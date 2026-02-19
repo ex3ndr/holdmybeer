@@ -6,8 +6,6 @@ export interface ProgressLine {
 
 export interface ProgressMultiline {
     add(initialMessage: string): ProgressLine;
-    doneRunning(message?: string): void;
-    failRunning(message?: string): void;
     stop(): void;
 }
 
@@ -75,15 +73,6 @@ export function progressMultilineStart(): ProgressMultiline {
         stream.write(`${status === "done" ? progressDoneSymbol : progressFailSymbol} ${state.message}\n`);
     };
 
-    const applyToRunning = (status: "done" | "failed", nextMessage?: string) => {
-        if (!active) {
-            return;
-        }
-        for (const state of states) {
-            finishState(state, status, nextMessage);
-        }
-    };
-
     return {
         add(initialMessage: string): ProgressLine {
             if (!active) {
@@ -125,12 +114,6 @@ export function progressMultilineStart(): ProgressMultiline {
                     finishState(state, "failed", nextMessage);
                 }
             };
-        },
-        doneRunning(message?: string) {
-            applyToRunning("done", message);
-        },
-        failRunning(message?: string) {
-            applyToRunning("failed", message);
         },
         stop() {
             if (!active) {
