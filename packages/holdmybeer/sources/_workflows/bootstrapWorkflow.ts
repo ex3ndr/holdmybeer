@@ -7,7 +7,6 @@ import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { beerSettingsWrite } from "@/modules/beer/beerSettingsWrite.js";
 import { gitRepoCheckout } from "@/modules/git/gitRepoCheckout.js";
 import { gitRemoteEnsure } from "@/modules/git/gitRemoteEnsure.js";
-import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
 import { githubOwnerChoicesGet } from "@/modules/github/githubOwnerChoicesGet.js";
 import { githubRepoCreate } from "@/modules/github/githubRepoCreate.js";
 import { githubRepoExists } from "@/modules/github/githubRepoExists.js";
@@ -28,7 +27,6 @@ import { text, textFormatKey } from "@text";
  */
 export async function bootstrapWorkflow(ctx: Context): Promise<void> {
   const showInferenceProgress = true;
-  await githubCliEnsure();
 
   const settingsPath = beerSettingsPathResolve();
   const settings = await beerSettingsRead(settingsPath);

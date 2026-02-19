@@ -5,6 +5,7 @@ import { workflows, type Workflow } from "@/_workflows/_index.js";
 import { beerSettingsPathResolve } from "@/modules/beer/beerSettingsPathResolve.js";
 import { beerSettingsRead } from "@/modules/beer/beerSettingsRead.js";
 import { contextGetOrInitialize } from "@/modules/context/contextGetOrInitialize.js";
+import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
 import { text } from "@text";
 
@@ -23,6 +24,7 @@ program
     const options = this.optsWithGlobals<{ project?: string }>();
     const projectPath = pathResolveFromInitCwd(options.project ?? ".");
     process.env.BEER_PROJECT_PATH = projectPath;
+    await githubCliEnsure();
     const ctx = await contextGetOrInitialize(projectPath);
     const bootstrapped = await mainWorkflowBootstrappedResolve();
     const selectedWorkflowId = await select({
