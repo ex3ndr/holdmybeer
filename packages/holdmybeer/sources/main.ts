@@ -6,6 +6,7 @@ import { type Workflow, workflows } from "@/_workflows/_index.js";
 import { Context } from "@/_workflows/context/context.js";
 import { githubCliEnsure } from "@/modules/github/githubCliEnsure.js";
 import { pathResolveFromInitCwd } from "@/modules/util/pathResolveFromInitCwd.js";
+import { workflowBootstrapRequired } from "@/modules/workflow/workflowBootstrapRequired.js";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8")) as { version: string };
 
@@ -41,7 +42,7 @@ program
 await program.parseAsync(process.argv);
 
 function mainWorkflowDisabledReasonResolve(workflow: Workflow, bootstrapped: boolean): string | undefined {
-    if (bootstrapped || workflow.id === "bootstrap") {
+    if (bootstrapped || !workflowBootstrapRequired(workflow.id)) {
         return undefined;
     }
     return text.workflow_bootstrap_required!;
