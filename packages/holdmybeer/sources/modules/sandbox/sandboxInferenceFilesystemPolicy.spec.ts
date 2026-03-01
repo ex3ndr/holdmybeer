@@ -4,13 +4,20 @@ import { sandboxInferenceFilesystemPolicy } from "@/modules/sandbox/sandboxInfer
 
 describe("sandboxInferenceFilesystemPolicy", () => {
     const initCwd = process.env.INIT_CWD;
+    const beerProjectPath = process.env.BEER_PROJECT_PATH;
 
     beforeEach(() => {
         process.env.INIT_CWD = "/workspace/project";
+        delete process.env.BEER_PROJECT_PATH;
     });
 
     afterAll(() => {
         process.env.INIT_CWD = initCwd;
+        if (beerProjectPath === undefined) {
+            delete process.env.BEER_PROJECT_PATH;
+            return;
+        }
+        process.env.BEER_PROJECT_PATH = beerProjectPath;
     });
 
     it("allows provider auth state writes when no policy is provided", () => {
