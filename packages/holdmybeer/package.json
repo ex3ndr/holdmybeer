@@ -1,6 +1,6 @@
 {
   "name": "@slopus/beer",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Holdmybeer CLI bootstrap tool",
   "type": "module",
   "license": "MIT",
