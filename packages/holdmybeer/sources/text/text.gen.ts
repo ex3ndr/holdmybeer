@@ -62,7 +62,11 @@ export const text = {
   prompt_create_private: "🔐  Create as private repository?",
   prompt_release_mode: "Select release increment (patch/minor/major/custom). patch -> {patch}",
   prompt_release_custom: "Enter custom semantic version",
+  prompt_ralph_goal: "🧠  What should I build?",
   prompt_ralph_loop_build: "🧠  What should I build?",
+  ralph_plan_questions_prompt: "📝  {question}",
+  ralph_plan_approve_prompt: "✅  Approve this plan? (y/n)",
+  ralph_plan_feedback_prompt: "🧾  What should change in this plan?",
   prompt_checkpoint_hint: "💬  Checkpoint commit message (optional)",
   prompt_workflow_select: "Select a workflow",
   prompt_deep_research_skip: "🔍  Deep research report not found (doc/product-pitch-deep-research-report.md). Run deep research first, or skip and use draft pitch as final?",
@@ -72,6 +76,10 @@ export const text = {
   inference_plan_generating: "Generating implementation plan",
   inference_plan_executing: "Executing implementation plan",
   inference_review_round: "Running review round {round}/3",
+  inference_ralph_planning: "Planning implementation with Opus",
+  inference_ralph_plan_refining: "Refining plan with Opus",
+  inference_ralph_executing: "Executing plan with Codex xhigh",
+  inference_ralph_reviewing: "Reviewing implementation with Codex high",
   inference_research_document_generating: "Generating research document",
   inference_research_summary_opus_generating: "Generating research summary with opus",
   inference_research_problems_codex_generating: "Generating unresolved questions with codex",
@@ -113,10 +121,12 @@ export const text = {
   error_release_version_same: "❌  New version must differ from current version.",
   error_release_version_missing: "❌  Could not read current version from packages/holdmybeer/package.json",
   error_release_tag_exists: "❌  Release tag already exists. Delete the existing tag or choose a different version.",
+  error_ralph_goal_required: "❌  Build goal is required for ralph.",
   error_ralph_loop_goal_required: "❌  Build goal is required for ralph-loop.",
   error_inference_progress_message_required: "❌  Inference progress message is required.",
   error_plan_sources_required: "❌  Plan workflow requires source docs (expected one of: doc/project-blueprint.md, doc/product-pitch-final.md, doc/product-pitch.md, README.md).",
   workflow_bootstrap_title: "Initialize .beer settings, source/publish repos, README, and first push",
+  workflow_ralph_title: "Plan with Opus, execute with Codex xhigh, then review with Codex high",
   workflow_ralph_loop_title: "Ask what to build, generate a plan, execute, and run 3 review rounds",
   workflow_research_title: "Run repository research and unresolved-questions docs with opus/codex in parallel",
   workflow_plan_title: "Build a persisted implementation task tree from blueprint and product docs",
@@ -256,7 +266,13 @@ export type TextValuesByKey = {
     patch: string | number;
   };
   prompt_release_custom: Record<never, never>;
+  prompt_ralph_goal: Record<never, never>;
   prompt_ralph_loop_build: Record<never, never>;
+  ralph_plan_questions_prompt: {
+    question: string | number;
+  };
+  ralph_plan_approve_prompt: Record<never, never>;
+  ralph_plan_feedback_prompt: Record<never, never>;
   prompt_checkpoint_hint: Record<never, never>;
   prompt_workflow_select: Record<never, never>;
   prompt_deep_research_skip: Record<never, never>;
@@ -268,6 +284,10 @@ export type TextValuesByKey = {
   inference_review_round: {
     round: string | number;
   };
+  inference_ralph_planning: Record<never, never>;
+  inference_ralph_plan_refining: Record<never, never>;
+  inference_ralph_executing: Record<never, never>;
+  inference_ralph_reviewing: Record<never, never>;
   inference_research_document_generating: Record<never, never>;
   inference_research_summary_opus_generating: Record<never, never>;
   inference_research_problems_codex_generating: Record<never, never>;
@@ -343,10 +363,12 @@ export type TextValuesByKey = {
   error_release_version_same: Record<never, never>;
   error_release_version_missing: Record<never, never>;
   error_release_tag_exists: Record<never, never>;
+  error_ralph_goal_required: Record<never, never>;
   error_ralph_loop_goal_required: Record<never, never>;
   error_inference_progress_message_required: Record<never, never>;
   error_plan_sources_required: Record<never, never>;
   workflow_bootstrap_title: Record<never, never>;
+  workflow_ralph_title: Record<never, never>;
   workflow_ralph_loop_title: Record<never, never>;
   workflow_research_title: Record<never, never>;
   workflow_plan_title: Record<never, never>;

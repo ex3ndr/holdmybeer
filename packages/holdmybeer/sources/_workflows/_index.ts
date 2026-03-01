@@ -3,6 +3,7 @@ import { bootstrap } from "@/_workflows/bootstrap.js";
 import { checkpointWorkflow } from "@/_workflows/checkpointWorkflow.js";
 import { planWorkflow } from "@/_workflows/planWorkflow.js";
 import { ralphLoopWorkflow } from "@/_workflows/ralphLoopWorkflow.js";
+import { ralphWorkflow } from "@/_workflows/ralphWorkflow.js";
 import { researchWorkflow } from "@/_workflows/researchWorkflow.js";
 import type { Context } from "@/types";
 
@@ -22,6 +23,12 @@ export const workflowRalphLoop: Workflow = {
     id: "execute",
     title: text.workflow_ralph_loop_title!,
     run: ralphLoopWorkflow
+};
+
+export const workflowRalph: Workflow = {
+    id: "ralph",
+    title: text.workflow_ralph_title!,
+    run: ralphWorkflow
 };
 
 export const workflowResearch: Workflow = {
@@ -45,6 +52,7 @@ export const workflowCheckpoint: Workflow = {
 export const workflows: readonly Workflow[] = [
     workflowBootstrap,
     workflowRalphLoop,
+    workflowRalph,
     workflowResearch,
     workflowPlan,
     workflowCheckpoint
